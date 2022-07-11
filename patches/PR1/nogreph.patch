@@ -1,0 +1,14 @@
+diff --git a/generate-configlist.sh b/generate-configlist.sh
+index 8692fe5cf4..ddbce81a8f 100755
+--- a/generate-configlist.sh
++++ b/generate-configlist.sh
+@@ -7,7 +7,8 @@ print_config_list () {
+ 	cat <<EOF
+ static const char *config_name_list[] = {
+ EOF
+-	grep -h '^[a-zA-Z].*\..*::$' Documentation/*config.txt Documentation/config/*.txt |
++	grep '^[a-zA-Z].*\..*::$' Documentation/*config.txt Documentation/config/*.txt |
++  awk -F':' '{ $1=""; print substr($0,2); }' |
+ 	sed '/deprecated/d; s/::$//; s/,  */\n/g' |
+ 	sort |
+ 	sed 's/^.*$/	"&",/'
