@@ -1,0 +1,89 @@
+diff --git a/fetch-negotiator.h b/fetch-negotiator.h
+index e348905a1f..edc05418e2 100644
+--- a/fetch-negotiator.h
++++ b/fetch-negotiator.h
+@@ -14,8 +14,8 @@ struct repository;
+  * Then, when "have" lines are required, call next(). Call ack() to report what
+  * the server tells us.
+  *
+- * Once negotiation is done, call release(). The negotiator then cannot be used
+- * (unless reinitialized with fetch_negotiator_init()).
++ * Once negotiation is done, call release_negotiator(). The negotiator then 
++ * cannot be used (unless reinitialized with fetch_negotiator_init()).
+  */
+ struct fetch_negotiator {
+ 	/*
+@@ -47,7 +47,7 @@ struct fetch_negotiator {
+ 	 */
+ 	int (*ack)(struct fetch_negotiator *, struct commit *);
+ 
+-	void (*release)(struct fetch_negotiator *);
++	void (*release_negotiator)(struct fetch_negotiator *);
+ 
+ 	/* internal use */
+ 	void *data;
+diff --git a/negotiator/default.c b/negotiator/default.c
+index 434189ae5d..157e884198 100644
+--- a/negotiator/default.c
++++ b/negotiator/default.c
+@@ -153,7 +153,7 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
+ 	return known_to_be_common;
+ }
+ 
+-static void release(struct fetch_negotiator *n)
++static void release_negotiator(struct fetch_negotiator *n)
+ {
+ 	clear_prio_queue(&((struct negotiation_state *)n->data)->rev_list);
+ 	FREE_AND_NULL(n->data);
+@@ -166,7 +166,7 @@ void default_negotiator_init(struct fetch_negotiator *negotiator)
+ 	negotiator->add_tip = add_tip;
+ 	negotiator->next = next;
+ 	negotiator->ack = ack;
+-	negotiator->release = release;
++	negotiator->release_negotiator = release_negotiator;
+ 	negotiator->data = CALLOC_ARRAY(ns, 1);
+ 	ns->rev_list.compare = compare_commits_by_commit_date;
+ 
+diff --git a/negotiator/noop.c b/negotiator/noop.c
+index 60569b8350..c8c2f06245 100644
+--- a/negotiator/noop.c
++++ b/negotiator/noop.c
+@@ -28,7 +28,7 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
+ 	return 0;
+ }
+ 
+-static void release(struct fetch_negotiator *n)
++static void release_negotiator(struct fetch_negotiator *n)
+ {
+ 	/* nothing to release */
+ }
+@@ -39,6 +39,6 @@ void noop_negotiator_init(struct fetch_negotiator *negotiator)
+ 	negotiator->add_tip = add_tip;
+ 	negotiator->next = next;
+ 	negotiator->ack = ack;
+-	negotiator->release = release;
++	negotiator->release_negotiator = release_negotiator;
+ 	negotiator->data = NULL;
+ }
+diff --git a/negotiator/skipping.c b/negotiator/skipping.c
+index 1236e79224..5c604f73a7 100644
+--- a/negotiator/skipping.c
++++ b/negotiator/skipping.c
+@@ -227,7 +227,7 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
+ 	return known_to_be_common;
+ }
+ 
+-static void release(struct fetch_negotiator *n)
++static void release_negotiator(struct fetch_negotiator *n)
+ {
+ 	clear_prio_queue(&((struct data *)n->data)->rev_list);
+ 	FREE_AND_NULL(n->data);
+@@ -240,7 +240,7 @@ void skipping_negotiator_init(struct fetch_negotiator *negotiator)
+ 	negotiator->add_tip = add_tip;
+ 	negotiator->next = next;
+ 	negotiator->ack = ack;
+-	negotiator->release = release;
++	negotiator->release_negotiator = release_negotiator;
+ 	negotiator->data = CALLOC_ARRAY(data, 1);
+ 	data->rev_list.compare = compare;
+ 

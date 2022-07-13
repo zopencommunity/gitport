@@ -1,0 +1,13 @@
+diff --git a/generate-cmdlist.sh b/generate-cmdlist.sh
+index 205541e0f7..c2d6c66a6f 100755
+--- a/generate-cmdlist.sh
++++ b/generate-cmdlist.sh
+@@ -28,7 +28,7 @@ command_list () {
+ category_list () {
+ 	echo "$1" |
+ 	cut -d' ' -f2- |
+-	tr ' ' '\012' |
++	tr ' ' '\n' |
+ 	grep -v '^$' |
+ 	LC_ALL=C sort -u
+ }

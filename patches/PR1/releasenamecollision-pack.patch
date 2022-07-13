@@ -1,0 +1,22 @@
+diff --git a/fetch-pack.c b/fetch-pack.c
+index cb6647d657..3ea63a545d 100644
+--- a/fetch-pack.c
++++ b/fetch-pack.c
+@@ -1175,7 +1175,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
+ 
+  all_done:
+ 	if (negotiator)
+-		negotiator->release(negotiator);
++		negotiator->release_negotiator(negotiator);
+ 	return ref;
+ }
+ 
+@@ -1787,7 +1787,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
+ 		die("fsck failed");
+ 
+ 	if (negotiator)
+-		negotiator->release(negotiator);
++		negotiator->release_negotiator(negotiator);
+ 
+ 	oidset_clear(&common);
+ 	return ref;
