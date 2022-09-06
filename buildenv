@@ -12,3 +12,9 @@ export ZLIB_HOME=$HOME/zot/prod/zlib # msf - temporary
 
 export ZOPEN_EXTRA_CPPFLAGS="-qnocsect -qnose -I\${OPENSSL_HOME}/include,\${GETTEXT_HOME}/include,\${ZLIB_HOME}/include,/usr/include/le -DNO_REGEX=NeedsStartEnd"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib"
+
+zopen_check_results()
+{
+  return 3
+}
+
