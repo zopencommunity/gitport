@@ -15,6 +15,6 @@ export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${Z
 
 zopen_check_results()
 {
-  return 3
+  return 3 # non-functional
 }
 
