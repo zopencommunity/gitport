@@ -13,6 +13,9 @@ export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man make
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
+export ZOPEN_CHECK_OPTS="test"
+
+export PERL="\${PERL5_HOME}/bin/perl"
 
 export ZLIB_HOME=$HOME/zot/prod/zlib # msf - temporary
 
