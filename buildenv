@@ -9,17 +9,15 @@ export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext "
 
 export ZOPEN_TARBALL_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.9.5.tar.gz"
-export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils"
+export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib"
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
-export ZOPEN_CHECK_OPTS="test"
+export ZOPEN_CHECK="skip"
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
-export ZLIB_HOME=$HOME/zot/prod/zlib # msf - temporary
-
-export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -DNO_REGEX=NeedsStartEnd"
+export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib"
 
 rm -f patches
