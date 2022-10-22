@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index 13ed57f..55e292f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -940,7 +940,7 @@ BUILTIN_OBJS += builtin/worktree.o
+ BUILTIN_OBJS += builtin/write-tree.o
+ 
+ GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB)
+-EXTLIBS =
++EXTLIBS = $(ZOPEN_EXTRA_LIBS)
+ 
+ GIT_USER_AGENT = git/$(GIT_VERSION)
+ 

@@ -1,0 +1,11 @@
+diff --git a/transport-helper.c b/transport-helper.c
+index bd666b2..af9e460 100644
+--- a/transport-helper.c
++++ b/transport-helper.c
+@@ -1,4 +1,6 @@
++#define fetch __zos_fetch
+ #include "cache.h"
++#undef fetch
+ #include "transport.h"
+ #include "quote.h"
+ #include "run-command.h"
