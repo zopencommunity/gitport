@@ -1,0 +1,13 @@
+diff --git a/t/test-lib.sh b/t/test-lib.sh
+index d731d66..0179177 100644
+--- a/t/test-lib.sh
++++ b/t/test-lib.sh
+@@ -903,7 +903,7 @@ else
+ fi
+ # Use -P to resolve symlinks in our working directory so that the cwd
+ # in subprocesses like git equals our $PWD (for pathname comparisons).
+-cd -P "$TRASH_DIRECTORY" || exit 1
++cd "$TRASH_DIRECTORY" || exit 1
+ 
+ this_test=${0##*/}
+ this_test=${this_test%%-*}

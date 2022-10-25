@@ -13,7 +13,8 @@ export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man make
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
-export ZOPEN_CHECK="skip"
+
+export ZOPEN_CHECK='test'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
@@ -29,6 +30,24 @@ fi
 
 zopen_check_results()
 {
-  return 3 # non-functional
+  chk="$2_check.log"
+  line=$(cat "${chk}" | egrep '^# failed .* among .* test\(s\)')
+  if [ "${line}x" = "x" ]; then
+    # Error - unable to find line - mark everything failed
+    totalTests=77
+    failures=77
+    expectedFailures=61
+  else
+    totalTests=$(echo ${line} | awk ' { print $5 }')
+    failures=$(echo ${line} | awk ' { print $3 }')
+  fi
+
+cat <<ZZ
+actualFailures:$failures
+totalTests:$totalTests
+expectedFailures:61
+ZZ
+
+return 0
 }
 
