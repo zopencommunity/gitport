@@ -14,7 +14,7 @@ export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man make
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
 
-export ZOPEN_CHECK='test'
+export ZOPEN_CHECK_OPTS='test'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
