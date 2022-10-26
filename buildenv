@@ -6,7 +6,7 @@ export ZOPEN_TYPE="GIT"
 export ZOPEN_TYPE="TARBALL"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"
-export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext "
+export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils"
 
 export ZOPEN_TARBALL_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.9.5.tar.gz"
 export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib"
@@ -15,6 +15,7 @@ export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
 
 export ZOPEN_CHECK_OPTS='test'
+export ZOPEN_INSTALL='skip'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
@@ -27,6 +28,22 @@ if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
 else
   ln -s gitpatches patches
 fi 
+
+#
+# Run an 'init' routine to clean out any GIT environment variables 
+# that might interfere with a new GIT operation
+#
+zopen_init()
+{
+  unset GIT_EXEC_PATH
+  unset GIT_HOME
+  unset GIT_MAN_PATH
+  unset GIT_PAGER
+  unset GIT_ROOT
+  unset GIT_SHELL
+  unset GIT_SSL_CAINFO
+  unset GIT_TEMPLATE_DIR
+}
 
 zopen_check_results()
 {
