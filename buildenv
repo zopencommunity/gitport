@@ -18,6 +18,7 @@ export ZOPEN_INSTALL='skip'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
+export ZOPEN_EXTRA_CFLAGS='-Wc,gonum -Wc,NOOPT'
 export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib"
 

@@ -11,7 +11,7 @@ index f7d3567..d8d3406 100644
 + #  include <stdio.h>
 + #  include <stdlib.h>
 +
-+    static int setbinaryfd(int fd) 
++    int setbinaryfd(int fd) 
 +    {
 +      attrib_t attr;
 +      int rc;

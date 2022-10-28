@@ -1,14 +1,17 @@
 diff --git a/cache.h b/cache.h
-index 84148cf..9a3a504 100644
+index 84148cf..9e53b33 100644
 --- a/cache.h
 +++ b/cache.h
-@@ -900,13 +900,34 @@ extern int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len);
+@@ -900,13 +900,39 @@ extern int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len);
  extern const unsigned char null_sha1[GIT_SHA1_RAWSZ];
  extern const struct object_id null_oid;
  
++#ifdef __MVS__
++static int ZERO=0;
++
 +static int dumpbuffers(const unsigned char *sha1, const unsigned char *sha2) 
 +{
-+	FILE* fp = fopen("/tmp/hashcmp.txt", "w");
++	FILE* fp = fopen("/tmp/hashcmp.txt", "a");
 +	fprintf(fp, "SHA1: 0x");
 +	for (int i=0; i<GIT_SHA1_RAWSZ; ++i) {
 +		fprintf(fp, "%2.2x", sha1[i]);
@@ -20,7 +23,9 @@ index 84148cf..9a3a504 100644
 +	}
 +	fprintf(fp, "\n");
 +	fclose(fp);
++	__ctrace("Traceback");
 +}
++#endif
 +	
 +	
  static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
