@@ -2,7 +2,6 @@
 #
 # Set up environment variables for general build tool to operate
 #
-export ZOPEN_TYPE="GIT"
 export ZOPEN_TYPE="TARBALL"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"

@@ -35,6 +35,7 @@ absgitdir=$(cd ${gitdir} && echo $PWD)
 
   export GIT_TEMPLATE_DIR='/fultonm/zopen/dev/gitport/git-2.9.5/templates/blt'  
 
+  # (MSF - empty git works) if git clone git@github.com:ZOSOpenTools/gittest_empty.git >gitclone.out 2>gitclone.err ; then
   if git clone git@github.com:ZOSOpenTools/zotsampleport.git >gitclone.out 2>gitclone.err ; then
     echo "Test passed"
     exit 0
