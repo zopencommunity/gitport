@@ -53,7 +53,7 @@ zopen_check_results()
     # Error - unable to find line - mark everything failed
     totalTests=77
     failures=77
-    expectedFailures=61
+    expectedFailures=13
   else
     totalTests=$(echo ${line} | awk ' { print $5 }')
     failures=$(echo ${line} | awk ' { print $3 }')
@@ -62,7 +62,7 @@ zopen_check_results()
 cat <<ZZ
 actualFailures:$failures
 totalTests:$totalTests
-expectedFailures:61
+expectedFailures:13
 ZZ
 
 return 0
