@@ -5,10 +5,10 @@
 export ZOPEN_TYPE="TARBALL"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"
-export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils"
+export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils diffutils"
 
 export ZOPEN_TARBALL_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.9.5.tar.gz"
-export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib"
+export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils"
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
@@ -53,7 +53,7 @@ zopen_check_results()
     # Error - unable to find line - mark everything failed
     totalTests=77
     failures=77
-    expectedFailures=61
+    expectedFailures=13
   else
     totalTests=$(echo ${line} | awk ' { print $5 }')
     failures=$(echo ${line} | awk ' { print $3 }')
@@ -62,7 +62,7 @@ zopen_check_results()
 cat <<ZZ
 actualFailures:$failures
 totalTests:$totalTests
-expectedFailures:61
+expectedFailures:13
 ZZ
 
 return 0
