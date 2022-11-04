@@ -1,0 +1,20 @@
+diff --git a/config.mak.uname b/config.mak.uname
+index 4cd62bd..3cc2c6f 100644
+--- a/config.mak.uname
++++ b/config.mak.uname
+@@ -591,3 +591,15 @@ ifeq ($(uname_S),QNX)
+ 	NO_STRCASESTR = YesPlease
+ 	NO_STRLCPY = YesPlease
+ endif
++ifeq ($(uname_S),OS/390)
++  V = 2
++  PERL_PATH = perl
++  PYTHON_PATH = python
++  HAVE_ALLOCA_H = YesPlease
++  NO_SYS_POLL_H = YesPlease
++  	BLK_SHA1 = YesPlease
++  NO_STRCASESTR = YesPlease
++  NEEDS_SSL_WITH_CRYPTO = YesPlease
++  NEEDS_MODE_TRANSLATION = YesPlease
++  HAVE_STRINGS_H = YesPlease
++endif
