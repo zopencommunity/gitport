@@ -5,20 +5,18 @@
 export ZOPEN_TYPE="TARBALL"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"
-export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils"
+export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils diffutils"
 
 export ZOPEN_TARBALL_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.9.5.tar.gz"
-export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib"
+export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils"
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
 
 export ZOPEN_CHECK_OPTS='test'
-export ZOPEN_INSTALL='skip'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
-export ZOPEN_EXTRA_CFLAGS='-Wc,gonum -Wc,NOOPT'
 export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib"
 
@@ -30,10 +28,10 @@ else
 fi 
 
 #
-# Run an 'init' routine to clean out any GIT environment variables 
-# that might interfere with a new GIT operation
+# Run an 'zopen_pre_check' routine to clean out any GIT environment variables 
+# that might interfere with a new GIT operation during the test run
 #
-zopen_init()
+zopen_pre_check()
 {
   unset GIT_EXEC_PATH
   unset GIT_HOME
@@ -48,23 +46,14 @@ zopen_init()
 zopen_check_results()
 {
   chk="$2_check.log"
-  line=$(cat "${chk}" | egrep '^# failed .* among .* test\(s\)')
-  if [ "${line}x" = "x" ]; then
-    # Error - unable to find line - mark everything failed
-    totalTests=77
-    failures=77
-    expectedFailures=61
-  else
-    totalTests=$(echo ${line} | awk ' { print $5 }')
-    failures=$(echo ${line} | awk ' { print $3 }')
-  fi
+  successes=$(egrep "^ok [0-9]" *_check.log | wc -l | xargs)
+  failures=$(egrep "^not ok [0-9]" *_check.log | wc -l | xargs)
+  totalTests=$((failures+successes))
 
 cat <<ZZ
 actualFailures:$failures
 totalTests:$totalTests
-expectedFailures:61
+expectedFailures:2
 ZZ
-
-return 0
 }
 

@@ -1,8 +1,8 @@
 diff --git a/wrapper.c b/wrapper.c
-index 26db215..f5726b5 100644
+index 26db215..9bec8c0 100644
 --- a/wrapper.c
 +++ b/wrapper.c
-@@ -418,6 +418,43 @@ FILE *fopen_for_writing(const char *path)
+@@ -418,6 +418,42 @@ FILE *fopen_for_writing(const char *path)
  	return ret;
  }
  
@@ -28,7 +28,6 @@ index 26db215..f5726b5 100644
 +    static int mkstempascii(const char* template) 
 +    {
 +	int fd = mkstemp(template);
-+        __ctrace(template);
 +	if (fd) {
 +		/* MSF - TBD - do not ALWAYS tag this as ASCII - perhaps usage may require more finesse */
 +		if (setccsid(fd, 819)) {
