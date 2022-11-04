@@ -14,7 +14,6 @@ export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
 
 export ZOPEN_CHECK_OPTS='test'
-export ZOPEN_INSTALL='skip'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
