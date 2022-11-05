@@ -46,8 +46,8 @@ zopen_pre_check()
 zopen_check_results()
 {
   chk="$1/$2_check.log"
-  successes=$(egrep "^ok [0-9]" *_check.log | wc -l | xargs)
-  failures=$(egrep "^not ok [0-9]" *_check.log | wc -l | xargs)
+  successes=$(egrep "^ok [0-9]" "${chk}" | wc -l | xargs)
+  failures=$(egrep "^not ok [0-9]" "${chk}" | wc -l | xargs)
   totalTests=$((failures+successes))
 
 cat <<ZZ
