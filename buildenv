@@ -8,7 +8,7 @@ export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils diffutils"
 
 export ZOPEN_TARBALL_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.9.5.tar.gz"
-export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils"
+export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses"
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
@@ -17,8 +17,8 @@ export ZOPEN_CHECK_OPTS='test'
 
 export PERL_PATH="\${PERL5_HOME}/bin/perl"
 
-export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include"
-export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib"
+export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include"
+export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib"
 
 rm -f patches
 if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
@@ -45,7 +45,7 @@ zopen_pre_check()
 
 zopen_check_results()
 {
-  chk="$2_check.log"
+  chk="$1/$2_check.log"
   successes=$(egrep "^ok [0-9]" *_check.log | wc -l | xargs)
   failures=$(egrep "^not ok [0-9]" *_check.log | wc -l | xargs)
   totalTests=$((failures+successes))
@@ -57,3 +57,12 @@ expectedFailures:2
 ZZ
 }
 
+zopen_append_to_env() {
+cat <<EOF
+unset GIT_EXEC_PATH
+unset GIT_MAN_PATH
+unset GIT_ROOT
+unset GIT_SHELL
+unset GIT_TEMPLATE_DIR
+EOF
+}
