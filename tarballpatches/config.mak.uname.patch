@@ -1,8 +1,8 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index d63629f..adc2399 100644
+index d63629f..51ff0c1 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -622,6 +622,25 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+@@ -622,6 +622,27 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
@@ -16,6 +16,7 @@ index d63629f..adc2399 100644
 +  BLK_SHA1 = YesPlease
 +  NO_STRCASESTR = YesPlease
 +  NO_REGEX = YesPlease
++  NO_MMAP = YesPlease
 +  NO_NSEC = YesPlease
 +  NO_STRLCPY = YesPlease
 +  NO_MKDTEMP = YesPlease
@@ -23,6 +24,7 @@ index d63629f..adc2399 100644
 +  NO_GECOS_IN_PWENT = YesPlease
 +  HAVE_STRINGS_H = YesPlease
 +  PTHREAD_LIBS =
++  NEEDS_MODE_TRANSLATION = YesPlease
 +endif
 +
  ifeq ($(uname_S),MINGW)
