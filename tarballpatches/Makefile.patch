@@ -1,11 +1,11 @@
 diff --git a/Makefile b/Makefile
-index 13ed57f..55e292f 100644
+index cac3452..4377fb6 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -940,7 +940,7 @@ BUILTIN_OBJS += builtin/worktree.o
- BUILTIN_OBJS += builtin/write-tree.o
+@@ -1268,7 +1268,7 @@ THIRD_PARTY_SOURCES += sha1dc/%
  
- GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB)
+ # xdiff and reftable libs may in turn depend on what is in libgit.a
+ GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
 -EXTLIBS =
 +EXTLIBS = $(ZOPEN_EXTRA_LIBS)
  

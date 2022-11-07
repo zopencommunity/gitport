@@ -1,11 +1,12 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index 4cd62bd..3cc2c6f 100644
+index d63629f..655f6c9 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -591,3 +591,15 @@ ifeq ($(uname_S),QNX)
- 	NO_STRCASESTR = YesPlease
- 	NO_STRLCPY = YesPlease
+@@ -622,6 +622,20 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+ 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
+ 	SHELL_PATH = /usr/coreutils/bin/bash
  endif
++
 +ifeq ($(uname_S),OS/390)
 +  V = 2
 +  PERL_PATH = perl
@@ -18,3 +19,7 @@ index 4cd62bd..3cc2c6f 100644
 +  NEEDS_MODE_TRANSLATION = YesPlease
 +  HAVE_STRINGS_H = YesPlease
 +endif
++
+ ifeq ($(uname_S),MINGW)
+ 	pathsep = ;
+ 	HAVE_ALLOCA_H = YesPlease
