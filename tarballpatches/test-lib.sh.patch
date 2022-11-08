@@ -1,13 +1,13 @@
 diff --git a/t/test-lib.sh b/t/test-lib.sh
-index d731d66..0179177 100644
+index a65df2f..99c6d57 100644
 --- a/t/test-lib.sh
 +++ b/t/test-lib.sh
-@@ -903,7 +903,7 @@ else
- fi
+@@ -1629,7 +1629,7 @@ fi
+ 
  # Use -P to resolve symlinks in our working directory so that the cwd
  # in subprocesses like git equals our $PWD (for pathname comparisons).
--cd -P "$TRASH_DIRECTORY" || exit 1
-+cd "$TRASH_DIRECTORY" || exit 1
+-cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
++cd "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
  
- this_test=${0##*/}
- this_test=${this_test%%-*}
+ start_test_output "$0"
+ 

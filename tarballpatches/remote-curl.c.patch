@@ -1,0 +1,11 @@
+diff --git a/remote-curl.c b/remote-curl.c
+index 72dfb8f..f78cd55 100644
+--- a/remote-curl.c
++++ b/remote-curl.c
+@@ -1,4 +1,6 @@
++#define fetch zos_fetch
+ #include "cache.h"
++#undef fetch
+ #include "config.h"
+ #include "remote.h"
+ #include "connect.h"

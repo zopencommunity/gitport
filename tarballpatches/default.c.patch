@@ -1,0 +1,11 @@
+diff --git a/negotiator/default.c b/negotiator/default.c
+index b7e79fe..e25adc9 100644
+--- a/negotiator/default.c
++++ b/negotiator/default.c
+@@ -1,4 +1,6 @@
++#define release zos_release
+ #include "cache.h"
++#undef release
+ #include "default.h"
+ #include "../commit.h"
+ #include "../fetch-negotiator.h"

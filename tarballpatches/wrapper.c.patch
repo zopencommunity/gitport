@@ -1,9 +1,9 @@
 diff --git a/wrapper.c b/wrapper.c
-index 26db215..9bec8c0 100644
+index 299d648..0667481 100644
 --- a/wrapper.c
 +++ b/wrapper.c
-@@ -418,6 +418,42 @@ FILE *fopen_for_writing(const char *path)
- 	return ret;
+@@ -161,6 +161,42 @@ void xsetenv(const char *name, const char *value, int overwrite)
+ 		die_errno(_("could not setenv '%s'"), name ? name : "(null)");
  }
  
 +#ifdef __MVS__
@@ -28,7 +28,7 @@ index 26db215..9bec8c0 100644
 +    static int mkstempascii(const char* template) 
 +    {
 +	int fd = mkstemp(template);
-+	if (fd) {
++  if (fd) {
 +		/* MSF - TBD - do not ALWAYS tag this as ASCII - perhaps usage may require more finesse */
 +		if (setccsid(fd, 819)) {
 +			die_errno("mkstemp failed");
@@ -38,10 +38,10 @@ index 26db215..9bec8c0 100644
 +	return fd;
 +    }
 +
-+#   define mkstemp mkstempascii
-+  #endif
++#  define mkstemp mkstempascii
++#  endif
 +#endif
-+		
- int xmkstemp(char *template)
- {
- 	int fd;
++
+ /**
+  * xopen() is the same as open(), but it die()s if the open() fails.
+  */
