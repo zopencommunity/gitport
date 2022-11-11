@@ -61,10 +61,10 @@ ZZ
 
 zopen_append_to_env() {
 cat <<EOF
-unset GIT_EXEC_PATH
 unset GIT_MAN_PATH
 unset GIT_ROOT
 unset GIT_SHELL
 export GIT_TEMPLATE_DIR="\$PWD/share/git-core/templates"
+export GIT_EXEC_PATH="\$PWD/libexec/git-core/"
 EOF
 }
