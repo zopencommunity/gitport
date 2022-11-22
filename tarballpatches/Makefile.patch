@@ -1,8 +1,96 @@
+diff --git a/git-gui/Makefile b/git-gui/Makefile
+index 56c85a8..72934a9 100644
+--- a/git-gui/Makefile
++++ b/git-gui/Makefile
+@@ -30,6 +30,9 @@ NONTCL_LIBFILES = \
+ ifndef SHELL_PATH
+ 	SHELL_PATH = /bin/sh
+ endif
++ifndef SHELL_PATH_FOR_SCRIPTS
++	SHELL_PATH_FOR_SCRIPTS = /bin/sh
++endif
+ 
+ ifndef gitexecdir
+ 	gitexecdir := $(shell git --exec-path)
+@@ -124,7 +127,7 @@ endif
+ 
+ DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
+ gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
+-SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
++SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH_FOR_SCRIPTS))
+ TCL_PATH_SQ = $(subst ','\'',$(TCL_PATH))
+ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
+ TCLTK_PATH_SED = $(subst ','\'',$(subst \,\\,$(TCLTK_PATH)))
+diff --git a/t/Makefile b/t/Makefile
+index 882782a..bacb8ef 100644
+--- a/t/Makefile
++++ b/t/Makefile
+@@ -9,8 +9,11 @@ include ../shared.mak
+ -include ../config.mak.autogen
+ -include ../config.mak
+ 
+-#GIT_TEST_OPTS = --verbose --debug
++GIT_TEST_OPTS = --verbose --debug
+ SHELL_PATH ?= $(SHELL)
++ifndef SHELL_PATH_FOR_SCRIPTS
++	SHELL_PATH_FOR_SCRIPTS = /bin/sh
++endif
+ TEST_SHELL_PATH ?= $(SHELL_PATH)
+ PERL_PATH ?= /usr/bin/perl
+ TAR ?= $(TAR)
+@@ -28,7 +31,7 @@ CHAINLINTTMP = chainlinttmp
+ endif
+ 
+ # Shell quote;
+-SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
++SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH_FOR_SCRIPTS))
+ TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
+ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+ TEST_RESULTS_DIRECTORY_SQ = $(subst ','\'',$(TEST_RESULTS_DIRECTORY))
+diff --git a/templates/Makefile b/templates/Makefile
+index 367ad00..f7837d7 100644
+--- a/templates/Makefile
++++ b/templates/Makefile
+@@ -12,11 +12,14 @@ template_instdir ?= $(prefix)/share/git-core/templates
+ ifndef SHELL_PATH
+ 	SHELL_PATH = /bin/sh
+ endif
++ifndef SHELL_PATH_FOR_SCRIPTS
++	SHELL_PATH_FOR_SCRIPTS = /bin/sh
++endif
+ ifndef PERL_PATH
+ 	PERL_PATH = perl
+ endif
+ 
+-SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
++SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH_FOR_SCRIPTS))
+ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+ 
+ # Shell quote (do not use $(call) to accommodate ancient setups);
 diff --git a/Makefile b/Makefile
-index cac3452..4377fb6 100644
+index cac3452..76647ac 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1268,7 +1268,7 @@ THIRD_PARTY_SOURCES += sha1dc/%
+@@ -8,6 +8,8 @@ include shared.mak
+ #
+ # Define SHELL_PATH to a POSIX shell if your /bin/sh is broken.
+ #
++# Define SHELL_PATH_FOR_SCRIPTS to a POSIX shell if your /bin/sh is broken.
++#
+ # Define SANE_TOOL_PATH to a colon-separated list of paths to prepend
+ # to PATH if your tools in /usr/bin are broken.
+ #
+@@ -839,6 +841,9 @@ BINDIR_PROGRAMS_NO_X += git-cvsserver
+ ifndef SHELL_PATH
+ 	SHELL_PATH = /bin/sh
+ endif
++ifndef SHELL_PATH_FOR_SCRIPTS
++	SHELL_PATH_FOR_SCRIPTS = /bin/sh
++endif
+ ifndef PERL_PATH
+ 	PERL_PATH = /usr/bin/perl
+ endif
+@@ -1268,7 +1273,7 @@ THIRD_PARTY_SOURCES += sha1dc/%
  
  # xdiff and reftable libs may in turn depend on what is in libgit.a
  GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
@@ -11,3 +99,12 @@ index cac3452..4377fb6 100644
  
  GIT_USER_AGENT = git/$(GIT_VERSION)
  
+@@ -2110,7 +2115,7 @@ perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
+ gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
+ gitwebstaticdir_SQ = $(subst ','\'',$(gitwebstaticdir))
+ 
+-SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
++SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH_FOR_SCRIPTS))
+ TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
+ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))

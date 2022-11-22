@@ -1,17 +1,27 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index d63629f..2120c70 100644
+index d63629f..a87e7eb 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -622,6 +622,26 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+@@ -362,7 +362,7 @@ ifeq ($(uname_S),IRIX)
+ 	NO_MMAP = YesPlease
+ 	NO_REGEX = YesPlease
+ 	SNPRINTF_RETURNS_BOGUS = YesPlease
+-	SHELL_PATH = /usr/gnu/bin/bash
++	SHELL_PATH = "/bin/env bash"
+ 	NEEDS_LIBGEN = YesPlease
+ endif
+ ifeq ($(uname_S),IRIX64)
+@@ -622,6 +622,27 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
 +
 +ifeq ($(uname_S),OS/390)
 +  V = 2
-+  PERL_PATH = perl
++	PERL_PATH = perl
 +	SHELL_PATH = bash
-+  PYTHON_PATH = python
++	SHELL_PATH_FOR_SCRIPTS = /bin/env bash
++	PYTHON_PATH = python
 +  NO_SYS_POLL_H = YesPlease
 +  NO_STRCASESTR = YesPlease
 +  NO_REGEX = YesPlease
