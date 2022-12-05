@@ -18,7 +18,10 @@ export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL
 
 export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
-export ZOPEN_EXTRA_LIBS="$ZOPEN_EXTRA_LIBS -lssl -lcrypto -lz -lcurl"
+export ZOPEN_EXTRA_LIBS="${ZOPEN_EXTRA_LIBS} -lz -lcurl -lssl -lcrypto"
+export CURL_LDFLAGS="-lcurl"
+export CURL_CFLAGS="-I\${CURL_HOME}/include"
+export CURL_CONFIG="no"
 
 rm -f patches
 if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
