@@ -8,11 +8,11 @@ Git on z/OS leverages Git's `.gitattributes` support to enable support for vario
 
 ### Working-tree-encoding
 The `working-tree-encoding` attribute can be used to determine the working tree encoding. For example,
-to convert all files from Git's internal UTF-8 encoding to IBM-1047, you can specify the following working-tree-encoding:
+to convert all files from Git's internal UTF-8 encoding to IBM-1047, you can specify the following working-tree-encoding in your .gitattributes file:
 ```
 * text working-tree-encoding=IBM-1047
 ```
-This will also result in Git on z/OS tagging all files as ibm-1047 on checkout. 
+This will result in Git on z/OS tagging all files as IBM-1047 on checkout. 
 
 If no encoding is specified, the default UTF-8 encoding is used and all files are tagged as ISO8859-1. 
 
@@ -34,3 +34,10 @@ You can specify multiple working-tree-encoding attributes, where the later attri
 When adding files, you need to make sure that the z/OS file tag matches the working-tree-encoding. Otherwise, you may encounter an error.
 
 NOTE: Git on z/OS does not currently support adding `untagged` files.
+
+### Comparison Rocket Software's Git
+Rocket Software implemented zos-working-tree-encoding, including it's synonym working-tree-encoding. Git on z/OS does not support zos-working-tree-encoding.
+Additionally, Rocket software implemented zos-working-tree-encoding from scratch, while Git on z/OS leverages the Git's official working-tree-encoding support.
+
+Binary files are also treated differently. With Rocket's Git, zos-working-tree-encoding=BINARY must be specified to ensure a file is tagged as binary. 
+Git on z/OS leverages the `binary` keyword, which is officially supported by Git.
