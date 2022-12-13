@@ -1,7 +1,7 @@
 #!/bin/sh
+set -e
 
 mydir=$(cd $(dirname $0) && echo $PWD)
-
 
 # The following is a bit hokey... might not always work
 #
@@ -30,16 +30,22 @@ cat > expected.txt <<ZZ
 t IBM-1047    T=on  README.md
 b binary      T=off a.png
 t ISO8859-1   T=on  ascii.txt
+t ISO8859-1   T=on  cacert.pem
+t IBM-037     T=on  my_037.txt
 ZZ
 cd EBCDICProject
 chtag -p * > ../actual.txt
-cat README.md ascii.txt > ../actual2.txt
+iconv -f IBM-037 -t IBM-1047 my_037.txt > my_1047.txt
+chtag -tc 1047 my_1047.txt
+cat README.md ascii.txt my_1047.txt > ../actual2.txt
 cd ..
 diff actual.txt expected.txt
 
 cat > expected2.txt <<ZZ
 Hello World
 Hello World
+Hello World []
 ZZ
 diff actual2.txt expected2.txt
+
 
