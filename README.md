@@ -16,6 +16,8 @@ This will result in Git on z/OS tagging all files as IBM-1047 on checkout.
 
 If no encoding is specified, the default UTF-8 encoding is used and all files are tagged as ISO8859-1. 
 
+To find out all of the supported encodings, run `iconv -l`.
+
 ### Binary files
 To specify a binary encoding, you can use the binary attribute as follows:
 ```
