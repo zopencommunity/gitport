@@ -33,5 +33,13 @@ t ISO8859-1   T=on  ascii.txt
 ZZ
 cd EBCDICProject
 chtag -p * > ../actual.txt
+cat README.md ascii.txt > ../actual2.txt
 cd ..
 diff actual.txt expected.txt
+
+cat > expected2.txt <<ZZ
+Hello World
+Hello World
+ZZ
+diff actual2.txt expected2.txt
+
