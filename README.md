@@ -35,9 +35,9 @@ When adding files, you need to make sure that the z/OS file tag matches the work
 
 NOTE: Git on z/OS does not currently support adding `untagged` files.
 
-### Comparison Rocket Software's Git
-Rocket Software implemented zos-working-tree-encoding, including it's synonym working-tree-encoding. Git on z/OS does not support zos-working-tree-encoding.
-Additionally, Rocket software implemented zos-working-tree-encoding from scratch, while Git on z/OS leverages the Git's official working-tree-encoding support.
+### Comparison to Rocket Software's Git
+Rocket Software implemented `zos-working-tree-encoding`, including it's synonym `working-tree-encoding`. Git on z/OS does not support zos-working-tree-encoding.
+Furthermore, Rocket Software implemented zos-working-tree-encoding from scratch, while Git on z/OS leverages the Git's official working-tree-encoding support.
 
-Binary files are also treated differently. With Rocket's Git, zos-working-tree-encoding=BINARY must be specified to ensure a file is tagged as binary. 
+Binary files are also handled differently. With Rocket's Git, `zos-working-tree-encoding=BINARY` must be specified to ensure a file is tagged as binary. 
 Git on z/OS leverages the `binary` keyword, which is officially supported by Git.
