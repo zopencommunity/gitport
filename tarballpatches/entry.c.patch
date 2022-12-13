@@ -1,0 +1,51 @@
+diff --git a/entry.c b/entry.c
+index 616e4f0..3fdca74 100644
+--- a/entry.c
++++ b/entry.c
+@@ -119,6 +119,24 @@ int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
+ 	return 0;
+ }
+ 
++#ifdef __MVS__
++void tag_file_as_working_tree_encoding(struct index_state *istate, char* path, int fd) {
++	struct conv_attrs ca;
++	convert_attrs(istate, &ca, path);
++  if (ca.attr_action != CRLF_BINARY) {
++    if (ca.working_tree_encoding)
++      __chgfdcodeset(fd, ca.working_tree_encoding); 
++    else
++      __setfdtext(fd);
++  }
++  else {
++    __setfdbinary(fd);
++  }
++
++  __disableautocvt(fd);
++}
++#endif
++
+ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+ 				 struct stream_filter *filter,
+ 				 const struct checkout *state, int to_tempfile,
+@@ -131,6 +149,10 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+ 	if (fd < 0)
+ 		return -1;
+ 
++#ifdef __MVS__
++  tag_file_as_working_tree_encoding(state->istate, path, fd);
++#endif
++
+ 	result |= stream_blob_to_fd(fd, &ce->oid, filter, 1);
+ 	*fstat_done = fstat_checkout_output(fd, state, statbuf);
+ 	result |= close(fd);
+@@ -367,6 +389,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+ 			return error_errno("unable to create file %s", path);
+ 		}
+ 
++#ifdef __MVS__
++    tag_file_as_working_tree_encoding(state->istate, path, fd);
++#endif
++
+ 		wrote = write_in_full(fd, new_blob, size);
+ 		if (!to_tempfile)
+ 			fstat_done = fstat_checkout_output(fd, state, &st);

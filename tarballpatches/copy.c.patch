@@ -1,0 +1,14 @@
+diff --git a/copy.c b/copy.c
+index 4de6a11..c5584d4 100644
+--- a/copy.c
++++ b/copy.c
+@@ -12,6 +12,9 @@ int copy_fd(int ifd, int ofd)
+ 		if (write_in_full(ofd, buffer, len) < 0)
+ 			return COPY_WRITE_ERROR;
+ 	}
++#ifdef __MVS__
++  __copyfdccsid(ifd, ofd);
++#endif
+ 	return 0;
+ }
+ 
