@@ -24,7 +24,9 @@ On z/OS, platform is `zos`. Therefore, the .gitattributes would be:
 
 If no encoding is specified, the default UTF-8 encoding is used and all files are tagged as ISO8859-1. 
 
-To find out all of the supported encodings, run `iconv -l`.
+To find out all of the supported encodings by git, run `iconv -l`.
+
+When adding files, you need to make sure that the z/OS file tag matches the working-tree-encoding. Otherwise, you may encounter an error.
 
 ### Binary files
 To specify a binary encoding, you can use the binary attribute as follows:
@@ -33,6 +35,10 @@ To specify a binary encoding, you can use the binary attribute as follows:
 ```
 This will tag all `*.png` files as binary.
 
+### Untagged files
+Git on z/OS does not currently support adding `untagged` files. Files need to be tagged before
+they can be added.
+
 ### Multiple encodings
 You can specify multiple working-tree-encoding attributes, where the later attributes overrides the initial attributes in case of an overlap.
 ```
@@ -40,7 +46,7 @@ You can specify multiple working-tree-encoding attributes, where the later attri
 *.png binary
 ```
 
-### Gotchas
-When adding files, you need to make sure that the z/OS file tag matches the working-tree-encoding. Otherwise, you may encounter an error.
+### Migration considerations
+If you are migrating from Rocket Software's Git, then the good news is that Git on z/OS should be compatible. 
 
-NOTE: Git on z/OS does not currently support adding `untagged` files.
+If you encounter any issues, please open an issue under https://github.com/ZOSOpenTools/gitport/issues.
