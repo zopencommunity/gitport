@@ -1,0 +1,53 @@
+diff --git a/convert.c b/convert.c
+index 95e6a52..b5eb8d2 100644
+--- a/convert.c
++++ b/convert.c
+@@ -1293,20 +1293,38 @@ static int git_path_check_ident(struct attr_check_item *check)
+ 	return !!ATTR_TRUE(value);
+ }
+ 
++static const char* get_platform() {
++	struct utsname uname_info;
++
++	if (uname(&uname_info))
++		die(_("uname() failed with error '%s' (%d)\n"),
++			    strerror(errno),
++			    errno);
++
++  if (!strcmp(uname_info.sysname, "OS/390"))
++    return "zos";
++  return uname_info.sysname;
++}
++
++
+ static struct attr_check *check;
+ 
+ void convert_attrs(struct index_state *istate,
+ 		   struct conv_attrs *ca, const char *path)
+ {
+ 	struct attr_check_item *ccheck = NULL;
++	struct strbuf platform_working_tree_encoding = STRBUF_INIT;
++
++	strbuf_addf(&platform_working_tree_encoding, "%s-working-tree-encoding", get_platform());
+ 
+ 	if (!check) {
+ 		check = attr_check_initl("crlf", "ident", "filter",
+-					 "eol", "text", "working-tree-encoding",
++					 "eol", "text", "working-tree-encoding", platform_working_tree_encoding.buf,
+ 					 NULL);
+ 		user_convert_tail = &user_convert;
+ 		git_config(read_convert_config, NULL);
+ 	}
++	strbuf_release(&platform_working_tree_encoding);
+ 
+ 	git_check_attr(istate, path, check);
+ 	ccheck = check->items;
+@@ -1327,6 +1345,8 @@ void convert_attrs(struct index_state *istate,
+ 			ca->crlf_action = CRLF_TEXT_CRLF;
+ 	}
+ 	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
++  if (git_path_check_encoding(ccheck + 6))
++    ca->working_tree_encoding = git_path_check_encoding(ccheck + 6);
+ 
+ 	/* Save attr and make a decision for action */
+ 	ca->attr_action = ca->crlf_action;
