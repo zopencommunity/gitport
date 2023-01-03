@@ -1,8 +1,20 @@
 diff --git a/convert.c b/convert.c
-index 95e6a52..b5eb8d2 100644
+index 95e6a52..65d5c5f 100644
 --- a/convert.c
 +++ b/convert.c
-@@ -1293,20 +1293,38 @@ static int git_path_check_ident(struct attr_check_item *check)
+@@ -396,6 +396,11 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+ 		return 0;
+ 
+ 	trace_encoding("source", path, enc, src, src_len);
++#ifdef __MVS__
++  // Don't convert ISO8859-1 on z/OS
++  if (strcasecmp("ISO8859-1", enc) == 0)
++    return 0;
++#endif
+ 	dst = reencode_string_len(src, src_len, default_encoding, enc,
+ 				  &dst_len);
+ 	if (!dst) {
+@@ -1293,20 +1298,38 @@ static int git_path_check_ident(struct attr_check_item *check)
  	return !!ATTR_TRUE(value);
  }
  
@@ -42,7 +54,7 @@ index 95e6a52..b5eb8d2 100644
  
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
-@@ -1327,6 +1345,8 @@ void convert_attrs(struct index_state *istate,
+@@ -1327,6 +1350,8 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
