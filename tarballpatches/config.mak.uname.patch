@@ -1,5 +1,5 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index d63629f..a87e7eb 100644
+index d63629f..70bd89c 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
 @@ -362,7 +362,7 @@ ifeq ($(uname_S),IRIX)
@@ -18,10 +18,10 @@ index d63629f..a87e7eb 100644
 +
 +ifeq ($(uname_S),OS/390)
 +  V = 2
-+	PERL_PATH = perl
++	PERL_PATH = /bin/env perl
 +	SHELL_PATH = bash
 +	SHELL_PATH_FOR_SCRIPTS = /bin/env bash
-+	PYTHON_PATH = python
++	PYTHON_PATH = /bin/env python3
 +  NO_SYS_POLL_H = YesPlease
 +  NO_STRCASESTR = YesPlease
 +  NO_REGEX = YesPlease
