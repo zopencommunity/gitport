@@ -1,0 +1,15 @@
+diff --git a/cache.h b/cache.h
+index 26ed03b..4ea2592 100644
+--- a/cache.h
++++ b/cache.h
+@@ -1066,6 +1066,10 @@ extern enum fsync_component fsync_components;
+ extern int fsync_object_files;
+ extern int use_fsync;
+ 
++#ifdef __MVS__
++extern int ignore_file_tags;
++#endif
++
+ enum fsync_method {
+ 	FSYNC_METHOD_FSYNC,
+ 	FSYNC_METHOD_WRITEOUT_ONLY,
