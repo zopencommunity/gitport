@@ -6,7 +6,7 @@ export ZOPEN_TYPE="TARBALL"
 export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils diffutils bash"
 
-export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-2.38.1.tar.xz"
+export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-2.39.1.tar.xz"
 export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash"
 
 export ZOPEN_BOOTSTRAP="make"
@@ -27,9 +27,9 @@ export CURL_CONFIG="no"
 rm -f patches
 if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
   ln -s tarballpatches patches
-  export ZOPEN_NAME="git-2.38.1"
-  rm -f v2.38.1
-  ln -s ${ZOPEN_NAME} v2.38.1
+  export ZOPEN_NAME="git-2.39.1"
+  rm -f v2.39.1
+  ln -s ${ZOPEN_NAME} v2.39.1
 else
   ln -s gitpatches patches
 fi 
