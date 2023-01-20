@@ -70,5 +70,20 @@ unset GIT_ROOT
 unset GIT_SHELL
 export GIT_TEMPLATE_DIR="\$PWD/share/git-core/templates"
 export GIT_EXEC_PATH="\$PWD/libexec/git-core/"
+if [ "\${GIT_SSL_CAINFO}x" = "x" ]; then
+  if [ -f "\$PWD/cacert.pem" ]; then
+    export GIT_SSL_CAINFO="\$PWD/cacert.pem"
+  else
+    echo "Warning: you need to set GIT_SSL_CAINFO to a pem file if you want to use git with SSH" >&2
+  fi
+fi
+EOF
+}
+
+zopen_append_to_setup() {
+cat <<EOF
+if [ -f "\$PWD/../cacert.pem" ]; then
+  cp "\$PWD/../cacert.pem" "\$PWD/cacert.pem"
+fi
 EOF
 }
