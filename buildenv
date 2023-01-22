@@ -12,6 +12,10 @@ export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man make
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
 
+export ZOPEN_MAKE="zopen_build_all"
+export ZOPEN_MAKE_OPTS=""
+export ZOPEN_INSTALL="zopen_install_all"
+export ZOPEN_INSTALL_OPTS=""
 export ZOPEN_CHECK_OPTS='test'
 
 export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME}"
@@ -34,6 +38,29 @@ else
   ln -s gitpatches patches
 fi 
 
+zopen_build_all()
+{
+  make -j$ZOPEN_NUM_JOBS "$@"
+  if [ $? -gt 0 ]; then
+    return 4;
+  fi
+  (cd contrib/subtree && make -j$ZOPEN_NUM_JOBS "$@")
+  if [ $? -gt 0 ]; then
+    return 4;
+  fi
+}
+
+zopen_install_all()
+{
+  make -j$ZOPEN_NUM_JOBS install "$@"
+  if [ $? -gt 0 ]; then
+    return 4;
+  fi
+  (cd contrib/subtree && make -j$ZOPEN_NUM_JOBS install "$@")
+  if [ $? -gt 0 ]; then
+    return 4;
+  fi
+}
 # Run an 'zopen_pre_check' routine to clean out any GIT environment variables 
 # that might interfere with a new GIT operation during the test run
 #
