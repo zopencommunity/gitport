@@ -1,6 +1,33 @@
 # Git on z/OS
-To use Git on z/OS, source the .env file as follows:
+Git is a popular version control system that is widely used in the open source community. 
+
+## Pre-requisites
+Git on z/OS has the following dependencies:
+* bash - https://github.com/ZOSOpenTools/bashport/releases
+* perl - https://github.com/ZOSOpenTools/perlport/releases
+* ncurses - https://github.com/ZOSOpenTools/ncursesport/releases
+
+Once you set up these dependences, you can then install Git.
+
+## Obtaining Git on z/OS
+Git on z/OS can be downloaded from https://github.com/ZOSOpenTools/gitport/releases.
+
+If you have curl on your system, you can download the latest version with:
+```
+curl -L -o gitport.pax.Z https://pathtogit.pax.Z
+```
+You can then extract the pax.Z as follows:
+```
+pax -rf gitport.pax.Z
+cd git-*
+```
+
+## Setting up Git on z/OS
+Once installed, you will need to source the .env file as follows:
+
 `. ./.env`
+
+This will set the PATH, LIBPATH, MANPATH and other Git environment variables.
 
 ## Encoding considerations
 Git on z/OS leverages Git's `.gitattributes` support to enable support for various encodings, documented [here](https://git-scm.com/docs/gitattributes). 
