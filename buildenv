@@ -97,11 +97,15 @@ unset GIT_ROOT
 unset GIT_SHELL
 export GIT_TEMPLATE_DIR="\$PWD/share/git-core/templates"
 export GIT_EXEC_PATH="\$PWD/libexec/git-core/"
-if [ "\${GIT_SSL_CAINFO}x" = "x" ]; then
+git_config_sslCAinfo=\$(git config --global --get http.sslCAinfo)
+git_config_sslVerify=\$(git config --global --get http.sslVerify)
+if [ "\${git_config_sslVerify}" = "false" ] || [ "\${GIT_SSL_NO_VERIFY}x" != "x" ]; then
+  echo "Warning: you are using git in an insecure way, consider unsetting GIT_SSL_NO_VERIFY or setting http.sslVerify to true." >&2
+elif [ "\${GIT_SSL_CAINFO}x" = "x" ] && [ "\${git_config_sslCAinfo}x" != "x" ]; then
   if [ -f "\$PWD/cacert.pem" ]; then
     export GIT_SSL_CAINFO="\$PWD/cacert.pem"
   else
-    echo "Warning: you need to set GIT_SSL_CAINFO to a pem file if you want to use git with SSH" >&2
+    echo "Warning: you need to set GIT_SSL_CAINFO or git config http.sslVerify to a pem file if you want to use git with SSH." >&2
   fi
 fi
 EOF
