@@ -5,6 +5,7 @@ Git is a popular version control system that is widely used in the open source c
 Git on z/OS has the following dependencies:
 * bash - https://github.com/ZOSOpenTools/bashport/releases
 * perl - https://github.com/ZOSOpenTools/perlport/releases
+* less - (default pager) //github.com/ZOSOpenTools/lessport/releases
 * ncurses - https://github.com/ZOSOpenTools/ncursesport/releases
 
 Once you set up these dependences, you can then install Git.
@@ -21,6 +22,18 @@ You can then extract the pax.Z as follows:
 pax -rf gitport.pax.Z
 cd git-*
 ```
+
+## Setting up a CA Certificate
+To obtain a CA certificate, you can download the recommended CA certificates extracted from Mozilla here:
+https://curl.se/docs/caextract.html
+
+If you have [zopen](https://zosopentools.github.io/meta/#/Guides/zopen) in your path, you can use the `zopen update-cacerts` command to download the latest CA certificate.
+
+Once you have a CA Certificate on your file system, you can set the GIT_SSL_CAINFO environment variable to point to it.
+```
+export GIT_SSL_CAINFO=/path/to/my/cacert.pem
+```
+
 
 ## Setting up Git on z/OS
 Once installed, you will need to source the .env file as follows:
