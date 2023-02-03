@@ -7,7 +7,9 @@ export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext coreutils diffutils bash"
 
 export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-2.39.1.tar.xz"
-export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash"
+export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man makeinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed"
+
+export ZOPEN_RUNTIME_DEPS="perl bash less ncurses" # If building with shared libs, add openssl, curl
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
@@ -117,4 +119,8 @@ if [ -f "\$PWD/../cacert.pem" ]; then
   cp "\$PWD/../cacert.pem" "\$PWD/cacert.pem"
 fi
 EOF
+}
+
+zopen_get_version() {
+  git --version | awk -F" " '{print $3}'
 }
