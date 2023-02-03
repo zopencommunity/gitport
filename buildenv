@@ -101,7 +101,7 @@ git_config_sslCAinfo=\$(git config --global --get http.sslCAinfo)
 git_config_sslVerify=\$(git config --global --get http.sslVerify)
 if [ "\${git_config_sslVerify}" = "false" ] || [ "\${GIT_SSL_NO_VERIFY}x" != "x" ]; then
   echo "Warning: you are using git in an insecure way, consider unsetting GIT_SSL_NO_VERIFY or setting http.sslVerify to true." >&2
-elif [ "\${GIT_SSL_CAINFO}x" = "x" ] && [ "\${git_config_sslCAinfo}x" != "x" ]; then
+elif [ "\${GIT_SSL_CAINFO}x" = "x" ] && [ "\${git_config_sslCAinfo}x" = "x" ]; then
   if [ -f "\$PWD/cacert.pem" ]; then
     export GIT_SSL_CAINFO="\$PWD/cacert.pem"
   else
@@ -111,10 +111,8 @@ fi
 EOF
 }
 
-zopen_append_to_setup() {
-cat <<EOF
-if [ -f "\$PWD/../cacert.pem" ]; then
-  cp "\$PWD/../cacert.pem" "\$PWD/cacert.pem"
-fi
-EOF
+zopen_post_install()
+{
+  # Install a cacert.pem to be used (optionally) by the customer
+  zopen update-cacert -f $1
 }
