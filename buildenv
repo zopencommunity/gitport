@@ -111,10 +111,8 @@ fi
 EOF
 }
 
-zopen_append_to_setup() {
-cat <<EOF
-if [ -f "\$PWD/../cacert.pem" ]; then
-  cp "\$PWD/../cacert.pem" "\$PWD/cacert.pem"
-fi
-EOF
+zopen_post_install()
+{
+  # Install a cacert.pem to be used (optionally) by the customer
+  zopen update-cacert -f $1
 }
