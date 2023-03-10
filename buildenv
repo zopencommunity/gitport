@@ -3,11 +3,13 @@
 #
 export ZOPEN_TYPE="TARBALL"
 
+GIT_VERSION="2.39.2"
+
 export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash"
 
-export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-2.39.1.tar.xz"
-export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed"
+export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
+export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre"
 
 export ZOPEN_RUNTIME_DEPS="perl bash less ncurses" # If building with shared libs, add openssl, curl
 
@@ -20,7 +22,7 @@ export ZOPEN_INSTALL="zopen_install_all"
 export ZOPEN_INSTALL_OPTS=""
 export ZOPEN_CHECK_OPTS='test'
 
-export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME}"
+export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
 
 export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
@@ -33,9 +35,9 @@ export CURL_CONFIG="no"
 rm -f patches
 if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
   ln -s tarballpatches patches
-  export ZOPEN_NAME="git-2.39.1"
-  rm -f v2.39.1
-  ln -s ${ZOPEN_NAME} v2.39.1
+  export ZOPEN_NAME="git-${GIT_VERSION}"
+  rm -f "v${GIT_VERSION}"
+  ln -s ${ZOPEN_NAME} "v${GIT_VERSION}"
 else
   ln -s gitpatches patches
 fi 
