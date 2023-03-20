@@ -11,6 +11,12 @@ export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man texinfo 
 export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
 export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre"
 
+#
+# Note the 'man' tarball release is numbered independently from the 'git' release.
+# 2.9.5 is the latest 'man' tarball and 2.39.1 is the latest 'git' tarball (right now)
+#
+export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${GIT_VERSION}.tar.xz"
+
 export ZOPEN_RUNTIME_DEPS="perl bash less ncurses" # If building with shared libs, add openssl, curl
 
 export ZOPEN_BOOTSTRAP="make"
@@ -65,7 +71,7 @@ zopen_install_all()
     return 4;
   fi
 }
-# Run an 'zopen_pre_check' routine to clean out any GIT environment variables 
+# Run a 'zopen_pre_check' routine to clean out any GIT environment variables 
 # that might interfere with a new GIT operation during the test run
 #
 zopen_pre_check()
@@ -84,8 +90,12 @@ zopen_check_results()
 {
   chk="$1/$2_check.log"
   successes=$(egrep "^ok [0-9]" "${chk}" | wc -l | xargs)
-  failures=$(egrep "^not ok [0-9]" "${chk}" | wc -l | xargs)
+
+  failuretests=$(egrep "^not ok [0-9]" "${chk}")
+  failures=$(echo "${failuretests}" | wc -l | xargs)
   totalTests=$((failures+successes))
+
+  echo "${failuretests}" >"$1/$2_check_failures.log"
 
 cat <<ZZ
 actualFailures:$failures
@@ -118,7 +128,41 @@ EOF
 zopen_post_install()
 {
   # Install a cacert.pem to be used (optionally) by the customer
-  zopen update-cacert -f $1
+  if ! zopen update-cacert -f $1 ; then
+    printSoftError "zopen update-cacert failed"
+    return 4
+  fi
+
+  # Install man pages from ${GIT_MANPAGES_URL}
+  if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
+    GIT_SRC_DIR="${PWD}"
+    GIT_ROOT="${GIT_SRC_DIR}/.."
+    GIT_MAN_REL_DIR="git-manpages"
+    GIT_MAN_DIR="${GIT_ROOT}/${GIT_MAN_REL_DIR}"
+    GIT_MAN_TARBALL="${GIT_ROOT}/${GIT_MAN_REL_DIR}.tar.xz"
+
+    if ! [ -d "${GIT_MAN_TARBALL}" ]; then 
+      if ! curl -L "${ZOPEN_TARBALL_MAN_URL}" -o "${GIT_MAN_TARBALL}" ; then
+        printSoftError "Unable to download ${GIT_MAN_TARBALL} from ${ZOPEN_TARBALL_MAN_URL}"
+        return 4
+      fi
+    fi
+    if ! rm -rf  "${GIT_MAN_DIR}"  || ! mkdir "${GIT_MAN_DIR}" || ! tar -C "${GIT_MAN_DIR}" -axf "${GIT_MAN_TARBALL}" ; then
+      printSoftError "Unable to untar and create directory ${GIT_MAN_DIR}" 
+      return 4
+    fi
+    if (! cd "${GIT_MAN_DIR}" || ! git init || ! git checkout -b master || ! git add . || ! git commit -m 'base' ) ; then
+      printSoftError "Unable to set up local git repo for ${GIT_MAN_DIR}"
+      return 4
+    fi
+    if ! make quick-install-man ; then
+      printSoftError "Unable to install git man pages"
+      return 4
+    fi
+  else
+    printSoftError "Add code for GIT build of manpages"
+    return 4
+  fi
 }
 
 zopen_get_version() {
