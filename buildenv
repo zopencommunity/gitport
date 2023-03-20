@@ -14,6 +14,13 @@ export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/g
 export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
 export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre"
 
+#
+# Note the 'man' tarball release is numbered independently from the 'git' release.
+# 2.9.5 is the latest 'man' tarball and 2.39.1 is the latest 'git' tarball (right now)
+#
+export ZOPEN_TARBALL_MAN_REL="2.9.5"
+export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${ZOPEN_TARBALL_MAN_REL}.tar.xz"
+
 export ZOPEN_RUNTIME_DEPS="perl bash less ncurses" # If building with shared libs, add openssl, curl
 
 export ZOPEN_BOOTSTRAP="make"
@@ -126,6 +133,7 @@ zopen_post_install()
 {
   # Install a cacert.pem to be used (optionally) by the customer
   if ! zopen update-cacert -f $1 ; then
+    printSoftError "zopen update-cacert failed"
     return 4
   fi
 
@@ -139,24 +147,24 @@ zopen_post_install()
 
     if ! [ -d "${GIT_MAN_TARBALL}" ]; then 
       if ! curl -L "${ZOPEN_TARBALL_MAN_URL}" -o "${GIT_MAN_TARBALL}" ; then
-        echo "Unable to download ${GIT_MAN_TARBALL} from ${ZOPEN_TARBALL_MAN_URL}" >&2
+        printSoftError "Unable to download ${GIT_MAN_TARBALL} from ${ZOPEN_TARBALL_MAN_URL}"
         return 4
       fi
     fi
     if ! rm -rf  "${GIT_MAN_DIR}"  || ! mkdir "${GIT_MAN_DIR}" || ! tar -C "${GIT_MAN_DIR}" -axf "${GIT_MAN_TARBALL}" ; then
-      echo "Unable to untar and create directory ${GIT_MAN_DIR}" >&2
+      printSoftError "Unable to untar and create directory ${GIT_MAN_DIR}" 
       return 4
     fi
     if (! cd "${GIT_MAN_DIR}" || ! git init || ! git checkout -b master || ! git add . || ! git commit -m 'base' ) ; then
-      echo "Unable to set up local git repo for ${GIT_MAN_DIR}" >&2
+      printSoftError "Unable to set up local git repo for ${GIT_MAN_DIR}"
       return 4
     fi
     if ! make quick-install-man ; then
-      echo "Unable to install git man pages" >&2
+      printSoftError "Unable to install git man pages"
       return 4
     fi
   else
-    echo "Add code for GIT build of manpages" >&2
+    printSoftError "Add code for GIT build of manpages"
     return 4
   fi
 }
