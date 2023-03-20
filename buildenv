@@ -8,9 +8,6 @@ GIT_VERSION="2.39.2"
 export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash"
 
-export ZOPEN_TARBALL_MAN_REL="2.9.5"
-export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${ZOPEN_TARBALL_MAN_REL}.tar.xz"
-
 export ZOPEN_TARBALL_URL="https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
 export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre"
 
@@ -18,8 +15,7 @@ export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texi
 # Note the 'man' tarball release is numbered independently from the 'git' release.
 # 2.9.5 is the latest 'man' tarball and 2.39.1 is the latest 'git' tarball (right now)
 #
-export ZOPEN_TARBALL_MAN_REL="2.9.5"
-export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${ZOPEN_TARBALL_MAN_REL}.tar.xz"
+export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${GIT_VERSION}.tar.xz"
 
 export ZOPEN_RUNTIME_DEPS="perl bash less ncurses" # If building with shared libs, add openssl, curl
 
