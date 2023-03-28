@@ -167,9 +167,6 @@ zopen_post_install()
 
 zopen_append_to_zoslib_env() {
 cat <<EOF
-GIT_MAN_PATH|unset|
-GIT_ROOT|unset|
-GIT_SHELL|unset|
 GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
 GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
