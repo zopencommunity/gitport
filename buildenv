@@ -165,6 +165,14 @@ zopen_post_install()
   fi
 }
 
+zopen_append_to_zoslib_env() {
+cat <<EOF
+GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
+GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
+GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
+EOF
+}
+
 zopen_get_version() {
   ./git --version | awk -F" " '{print $3}'
 }
