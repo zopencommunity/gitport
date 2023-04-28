@@ -1,28 +1,17 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index d63629f..68a7389 100644
+index 64c44db..1caa1f5 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -362,7 +362,7 @@ ifeq ($(uname_S),IRIX)
- 	NO_MMAP = YesPlease
- 	NO_REGEX = YesPlease
- 	SNPRINTF_RETURNS_BOGUS = YesPlease
--	SHELL_PATH = /usr/gnu/bin/bash
-+	SHELL_PATH = "/bin/env bash"
- 	NEEDS_LIBGEN = YesPlease
- endif
- ifeq ($(uname_S),IRIX64)
-@@ -622,6 +622,28 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+@@ -623,6 +623,24 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
-+
 +ifeq ($(uname_S),OS/390)
-+  V = 2
-+	PERL_PATH = perl
-+	PERL_PATH_FOR_SCRIPTS = /bin/env perl
-+	SHELL_PATH = bash
-+	SHELL_PATH_FOR_SCRIPTS = /bin/env bash
-+	PYTHON_PATH = python
++  PERL_PATH = perl
++  PERL_PATH_FOR_SCRIPTS = /bin/env perl
++  SHELL_PATH = bash
++  SHELL_PATH_FOR_SCRIPTS = /bin/env bash
++  PYTHON_PATH = python
 +  NO_SYS_POLL_H = YesPlease
 +  NO_STRCASESTR = YesPlease
 +  NO_REGEX = YesPlease
@@ -33,10 +22,8 @@ index d63629f..68a7389 100644
 +  NO_MEMMEM = YesPlease
 +  NO_GECOS_IN_PWENT = YesPlease
 +  HAVE_STRINGS_H = YesPlease
-+  PTHREAD_LIBS =
 +  NEEDS_MODE_TRANSLATION = YesPlease
 +endif
-+
  ifeq ($(uname_S),MINGW)
- 	pathsep = ;
- 	HAVE_ALLOCA_H = YesPlease
+ 	ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
+ 		$(error "Building with MSys is no longer supported")

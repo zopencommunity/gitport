@@ -1,5 +1,5 @@
 diff --git a/object-file.c b/object-file.c
-index 2629055..aa5bac0 100644
+index 939865c..ae92aaa 100644
 --- a/object-file.c
 +++ b/object-file.c
 @@ -8,6 +8,7 @@
@@ -10,9 +10,9 @@ index 2629055..aa5bac0 100644
  #include "string-list.h"
  #include "lockfile.h"
  #include "delta.h"
-@@ -34,6 +35,10 @@
- #include "promisor-remote.h"
+@@ -35,6 +36,10 @@
  #include "submodule.h"
+ #include "fsck.h"
  
 +#ifdef __MVS__
 +#include <_Ccsid.h>
@@ -21,7 +21,7 @@ index 2629055..aa5bac0 100644
  /* The maximum size for an object header. */
  #define MAX_HEADER_LEN 32
  
-@@ -2500,18 +2505,86 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+@@ -2463,18 +2468,86 @@ int index_fd(struct index_state *istate, struct object_id *oid,
  	return ret;
  }
  
