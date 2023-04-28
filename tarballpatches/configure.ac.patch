@@ -1,0 +1,14 @@
+diff --git a/configure.ac b/configure.ac
+index 38ff866..c9cf5ac 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -463,6 +463,9 @@ else
+             CC_LD_DYNPATH=-Wl,+b,
+           else
+              CC_LD_DYNPATH=
++             if test "$(uname -s)" = "OS/390"; then
++                CC_LD_DYNPATH=-L
++             fi
+              AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
+           fi
+       fi
