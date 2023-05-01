@@ -1,0 +1,635 @@
+diff --git a/configure b/configure
+index 98a208d..268001b 100755
+--- a/configure
++++ b/configure
+@@ -1515,7 +1515,7 @@ fi
+ ac_fn_c_try_compile ()
+ {
+   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+-  rm -f conftest.$ac_objext conftest.beam
++  rm -f conftest.$ac_objext conftest.dbg conftest.beam
+   if { { ac_try="$ac_compile"
+ case "(($ac_try" in
+   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+@@ -1594,9 +1594,9 @@ then :
+ else $as_nop
+   eval "$3=yes"
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ eval ac_res=\$$3
+ 	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+@@ -1629,7 +1629,7 @@ then :
+ else $as_nop
+   eval "$3=no"
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ eval ac_res=\$$3
+ 	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+@@ -1644,7 +1644,7 @@ printf "%s\n" "$ac_res" >&6; }
+ ac_fn_c_try_link ()
+ {
+   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+-  rm -f conftest.$ac_objext conftest.beam conftest$ac_exeext
++  rm -f conftest.$ac_objext conftest.dbg conftest.beam conftest$ac_exeext
+   if { { ac_try="$ac_link"
+ case "(($ac_try" in
+   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+@@ -1679,7 +1679,7 @@ fi
+   # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+   # interfere with the next link command; also delete a directory that is
+   # left behind by Apple's compiler.  We do this before executing the actions.
+-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
++  rm -rf conftest.dSYM conftest_ipa8_conftest.oo conftest.dbg
+   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+   as_fn_set_status $ac_retval
+ 
+@@ -1722,7 +1722,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
+ 
+        ac_retval=$ac_status
+ fi
+-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
++  rm -rf conftest.dSYM conftest_ipa8_conftest.oo conftest.dbg
+   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+   as_fn_set_status $ac_retval
+ 
+@@ -1780,7 +1780,7 @@ then :
+ else $as_nop
+   eval "$3=no"
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ fi
+ eval ac_res=\$$3
+@@ -1839,9 +1839,9 @@ then :
+ else $as_nop
+   eval "$4=no"
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ eval ac_res=\$$4
+ 	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+@@ -2110,7 +2110,7 @@ printf "%s\n" "$as_me: WARNING: cache variable $ac_var contains a newline" >&2;}
+     rm -f -r conftest* confdefs* conf$$* $ac_clean_files &&
+     exit $exit_status
+ ' 0
+-for ac_signal in 1 2 13 15; do
++for ac_signal in HUP INT PIPE TERM; do
+   trap 'ac_signal='$ac_signal'; as_fn_exit 1' $ac_signal
+ done
+ ac_signal=0
+@@ -3448,7 +3448,7 @@ fi
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $cross_compiling" >&5
+ printf "%s\n" "$cross_compiling" >&6; }
+ 
+-rm -f conftest.$ac_ext conftest$ac_cv_exeext conftest.out
++rm -f conftest.$ac_ext conftest$ac_cv_exeext conftest.out conftest.o
+ ac_clean_files=$ac_clean_files_save
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for suffix of object files" >&5
+ printf %s "checking for suffix of object files... " >&6; }
+@@ -3529,7 +3529,7 @@ then :
+ else $as_nop
+   ac_compiler_gnu=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ ac_cv_c_compiler_gnu=$ac_compiler_gnu
+ 
+ fi
+@@ -3602,11 +3602,11 @@ if ac_fn_c_try_compile "$LINENO"
+ then :
+   ac_cv_prog_cc_g=yes
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+    ac_c_werror_flag=$ac_save_c_werror_flag
+ fi
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cc_g" >&5
+@@ -3648,7 +3648,7 @@ do
+ then :
+   ac_cv_prog_cc_c11=$ac_arg
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam
+   test "x$ac_cv_prog_cc_c11" != "xno" && break
+ done
+ rm -f conftest.$ac_ext
+@@ -3694,7 +3694,7 @@ do
+ then :
+   ac_cv_prog_cc_c99=$ac_arg
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam
+   test "x$ac_cv_prog_cc_c99" != "xno" && break
+ done
+ rm -f conftest.$ac_ext
+@@ -3740,7 +3740,7 @@ do
+ then :
+   ac_cv_prog_cc_c89=$ac_arg
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam
+   test "x$ac_cv_prog_cc_c89" != "xno" && break
+ done
+ rm -f conftest.$ac_ext
+@@ -3838,7 +3838,7 @@ then :
+ else $as_nop
+   ac_cv_working_alloca_h=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ fi
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_working_alloca_h" >&5
+@@ -3891,7 +3891,7 @@ then :
+ else $as_nop
+   ac_cv_func_alloca_works=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ fi
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_alloca_works" >&5
+@@ -3950,7 +3950,7 @@ else $as_nop
+   ac_cv_c_stack_direction=-1
+ fi
+ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+-  conftest.$ac_objext conftest.beam conftest.$ac_ext
++  conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ 
+ fi
+@@ -4480,7 +4480,7 @@ then :
+ else $as_nop
+   ac_compiler_gnu=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ ac_cv_c_compiler_gnu=$ac_compiler_gnu
+ 
+ fi
+@@ -4553,11 +4553,11 @@ if ac_fn_c_try_compile "$LINENO"
+ then :
+   ac_cv_prog_cc_g=yes
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+    ac_c_werror_flag=$ac_save_c_werror_flag
+ fi
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cc_g" >&5
+@@ -4599,7 +4599,7 @@ do
+ then :
+   ac_cv_prog_cc_c11=$ac_arg
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam
+   test "x$ac_cv_prog_cc_c11" != "xno" && break
+ done
+ rm -f conftest.$ac_ext
+@@ -4645,7 +4645,7 @@ do
+ then :
+   ac_cv_prog_cc_c99=$ac_arg
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam
+   test "x$ac_cv_prog_cc_c99" != "xno" && break
+ done
+ rm -f conftest.$ac_ext
+@@ -4691,7 +4691,7 @@ do
+ then :
+   ac_cv_prog_cc_c89=$ac_arg
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam
+   test "x$ac_cv_prog_cc_c89" != "xno" && break
+ done
+ rm -f conftest.$ac_ext
+@@ -4744,7 +4744,7 @@ if ac_fn_c_try_compile "$LINENO"
+ then :
+   ac_cv_c_inline=$ac_kw
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+   test "$ac_cv_c_inline" != no && break
+ done
+ 
+@@ -4801,7 +4801,7 @@ then :
+ else $as_nop
+   git_cv_ld_dashr=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+    LDFLAGS="${SAVE_LDFLAGS}"
+ 
+@@ -4837,7 +4837,7 @@ then :
+ else $as_nop
+   git_cv_ld_wl_rpath=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+       LDFLAGS="${SAVE_LDFLAGS}"
+ 
+@@ -4873,7 +4873,7 @@ then :
+ else $as_nop
+   git_cv_ld_rpath=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+          LDFLAGS="${SAVE_LDFLAGS}"
+ 
+@@ -4909,7 +4909,7 @@ then :
+ else $as_nop
+   git_cv_ld_wl_b=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+             LDFLAGS="${SAVE_LDFLAGS}"
+ 
+@@ -4920,6 +4920,9 @@ printf "%s\n" "$git_cv_ld_wl_b" >&6; }
+             CC_LD_DYNPATH=-Wl,+b,
+           else
+              CC_LD_DYNPATH=
++            if test "$host" == "openedition"; then
++             CC_LD_DYNPATH=-L
++            fi 
+              { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: linker does not support runtime path to dynamic libraries" >&5
+ printf "%s\n" "$as_me: WARNING: linker does not support runtime path to dynamic libraries" >&2;}
+           fi
+@@ -5306,7 +5309,7 @@ then :
+ else $as_nop
+   ac_cv_lib_crypto_SHA1_Init=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5345,7 +5348,7 @@ then :
+ else $as_nop
+   ac_cv_lib_ssl_SHA1_Init=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5417,7 +5420,7 @@ then :
+ else $as_nop
+   ac_cv_lib_pcre2_8_pcre2_config_8=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5486,7 +5489,7 @@ then :
+ else $as_nop
+   ac_cv_lib_curl_curl_global_init=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5616,7 +5619,7 @@ then :
+ else $as_nop
+   ac_cv_lib_expat_XML_ParserCreate=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5698,7 +5701,7 @@ else $as_nop
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ printf "%s\n" "no" >&6; }
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+     LIBS="$old_LIBS"
+ done
+@@ -5762,7 +5765,7 @@ else $as_nop
+ printf "%s\n" "no" >&6; }
+ 	NO_DEFLATE_BOUND=yes
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS="$old_LIBS"
+ 
+@@ -5808,7 +5811,7 @@ then :
+ else $as_nop
+   ac_cv_lib_c_socket=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5868,7 +5871,7 @@ then :
+ else $as_nop
+   ac_cv_lib_resolv_inet_ntop=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5924,7 +5927,7 @@ then :
+ else $as_nop
+   ac_cv_lib_resolv_inet_pton=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -5980,7 +5983,7 @@ then :
+ else $as_nop
+   ac_cv_lib_resolv_hstrerror=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -6035,7 +6038,7 @@ then :
+ else $as_nop
+   ac_cv_lib_c_basename=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -6082,7 +6085,7 @@ else $as_nop
+ printf "%s\n" "no" >&6; }
+ 	LIBC_CONTAINS_LIBINTL=
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ 
+ config_appended_defs="$config_appended_defs${newline}LIBC_CONTAINS_LIBINTL=${LIBC_CONTAINS_LIBINTL}"
+@@ -6201,7 +6204,7 @@ printf "%s\n" "yes" >&6; }
+ 
+ 	OLD_ICONV=UnfortunatelyYes
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ 
+ 
+ if test -n "$ICONVDIR"; then
+@@ -6274,7 +6277,7 @@ else $as_nop
+   ac_cv_iconv_omits_bom=yes
+ fi
+ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+-  conftest.$ac_objext conftest.beam conftest.$ac_ext
++  conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ 
+ 
+@@ -6343,7 +6346,7 @@ then :
+                   break 2
+ 
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+             done
+          done
+ 
+@@ -6503,7 +6506,7 @@ do
+ then :
+   ac_cv_search_getaddrinfo=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_getaddrinfo+y}
+ then :
+@@ -6900,7 +6903,7 @@ else $as_nop
+   ac_cv_fread_reads_directories=yes
+ fi
+ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+-  conftest.$ac_objext conftest.beam conftest.$ac_ext
++  conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ 
+ 
+@@ -6965,7 +6968,7 @@ else $as_nop
+   ac_cv_snprintf_returns_bogus=yes
+ fi
+ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+-  conftest.$ac_objext conftest.beam conftest.$ac_ext
++  conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ fi
+ 
+ 
+@@ -7112,7 +7115,7 @@ then :
+ else $as_nop
+   ac_cv_lib_iconv_locale_charset=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -7151,7 +7154,7 @@ then :
+ else $as_nop
+   ac_cv_lib_charset_locale_charset=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -7206,7 +7209,7 @@ do
+ then :
+   ac_cv_search_clock_gettime=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_clock_gettime+y}
+ then :
+@@ -7272,7 +7275,7 @@ else $as_nop
+ printf "%s\n" "no" >&6; }
+ 	HAVE_CLOCK_MONOTONIC=
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ 
+ config_appended_defs="$config_appended_defs${newline}HAVE_CLOCK_MONOTONIC=${HAVE_CLOCK_MONOTONIC}"
+ 
+@@ -7316,7 +7319,7 @@ do
+ then :
+   ac_cv_search_sync_file_range=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_sync_file_range+y}
+ then :
+@@ -7391,7 +7394,7 @@ do
+ then :
+   ac_cv_search_setitimer=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_setitimer+y}
+ then :
+@@ -7465,7 +7468,7 @@ do
+ then :
+   ac_cv_search_strcasestr=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_strcasestr+y}
+ then :
+@@ -7539,7 +7542,7 @@ do
+ then :
+   ac_cv_search_memmem=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_memmem+y}
+ then :
+@@ -7613,7 +7616,7 @@ do
+ then :
+   ac_cv_search_strlcpy=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_strlcpy+y}
+ then :
+@@ -7702,7 +7705,7 @@ do
+ then :
+   ac_cv_search_strtoumax=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_strtoumax+y}
+ then :
+@@ -7776,7 +7779,7 @@ do
+ then :
+   ac_cv_search_setenv=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_setenv+y}
+ then :
+@@ -7850,7 +7853,7 @@ do
+ then :
+   ac_cv_search_unsetenv=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_unsetenv+y}
+ then :
+@@ -7924,7 +7927,7 @@ do
+ then :
+   ac_cv_search_mkdtemp=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_mkdtemp+y}
+ then :
+@@ -7998,7 +8001,7 @@ do
+ then :
+   ac_cv_search_initgroups=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_initgroups+y}
+ then :
+@@ -8072,7 +8075,7 @@ do
+ then :
+   ac_cv_search_getdelim=$ac_res
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext
+   if test ${ac_cv_search_getdelim+y}
+ then :
+@@ -8151,7 +8154,7 @@ else $as_nop
+ printf "%s\n" "no" >&6; }
+ 	HAVE_BSD_SYSCTL=
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam conftest.$ac_ext
+ 
+ config_appended_defs="$config_appended_defs${newline}HAVE_BSD_SYSCTL=${HAVE_BSD_SYSCTL}"
+ 
+@@ -8237,7 +8240,7 @@ else $as_nop
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ printf "%s\n" "no" >&6; }
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+       CFLAGS="$old_CFLAGS"
+       LIBS="$old_LIBS"
+@@ -8272,7 +8275,7 @@ then :
+ else $as_nop
+   ac_cv_lib_pthread_pthread_create=no
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+@@ -8330,7 +8333,7 @@ else $as_nop
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ printf "%s\n" "no" >&6; }
+ fi
+-rm -f core conftest.err conftest.$ac_objext conftest.beam \
++rm -f core conftest.err conftest.$ac_objext conftest.dbg conftest.beam \
+     conftest$ac_exeext conftest.$ac_ext
+ 
+   CFLAGS="$old_CFLAGS"
+@@ -9088,7 +9091,7 @@ $debug ||
+   : "${ac_tmp:=$tmp}"
+   { test ! -d "$ac_tmp" || rm -fr "$ac_tmp"; } && exit $exit_status
+ ' 0
+-  trap 'as_fn_exit 1' 1 2 13 15
++  trap 'as_fn_exit 1' HUP INT PIPE TERM
+ }
+ # Create a (secure) tmp directory for tmp files.
+ 

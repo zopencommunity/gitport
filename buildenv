@@ -3,7 +3,7 @@
 #
 export ZOPEN_TYPE="TARBALL"
 
-GIT_VERSION="2.39.2"
+GIT_VERSION="2.40.1"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash"
@@ -13,7 +13,6 @@ export ZOPEN_TARBALL_DEPS="curl git make m4 perl autoconf automake help2man texi
 
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
-# 2.9.5 is the latest 'man' tarball and 2.39.1 is the latest 'git' tarball (right now)
 #
 export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${GIT_VERSION}.tar.xz"
 
@@ -70,6 +69,8 @@ zopen_install_all()
   if [ $? -gt 0 ]; then
     return 4;
   fi
+  # Copy new contributor tools git-jump as per instructions
+  cp contrib/git-jump/git-jump $ZOPEN_INSTALL_DIR/bin
 }
 # Run a 'zopen_pre_check' routine to clean out any GIT environment variables 
 # that might interfere with a new GIT operation during the test run

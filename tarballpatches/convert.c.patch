@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index 95e6a52..eba9a48 100644
+index a54d169..28f0a3b 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -370,12 +370,15 @@ static int check_roundtrip(const char *enc_name)
@@ -47,9 +47,9 @@ index 95e6a52..eba9a48 100644
  	/*
  	 * No encoding is specified or there is nothing to encode.
  	 * Tell the caller that the content was not modified.
-@@ -1293,20 +1304,38 @@ static int git_path_check_ident(struct attr_check_item *check)
- 	return !!ATTR_TRUE(value);
- }
+@@ -1295,18 +1306,36 @@ static int git_path_check_ident(struct attr_check_item *check)
+ 
+ static struct attr_check *check;
  
 +static const char* get_platform() {
 +	struct utsname uname_info;
@@ -64,16 +64,14 @@ index 95e6a52..eba9a48 100644
 +  return uname_info.sysname;
 +}
 +
-+
- static struct attr_check *check;
- 
  void convert_attrs(struct index_state *istate,
  		   struct conv_attrs *ca, const char *path)
  {
  	struct attr_check_item *ccheck = NULL;
-+	struct strbuf platform_working_tree_encoding = STRBUF_INIT;
-+
++  struct strbuf platform_working_tree_encoding = STRBUF_INIT; 
++  
 +	strbuf_addf(&platform_working_tree_encoding, "%s-working-tree-encoding", get_platform());
++
  
  	if (!check) {
  		check = attr_check_initl("crlf", "ident", "filter",
@@ -85,7 +83,7 @@ index 95e6a52..eba9a48 100644
  	}
 +	strbuf_release(&platform_working_tree_encoding);
  
- 	git_check_attr(istate, path, check);
+ 	git_check_attr(istate, NULL, path, check);
  	ccheck = check->items;
 @@ -1327,6 +1356,8 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
