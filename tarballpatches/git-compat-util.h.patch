@@ -1,17 +1,16 @@
 diff --git a/git-compat-util.h b/git-compat-util.h
-index af05077..ecc35a4 100644
+index 5b2b99c..e9f21cb 100644
 --- a/git-compat-util.h
 +++ b/git-compat-util.h
-@@ -1508,6 +1508,12 @@ int git_access(const char *path, int mode);
- # endif
- #endif
- 
-+
-+#ifdef __MVS__
-+/* On z/OS, getenv does not return a unique pointer, use __getenv instead
-+ */
-+#define getenv __getenv
-+#endif
- /*
-  * Our code often opens a path to an optional file, to work on its
-  * contents when we can successfully open it.  We can ignore a failure
+@@ -223,7 +223,11 @@ struct strbuf;
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <stddef.h>
++#define release stdlib_release
++#define fetch stdlib_fetch
+ #include <stdlib.h>
++#undef fetch
++#undef release
+ #include <stdarg.h>
+ #include <string.h>
+ #ifdef HAVE_STRINGS_H
