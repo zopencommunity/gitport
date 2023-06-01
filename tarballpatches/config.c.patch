@@ -1,8 +1,16 @@
 diff --git a/config.c b/config.c
-index cbb5a3b..a68d2aa 100644
+index b79baf8..57fe8b4 100644
 --- a/config.c
 +++ b/config.c
-@@ -1623,6 +1623,13 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
+@@ -11,6 +11,7 @@
+ #include "alloc.h"
+ #include "date.h"
+ #include "branch.h"
++#include "cache.h"
+ #include "config.h"
+ #include "convert.h"
+ #include "environment.h"
+@@ -1708,6 +1709,13 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
  		return 0;
  	}
  

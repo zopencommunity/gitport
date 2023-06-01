@@ -3,7 +3,7 @@
 #
 export ZOPEN_TYPE="TARBALL"
 
-GIT_VERSION="2.40.1"
+GIT_VERSION="2.41.0"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"
 export ZOPEN_GIT_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash"
