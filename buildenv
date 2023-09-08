@@ -128,6 +128,12 @@ EOF
 
 zopen_post_install()
 {
+  # Validate that git clone work for https and git protocols
+  set -e
+  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport
+  $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport
+  set +e
+
   # Install a cacert.pem to be used (optionally) by the customer
   if ! zopen update-cacert -f $1 ; then
     printSoftError "zopen update-cacert failed"
@@ -172,15 +178,6 @@ GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
 GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 EOF
-}
-
-zopen_post_install() {
-  installdir=$1
-  # Validate that git clone work for https and git protocols
-  set -e
-  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport
-  $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport
-  set +e
 }
 
 zopen_get_version() {
