@@ -3,6 +3,7 @@
 #
 export ZOPEN_TYPE="TARBALL"
 
+# bump: git-version /GIT_VERSION="(.*)"/ https://github.com/git/git.git|*
 GIT_VERSION="2.41.0"
 
 export ZOPEN_GIT_URL="https://github.com/git/git"
