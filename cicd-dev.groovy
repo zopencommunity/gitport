@@ -10,6 +10,6 @@ node('linux')
         }
 
         stage('Build') {
-                build job: 'Port-Pipeline', parameters: [string(name: 'PORT_GITHUB_REPO', value: 'https://github.com/ZOSOpenTools/gitport.git'), string(name: 'PORT_DESCRIPTION', value: 'git description' )]
+                build job: 'Port-Pipeline', parameters: [string(name: 'PORT_GITHUB_REPO', value: 'https://github.com/ZOSOpenTools/gitport.git'), string(name: 'PORT_DESCRIPTION', value: 'git description' ), string(name: 'BUILD_LINE', value: 'DEV')]
         }
 }
