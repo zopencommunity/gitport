@@ -38,16 +38,6 @@ export CURL_LDFLAGS="-lcurl"
 export CURL_CFLAGS="-I\${CURL_HOME}/include"
 export CURL_CONFIG="no"
 
-rm -f patches
-if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
-  ln -s tarballpatches patches
-  export ZOPEN_NAME="git-${GIT_VERSION}"
-  rm -f "v${GIT_VERSION}"
-  ln -s ${ZOPEN_NAME} "v${GIT_VERSION}"
-else
-  ln -s gitpatches patches
-fi 
-
 zopen_build_all()
 {
   make -j$ZOPEN_NUM_JOBS "$@"
@@ -125,7 +115,7 @@ zopen_post_install()
   set +e
 
   # Install a cacert.pem to be used (optionally) by the customer
-  if ! zopen update-cacert -f $1 ; then
+  if ! $MYDIR/zopen update-cacert -f $1 ; then
     printSoftError "zopen update-cacert failed"
     return 4
   fi
