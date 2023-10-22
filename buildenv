@@ -7,10 +7,10 @@ export ZOPEN_BUILD_LINE="STABLE"
 GIT_VERSION="2.41.0"
 
 export ZOPEN_DEV_URL="https://github.com/git/git"
-export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash"
+export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash gettext"
 
 export ZOPEN_STABLE_URL="https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
-export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2"
+export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 gettext"
 
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
