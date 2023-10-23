@@ -145,8 +145,8 @@ zopen_post_install()
 
 zopen_append_to_zoslib_env() {
 cat <<EOF
-GIT_TEMPLATE_DIR|overrideset|PROJECT_ROOT/share/git-core/templates
-GIT_EXEC_PATH|overrideset|PROJECT_ROOT/libexec/git-core
+GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
+GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 ASCII_TERMINFO|set|PROJECT_ROOT/../../ncurses/ncurses/share/terminfo/
 EOF
