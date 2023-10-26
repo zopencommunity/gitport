@@ -1,3 +1,5 @@
+[![Automatic version updates](https://github.com/ZOSOpenTools/gitport/actions/workflows/bump.yml/badge.svg)](https://github.com/ZOSOpenTools/gitport/actions/workflows/bump.yml)
+
 # Git on z/OS
 Git is a popular version control system that is widely used in the open source community. 
 
