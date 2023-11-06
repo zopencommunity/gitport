@@ -143,6 +143,14 @@ zopen_post_install()
   fi
 }
 
+zopen_append_to_env()
+{
+cat <<ZZ
+  unset GIT_TEMPLATE_DIR
+  unset GIT_EXEC_PATH
+ZZ
+}
+
 zopen_append_to_zoslib_env() {
 cat <<EOF
 GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
