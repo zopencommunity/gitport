@@ -1,0 +1,15 @@
+diff --git a/read-cache-ll.h b/read-cache-ll.h
+index 9a1a7ed..a99eef7 100644
+--- a/read-cache-ll.h
++++ b/read-cache-ll.h
+@@ -466,6 +466,10 @@ struct cache_entry *refresh_cache_entry(struct index_state *, struct cache_entry
+ 
+ void set_alternate_index_output(const char *);
+ 
++#ifdef __MVS__
++extern int ignore_file_tags;
++#endif
++
+ extern int verify_index_checksum;
+ extern int verify_ce_order;
+ 

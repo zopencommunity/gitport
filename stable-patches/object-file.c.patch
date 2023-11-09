@@ -1,33 +1,26 @@
 diff --git a/object-file.c b/object-file.c
-index 7c1af5c..ed4494d 100644
+index 7dc0c4b..02ee8bd 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -9,6 +9,7 @@
- #include "git-compat-util.h"
- #include "abspath.h"
- #include "alloc.h"
-+#include "cache.h"
- #include "config.h"
- #include "convert.h"
- #include "environment.h"
-@@ -44,6 +45,10 @@
+@@ -44,6 +44,11 @@
  #include "submodule.h"
  #include "fsck.h"
- #include "wrapper.h"
-+ 
+ 
 +#ifdef __MVS__
 +#include <_Ccsid.h>
++#include "read-cache-ll.h"
 +#endif
- 
++
  /* The maximum size for an object header. */
  #define MAX_HEADER_LEN 32
-@@ -2479,18 +2484,87 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+ 
+@@ -2478,18 +2483,87 @@ int index_fd(struct index_state *istate, struct object_id *oid,
  	return ret;
  }
  
 +#ifdef __MVS__
 +void validate_codeset(struct index_state *istate, const char *path, int* autoconvertToASCII) {
-+	struct conv_attrs ca;
++       struct conv_attrs ca;
 +  struct stat st;
 +  unsigned short attr_ccsid;
 +  unsigned short file_ccsid;
@@ -36,7 +29,7 @@ index 7c1af5c..ed4494d 100644
 +    return;
 +
 +  *autoconvertToASCII = 0;
-+	convert_attrs(istate, &ca, path);
++       convert_attrs(istate, &ca, path);
 +  if (ca.attr_action == CRLF_BINARY) {
 +    attr_ccsid = FT_BINARY;
 +  }
@@ -57,7 +50,7 @@ index 7c1af5c..ed4494d 100644
 +
 +  if (attr_ccsid != file_ccsid) {
 +    if (file_ccsid == 1047 && attr_ccsid == 819) {
-+      *autoconvertToASCII = 1;
++autoconvertToASCII = 1;
 +      return;
 +    }
 +    // Allow tag mixing of 819 and 1208
@@ -68,19 +61,19 @@ index 7c1af5c..ed4494d 100644
 +    if (attr_ccsid == FT_BINARY)
 +      return;
 +
-+    char attr_csname[_XOPEN_PATH_MAX] = {0};
++   char attr_csname[_XOPEN_PATH_MAX] = {0};
 +    char file_csname[_XOPEN_PATH_MAX] = {0};
 +    if (attr_ccsid != FT_BINARY) {
 +      __toCSName(attr_ccsid, attr_csname);
-+    } else { 
++    } else {
 +      snprintf(attr_csname, _XOPEN_PATH_MAX, "%s", "binary");
 +    }
 +    if (file_ccsid != FT_BINARY) {
 +      __toCSName(file_ccsid, file_csname);
-+    } else { 
++    } else {
 +      snprintf(file_csname, _XOPEN_PATH_MAX, "%s", "binary");
 +    }
-+    die("%s added file: file tag (%s) does not match working-tree-encoding (%s)", path, file_csname, attr_csname); 
++    die("%s added file: file tag (%s) does not match working-tree-encoding (%s)", path, file_csname, attr_csname);
 +  }
 +}
 +#endif
@@ -91,8 +84,8 @@ index 7c1af5c..ed4494d 100644
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;
-+  struct conv_attrs ca;
-+  int autocvtToASCII;
++	struct conv_attrs ca;
++	int autocvtToASCII;
  
  	switch (st->st_mode & S_IFMT) {
  	case S_IFREG:
