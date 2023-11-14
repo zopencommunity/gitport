@@ -70,6 +70,17 @@ To find out all of the supported encodings by git, run `iconv -l`.
 
 When adding files, you need to make sure that the z/OS file tag matches the working-tree-encoding. Otherwise, you may encounter an error.
 
+### Encodings and z/OS File Tags (ccsids)
+
+Git on z/OS will do its best to associate a file tag (ccsid) with the git working-tree-encoding. However, UTF-8 encoded files are by default
+tagged as IS08859-1 because z/OS Open Tools currently acts on _BPXK_AUTOCVT=ON. To modify the default uf8 tag, you can do as follows:
+
+* `git config --global core.utf8ccsid 1208` # Global setting, 1208 is the ccsid for the UTF8 file tag
+* `git config core.utf8ccsid 1208` # Repo setting
+* `export GIT_UTF8_CCSID=1208` # environment variable
+
+The environment variable has precedence over the git config setting.
+
 ### Binary files
 To specify a binary encoding, you can use the binary attribute as follows:
 ```
