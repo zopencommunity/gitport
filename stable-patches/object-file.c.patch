@@ -50,7 +50,7 @@ index 7dc0c4b..c610c8d 100644
 +  }
 +
 +  if (attr_ccsid != file_ccsid) {
-+    if (file_ccsid == 1047 && (attr_ccsid == 819 || attr_ccsid == 1208)) {
++    if (file_ccsid == 1047 && attr_ccsid == 819) {
 +      autoconvertToASCII = 1;
 +      return;
 +    }
