@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index 9ee79fe..a955084 100644
+index a8870ba..8e5c6fa 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -377,12 +377,15 @@ static int check_roundtrip(const char *enc_name)

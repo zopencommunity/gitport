@@ -1,5 +1,5 @@
 diff --git a/config.c b/config.c
-index 3846a37..4cb3e7c 100644
+index 3846a37..dfd22ed 100644
 --- a/config.c
 +++ b/config.c
 @@ -39,6 +39,9 @@
@@ -12,13 +12,18 @@ index 3846a37..4cb3e7c 100644
  
  struct config_source {
  	struct config_source *prev;
-@@ -1670,6 +1673,13 @@ static int git_default_core_config(const char *var, const char *value,
+@@ -1670,6 +1673,18 @@ static int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
 + #ifdef __MVS__
 +	if (!strcmp(var, "core.ignorefiletags")) {
 +		ignore_file_tags = git_config_bool(var, value);
++		return 0;
++	}
++
++	if (!strcmp(var, "core.utf8ccsid")) {
++		utf8_ccsid = git_config_ulong(var, value, ctx->kvi);
 +		return 0;
 +	}
 +#endif

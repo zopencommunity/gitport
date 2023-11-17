@@ -1,8 +1,8 @@
 diff --git a/entry.c b/entry.c
-index 616e4f0..3fdca74 100644
+index 43767f9..3f3f8cb 100644
 --- a/entry.c
 +++ b/entry.c
-@@ -119,6 +119,24 @@ int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
+@@ -126,6 +126,24 @@ int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
  	return 0;
  }
  
@@ -14,7 +14,7 @@ index 616e4f0..3fdca74 100644
 +    if (ca.working_tree_encoding)
 +      __chgfdcodeset(fd, ca.working_tree_encoding); 
 +    else
-+      __setfdtext(fd);
++      __chgfdccsid(fd, utf8_ccsid);
 +  }
 +  else {
 +    __setfdbinary(fd);
@@ -27,7 +27,7 @@ index 616e4f0..3fdca74 100644
  static int streaming_write_entry(const struct cache_entry *ce, char *path,
  				 struct stream_filter *filter,
  				 const struct checkout *state, int to_tempfile,
-@@ -131,6 +149,10 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+@@ -138,6 +156,10 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
  	if (fd < 0)
  		return -1;
  
@@ -38,7 +38,7 @@ index 616e4f0..3fdca74 100644
  	result |= stream_blob_to_fd(fd, &ce->oid, filter, 1);
  	*fstat_done = fstat_checkout_output(fd, state, statbuf);
  	result |= close(fd);
-@@ -367,6 +389,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+@@ -374,6 +396,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
  			return error_errno("unable to create file %s", path);
  		}
  
@@ -49,3 +49,29 @@ index 616e4f0..3fdca74 100644
  		wrote = write_in_full(fd, new_blob, size);
  		if (!to_tempfile)
  			fstat_done = fstat_checkout_output(fd, state, &st);
+@@ -476,6 +502,25 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
+ 	struct stat st;
+ 	struct conv_attrs ca_buf;
+ 
++
++#ifdef __MVS__
++  const char* git_utf8_ccsid_str = getenv("GIT_UTF8_CCSID");
++
++  if (git_utf8_ccsid_str != NULL) {
++      char* endptr;
++      errno = 0;
++      long conv = strtol(git_utf8_ccsid_str, &endptr, 10);
++
++      if (!conv) {
++          perror("Error converting GIT_UTF8_CCSID to short");
++      } else if (endptr == git_utf8_ccsid_str) {
++          fprintf(stderr, "No digits were found in GIT_UTF8_CCSID\n");
++      } else {
++          utf8_ccsid = conv;
++      }
++  }
++#endif
++
+ 	if (ce->ce_flags & CE_WT_REMOVE) {
+ 		if (topath)
+ 			/*

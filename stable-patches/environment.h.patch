@@ -1,0 +1,15 @@
+diff --git a/environment.h b/environment.h
+index c537747..0673680 100644
+--- a/environment.h
++++ b/environment.h
+@@ -133,6 +133,10 @@ extern size_t delta_base_cache_limit;
+ extern unsigned long big_file_threshold;
+ extern unsigned long pack_size_limit_cfg;
+ 
++#ifdef __MVS__
++extern int utf8_ccsid;
++#endif
++
+ /*
+  * Accessors for the core.sharedrepository config which lazy-load the value
+  * from the config (if not already set). The "reset" function can be
