@@ -1,5 +1,5 @@
 diff --git a/object-file.c b/object-file.c
-index 7dc0c4b..c610c8d 100644
+index 7c7afe5..f634790 100644
 --- a/object-file.c
 +++ b/object-file.c
 @@ -44,6 +44,11 @@
@@ -51,7 +51,7 @@ index 7dc0c4b..c610c8d 100644
 +
 +  if (attr_ccsid != file_ccsid) {
 +    if (file_ccsid == 1047 && attr_ccsid == 819) {
-+      autoconvertToASCII = 1;
++      *autoconvertToASCII = 1;
 +      return;
 +    }
 +    // Allow tag mixing of 819 and 1208
