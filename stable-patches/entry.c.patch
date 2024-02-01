@@ -1,5 +1,5 @@
 diff --git a/entry.c b/entry.c
-index 43767f9..3f3f8cb 100644
+index 076e97e..5c19411 100644
 --- a/entry.c
 +++ b/entry.c
 @@ -126,6 +126,24 @@ int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
