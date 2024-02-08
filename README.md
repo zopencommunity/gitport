@@ -70,6 +70,13 @@ To find out all of the supported encodings by git, run `iconv -l`.
 
 When adding files, you need to make sure that the z/OS file tag matches the working-tree-encoding. Otherwise, you may encounter an error.
 
+**Important Note:** If you are relying on the zos-working-tree-encoding support and you are editing your git-managed files on a non-z/OS platform, make sure that the files are encoded in UTF-8 mode. This is because Git assumes such files are encoded in UTF-8 prior to conversion. See [the working-tree-encoding documentation](https://git-scm.com/docs/gitattributes#_working_tree_encoding) for more details.  If you insist on editing your files in a different encoding, make sure to add the `working-tree-encoding` to the .gitattributes to reflect the codepage:
+
+```
+*  zos-working-tree-encoding=ibm-1047 working-tree-encoding=iso8859-1
+```
+This indicates that the file will be encoded in IBM-1047 on z/OS, but on non-z/OS platforms, it will be encoded in iso8859-1. 
+
 ### Encodings and z/OS File Tags (ccsids)
 
 Git on z/OS will do its best to associate a file tag (ccsid) with the git working-tree-encoding. However, there is a special case for 
