@@ -35,8 +35,8 @@ index a8870ba..bd238ec 100644
  
  	trace_encoding("source", path, enc, src, src_len);
 +#ifdef __MVS__
-+  // Don't convert ISO8859-1 on z/OS
-+  if (strcasecmp("ISO8859-1", enc) == 0)
++  // If UTF CCSID == 819 (ISO8859-1), do not convert ISO8859-1 tagged files
++  if (utf8_ccsid == 819 && strcasecmp("ISO8859-1", enc) == 0)
 +    return 0;
 +#endif
  	dst = reencode_string_len(src, src_len, default_encoding, enc,
@@ -98,7 +98,6 @@ index a8870ba..bd238ec 100644
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
 @@ -1334,6 +1368,8 @@ void convert_attrs(struct index_state *istate,
->>>>>>> a109f62 (Change default UTF8 ccsid to 1208 and remove ISO8859-1 workarounds)
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
