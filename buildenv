@@ -148,6 +148,7 @@ zopen_append_to_env()
 cat <<ZZ
   unset GIT_TEMPLATE_DIR
   unset GIT_EXEC_PATH
+  true # unset may return non-zero, reset to 0
 ZZ
 }
 
