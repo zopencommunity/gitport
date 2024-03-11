@@ -80,7 +80,7 @@ This indicates that the file will be encoded in IBM-1047 on z/OS, but on non-z/O
 ### Encodings and z/OS File Tags (CCSIDs)
 
 **Note:** Git on z/OS now aligns the file tag (CCSID) with the git working-tree-encoding by default. Previously, there was a specific handling for UTF-8 encoded files. These files were tagged as ISO8859-1 (CCSID 819) due to z/OS Open Tools' behavior under _BPXK_AUTOCVT=ON, which doesn't auto-convert files tagged with the UTF-8 tag (CCSID 1208).
-Consequently, the default tag for UTF-8 files is now ISO8859-1 (CCSID 819).
+Consequently, the default tag for UTF-8 encoded files is now UTF-8 (or CCSID 1208).
 
 To adjust the default tag for UTF-8, you can configure the git setting `core.utf8ccsid` to 819 using the following commands:
 
