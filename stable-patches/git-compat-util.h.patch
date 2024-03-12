@@ -1,5 +1,5 @@
 diff --git a/git-compat-util.h b/git-compat-util.h
-index 5b2b99c..e9f21cb 100644
+index 7c2a6538e5..1d9713a421 100644
 --- a/git-compat-util.h
 +++ b/git-compat-util.h
 @@ -223,7 +223,11 @@ struct strbuf;
@@ -12,5 +12,5 @@ index 5b2b99c..e9f21cb 100644
 +#undef fetch
 +#undef release
  #include <stdarg.h>
+ #include <stdbool.h>
  #include <string.h>
- #ifdef HAVE_STRINGS_H
