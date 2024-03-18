@@ -77,30 +77,27 @@ When adding files, you need to make sure that the z/OS file tag matches the work
 ```
 This indicates that the file will be encoded in IBM-1047 on z/OS, but on non-z/OS platforms, it will be encoded in iso8859-1. 
 
-### Encodings and z/OS File Tags (ccsids)
+### Encodings and z/OS File Tags (CCSIDs)
 
-Git on z/OS will do its best to associate a file tag (ccsid) with the git working-tree-encoding. However, there is a special case for 
-UTF-8 encoded files. Such files are tagged as IS08859-1 (ccsid 819) because z/OS Open Tools currently acts on _BPXK_AUTOCVT=ON, which does
-not auto-convert files tagged with the UTF-8 tag (ccsid 1208).
+**Note:** Git on z/OS now aligns the file tag (CCSID) with the git working-tree-encoding by default. Previously, there was a specific handling for UTF-8 encoded files. These files were tagged as ISO8859-1 (CCSID 819) due to z/OS Open Tools' behavior under _BPXK_AUTOCVT=ON, which doesn't auto-convert files tagged with the UTF-8 tag (CCSID 1208).
+Consequently, the default tag for UTF-8 encoded files is now UTF-8 (or CCSID 1208).
 
-Therefore, the default UTF-8 tag is IS08859-1 (or ccsid 819).
+To adjust the default tag for UTF-8, you can configure the git setting `core.utf8ccsid` to 819 using the following commands:
 
-To modify the default UTF-8 tag, you can set the git config setting `core.utf8ccsid` to 1208 as follows:
+- `git config --global core.utf8ccsid 819` # Global setting, 819 represents the CCSID for the UTF8 file tag
+- `git config core.utf8ccsid 819` # Local setting affecting the current repository
 
-* `git config --global core.utf8ccsid 1208` # Global setting, 1208 is the ccsid for the UTF8 file tag
-* `git config core.utf8ccsid 1208` # Local setting affecting the current repository
+Alternatively, you can set the GIT_UTF8_CCSID environment variable:
 
-Or you can set the GIT_UTF8_CCSID environment variable as follows:
+- `export GIT_UTF8_CCSID=819` # Environment variable
 
-* `export GIT_UTF8_CCSID=1208` # environment variable
-
-The environment variable has precedence over the git config setting.
+The environment variable takes precedence over the git config setting.
 
 #### Example
-Assuming you want to clone UTF-8 encoded files with the tag UTF8 or ccsid 1208 as opposed to the default ccsid (819):
+Assuming you want to clone UTF-8 encoded files with the tag UTF8 or ccsid 819 as opposed to the default ccsid (1208):
 
 ```
-git config --global core.utf8ccsid 1208 # Set the UTF-8 ccsid 1208 globally
+git config --global core.utf8ccsid 819 # Set the UTF-8 ccsid 819 globally
 git clone https://github.com/git/git
 cd git
 ls -lT # you will notice that all files are now tagged as UTF-8

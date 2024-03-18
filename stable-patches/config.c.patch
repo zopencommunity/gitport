@@ -1,18 +1,18 @@
 diff --git a/config.c b/config.c
-index 3846a37..dfd22ed 100644
+index 3cfeb3d8bd..1968317fe4 100644
 --- a/config.c
 +++ b/config.c
-@@ -39,6 +39,9 @@
- #include "worktree.h"
- #include "ws.h"
- #include "write-or-die.h"
+@@ -6,6 +6,9 @@
+  *
+  */
+ #include "git-compat-util.h"
 +#ifdef __MVS__
 +#include "read-cache-ll.h"
 +#endif
- 
- struct config_source {
- 	struct config_source *prev;
-@@ -1670,6 +1673,18 @@ static int git_default_core_config(const char *var, const char *value,
+ #include "abspath.h"
+ #include "advice.h"
+ #include "date.h"
+@@ -1523,6 +1526,18 @@ static int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  

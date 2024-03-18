@@ -4,13 +4,14 @@
 export ZOPEN_BUILD_LINE="STABLE"
 
 # bump: git-version /GIT_VERSION="(.*)"/ https://github.com/git/git.git|*
-GIT_VERSION="2.43.0"
+GIT_VERSION="2.44.0"
 
-export ZOPEN_DEV_URL="https://github.com/git/git"
-export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash"
+export ZOPEN_DEV_URL="https://github.com/git/git.git"
+export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash libiconv"
 
-export ZOPEN_STABLE_URL="https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
-export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2"
+export ZOPEN_STABLE_URL="https://github.com/git/git.git"
+export ZOPEN_STABLE_TAG="v${GIT_VERSION}"
+export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 libiconv"
 
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
@@ -29,7 +30,7 @@ export ZOPEN_INSTALL_OPTS=""
 export ZOPEN_CHECK_OPTS='test'
 export ZOPEN_COMP=CLANG
 
-export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
+export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME} --with-iconv=\${LIBICONV_HOME}"
 
 export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
@@ -38,6 +39,11 @@ export ZOPEN_EXTRA_CFLAGS="-O2"
 export CURL_LDFLAGS="-lcurl"
 export CURL_CFLAGS="-I\${CURL_HOME}/include"
 export CURL_CONFIG="no"
+
+zopen_init() {
+  # prevent -dirty suffix
+  echo "${GIT_VERSION}" > version
+}
 
 zopen_build_all()
 {
@@ -112,33 +118,28 @@ zopen_post_install()
   fi
 
   # Install man pages from ${GIT_MANPAGES_URL}
-  if [ "${ZOPEN_TYPE}" = "TARBALL" ]; then
-    GIT_SRC_DIR="${PWD}"
-    GIT_ROOT="${GIT_SRC_DIR}/.."
-    GIT_MAN_REL_DIR="git-manpages"
-    GIT_MAN_DIR="${GIT_ROOT}/${GIT_MAN_REL_DIR}"
-    GIT_MAN_TARBALL="${GIT_ROOT}/${GIT_MAN_REL_DIR}.tar.xz"
+  GIT_SRC_DIR="${PWD}"
+  GIT_ROOT="${GIT_SRC_DIR}/.."
+  GIT_MAN_REL_DIR="git-manpages"
+  GIT_MAN_DIR="${GIT_ROOT}/${GIT_MAN_REL_DIR}"
+  GIT_MAN_TARBALL="${GIT_ROOT}/${GIT_MAN_REL_DIR}.tar.xz"
 
-    if ! [ -d "${GIT_MAN_TARBALL}" ]; then 
-      if ! curl -L "${ZOPEN_TARBALL_MAN_URL}" -o "${GIT_MAN_TARBALL}" ; then
-        printSoftError "Unable to download ${GIT_MAN_TARBALL} from ${ZOPEN_TARBALL_MAN_URL}"
-        return 4
-      fi
-    fi
-    if ! rm -rf  "${GIT_MAN_DIR}"  || ! mkdir "${GIT_MAN_DIR}" || ! tar -C "${GIT_MAN_DIR}" -axf "${GIT_MAN_TARBALL}" ; then
-      printSoftError "Unable to untar and create directory ${GIT_MAN_DIR}" 
+  if ! [ -d "${GIT_MAN_TARBALL}" ]; then 
+    if ! curl -L "${ZOPEN_TARBALL_MAN_URL}" -o "${GIT_MAN_TARBALL}" ; then
+      printSoftError "Unable to download ${GIT_MAN_TARBALL} from ${ZOPEN_TARBALL_MAN_URL}"
       return 4
     fi
-    if (! cd "${GIT_MAN_DIR}" || ! git init || ! git checkout -b master || ! git add . || ! git commit -m 'base' ) ; then
-      printSoftError "Unable to set up local git repo for ${GIT_MAN_DIR}"
-      return 4
-    fi
-    if ! make quick-install-man ; then
-      printSoftError "Unable to install git man pages"
-      return 4
-    fi
-  else
-    printSoftError "Add code for GIT build of manpages"
+  fi
+  if ! rm -rf  "${GIT_MAN_DIR}"  || ! mkdir "${GIT_MAN_DIR}" || ! tar -C "${GIT_MAN_DIR}" -axf "${GIT_MAN_TARBALL}" ; then
+    printSoftError "Unable to untar and create directory ${GIT_MAN_DIR}" 
+    return 4
+  fi
+  if (! cd "${GIT_MAN_DIR}" || ! git init || ! git checkout -b master || ! git add . || ! git commit -m 'base' ) ; then
+    printSoftError "Unable to set up local git repo for ${GIT_MAN_DIR}"
+    return 4
+  fi
+  if ! make quick-install-man ; then
+    printSoftError "Unable to install git man pages"
     return 4
   fi
 }
