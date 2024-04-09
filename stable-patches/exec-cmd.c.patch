@@ -1,0 +1,45 @@
+diff --git a/exec-cmd.c b/exec-cmd.c
+index 909777f61f..3046893efe 100644
+--- a/exec-cmd.c
++++ b/exec-cmd.c
+@@ -150,6 +150,29 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
+ }
+ #endif /* HAVE_NS_GET_EXECUTABLE_PATH */
+ 
++#ifdef __MVS__
++/*
++ * Resolves the executable path for z/OS
++ *
++ * Returns 0 on success, -1 on failure.
++ */
++static int git_get_exec_path_zos(struct strbuf *buf)
++{
++	char* dir;
++	char* exe;
++	if ((path = __getprogramdir()) && (exe = getprogname())) {
++		trace_printf(
++			"trace: resolved executable path: %s/%s\n",
++			path, exe);
++		strbuf_addstr(buf, path);
++		strbuf_addstr(buf, "/");
++		strbuf_addstr(buf, exe);
++		return 0;
++	}
++	return -1;
++}
++#endif
++
+ #ifdef HAVE_WPGMPTR
+ /*
+  * Resolves the executable path by using the global variable _wpgmptr.
+@@ -198,6 +221,10 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
+ 		git_get_exec_path_darwin(buf) &&
+ #endif /* HAVE_NS_GET_EXECUTABLE_PATH */
+ 
++#ifdef __MVS__
++		git_get_exec_path_zos(buf) &&
++#endif /* HAVE_NS_GET_EXECUTABLE_PATH */
++
+ #ifdef PROCFS_EXECUTABLE_PATH
+ 		git_get_exec_path_procfs(buf) &&
+ #endif /* PROCFS_EXECUTABLE_PATH */
