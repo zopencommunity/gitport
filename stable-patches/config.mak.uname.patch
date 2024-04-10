@@ -1,8 +1,8 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index 64c44db..1caa1f5 100644
+index dacc95172d..60a911360e 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -623,6 +623,24 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+@@ -638,6 +638,25 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
@@ -13,6 +13,7 @@ index 64c44db..1caa1f5 100644
 +  SHELL_PATH_FOR_SCRIPTS = /bin/env bash
 +  PYTHON_PATH = python
 +  NO_SYS_POLL_H = YesPlease
++	RUNTIME_PREFIX = YesPlease
 +  NO_STRCASESTR = YesPlease
 +  NO_REGEX = YesPlease
 +  NO_MMAP = YesPlease
