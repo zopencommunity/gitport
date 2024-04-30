@@ -1,20 +1,21 @@
 diff --git a/object-file.c b/object-file.c
-index 7c7afe5..f634790 100644
+index 610b1f465c..9661518d01 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -44,6 +44,11 @@
- #include "submodule.h"
- #include "fsck.h"
+@@ -38,6 +38,12 @@
+ #include "loose.h"
+ #include "object-file-convert.h"
  
 +#ifdef __MVS__
 +#include <_Ccsid.h>
 +#include "read-cache-ll.h"
 +#endif
 +
++
  /* The maximum size for an object header. */
  #define MAX_HEADER_LEN 32
  
-@@ -2478,18 +2483,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+@@ -2642,18 +2648,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
  	return ret;
  }
  
