@@ -1,12 +1,21 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index dacc95172d..60a911360e 100644
+index a7607a5676..dff992a902 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -638,6 +638,25 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
- 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
+@@ -638,16 +638,23 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
-+ifeq ($(uname_S),OS/390)
+ ifeq ($(uname_S),OS/390)
+-	NO_SYS_POLL_H = YesPlease
+-	NO_STRCASESTR = YesPlease
+-	NO_REGEX = YesPlease
+-	NO_MMAP = YesPlease
+-	NO_NSEC = YesPlease
+-	NO_STRLCPY = YesPlease
+-	NO_MEMMEM = YesPlease
+-	NO_GECOS_IN_PWENT = YesPlease
+-	HAVE_STRINGS_H = YesPlease
+-	NEEDS_MODE_TRANSLATION = YesPlease
 +  PERL_PATH = perl
 +  PERL_PATH_FOR_SCRIPTS = /bin/env perl
 +  SHELL_PATH = bash
@@ -24,7 +33,6 @@ index dacc95172d..60a911360e 100644
 +  NO_GECOS_IN_PWENT = YesPlease
 +  HAVE_STRINGS_H = YesPlease
 +  NEEDS_MODE_TRANSLATION = YesPlease
-+endif
+ endif
  ifeq ($(uname_S),MINGW)
- 	ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
- 		$(error "Building with MSys is no longer supported")
+         ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
