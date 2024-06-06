@@ -100,7 +100,7 @@ Assuming you want to clone UTF-8 encoded files with the tag UTF8 or ccsid 819 as
 git config --global core.utf8ccsid 819 # Set the UTF-8 ccsid 819 globally
 git clone https://github.com/git/git
 cd git
-ls -lT # you will notice that all files are now tagged as UTF-8
+ls -lT # you will notice that all files are now tagged as 819
 ```
 
 
