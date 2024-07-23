@@ -111,6 +111,9 @@ zopen_post_install()
   $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport
   set +e
 
+  mkdir -p "$1/etc"
+  touch "$1/etc/gitconfig" # empty it out to avoid error with --system option
+
   # Install a cacert.pem to be used (optionally) by the customer
   if ! $MYDIR/zopen update-cacert -f $1 ; then
     printSoftError "zopen update-cacert failed"
@@ -159,6 +162,7 @@ GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
 GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 ASCII_TERMINFO|set|PROJECT_ROOT/../../ncurses/ncurses/share/terminfo/
+GIT_CONFIG_SYSTEM|set|PROJECT_ROOT/etc/gitconfig
 EOF
 }
 
