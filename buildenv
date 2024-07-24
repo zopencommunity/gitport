@@ -150,9 +150,12 @@ zopen_post_install()
 zopen_append_to_env()
 {
 cat <<ZZ
-  unset GIT_TEMPLATE_DIR
-  unset GIT_EXEC_PATH
-  true # unset may return non-zero, reset to 0
+  if [ -n "$GIT_TEMPLATE_DIR" ]; then
+    unset GIT_TEMPLATE_DIR
+  fi
+  if [ -n "$GIT_EXEC_PATH" ]; then
+    unset GIT_EXEC_PATH
+  fi
 ZZ
 }
 
