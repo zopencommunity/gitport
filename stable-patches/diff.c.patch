@@ -1,8 +1,8 @@
 diff --git a/diff.c b/diff.c
-index 648f671..a988d29 100644
+index 108c187577..3412fc392e 100644
 --- a/diff.c
 +++ b/diff.c
-@@ -4001,6 +4001,7 @@ int diff_populate_filespec(struct repository *r,
+@@ -4106,6 +4106,7 @@ int diff_populate_filespec(struct repository *r,
  	int check_binary = options ? options->check_binary : 0;
  	int err = 0;
  	int conv_flags = global_conv_flags_eol;
@@ -10,7 +10,7 @@ index 648f671..a988d29 100644
  	/*
  	 * demote FAIL to WARN to allow inspecting the situation
  	 * instead of refusing.
-@@ -4073,9 +4074,17 @@ int diff_populate_filespec(struct repository *r,
+@@ -4178,9 +4179,18 @@ int diff_populate_filespec(struct repository *r,
  			s->is_binary = 1;
  			return 0;
  		}
@@ -25,6 +25,18 @@ index 648f671..a988d29 100644
 +    if (!autocvtToASCII)
 +      __disableautocvt(fd);
 +#endif
++
  		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
  		close(fd);
  		s->should_munmap = 1;
+@@ -4284,6 +4294,10 @@ static void prep_temp_blob(struct index_state *istate,
+ 		blob = buf.buf;
+ 		size = buf.len;
+ 	}
++  
++#ifdef __MVS__
++  tag_file_as_working_tree_encoding(istate, path, temp->tempfile->fd);
++#endif
+ 	if (write_in_full(temp->tempfile->fd, blob, size) < 0 ||
+ 	    close_tempfile_gently(temp->tempfile))
+ 		die_errno("unable to write temp-file");
