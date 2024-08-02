@@ -1,5 +1,5 @@
 diff --git a/diff.c b/diff.c
-index 108c187577..4232fa32b3 100644
+index 108c187577..3412fc392e 100644
 --- a/diff.c
 +++ b/diff.c
 @@ -4106,6 +4106,7 @@ int diff_populate_filespec(struct repository *r,
@@ -10,7 +10,7 @@ index 108c187577..4232fa32b3 100644
  	/*
  	 * demote FAIL to WARN to allow inspecting the situation
  	 * instead of refusing.
-@@ -4178,13 +4179,19 @@ int diff_populate_filespec(struct repository *r,
+@@ -4178,9 +4179,18 @@ int diff_populate_filespec(struct repository *r,
  			s->is_binary = 1;
  			return 0;
  		}
@@ -21,16 +21,15 @@ index 108c187577..4232fa32b3 100644
  		if (fd < 0)
  			goto err_empty;
 +
++#ifdef __MVS__
++    if (!autocvtToASCII)
++      __disableautocvt(fd);
++#endif
++
  		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
  		close(fd);
  		s->should_munmap = 1;
- 
-+    __disableautocvt(fd);
-+
- 		/*
- 		 * Convert from working tree format to canonical git format
- 		 */
-@@ -4284,6 +4291,10 @@ static void prep_temp_blob(struct index_state *istate,
+@@ -4284,6 +4294,10 @@ static void prep_temp_blob(struct index_state *istate,
  		blob = buf.buf;
  		size = buf.len;
  	}
