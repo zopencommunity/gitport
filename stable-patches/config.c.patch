@@ -1,10 +1,10 @@
 diff --git a/config.c b/config.c
-index 3cfeb3d8bd..1968317fe4 100644
+index 6421894614..aa3c885d39 100644
 --- a/config.c
 +++ b/config.c
-@@ -6,6 +6,9 @@
-  *
-  */
+@@ -9,6 +9,9 @@
+ #define USE_THE_REPOSITORY_VARIABLE
+ 
  #include "git-compat-util.h"
 +#ifdef __MVS__
 +#include "read-cache-ll.h"
@@ -12,7 +12,7 @@ index 3cfeb3d8bd..1968317fe4 100644
  #include "abspath.h"
  #include "advice.h"
  #include "date.h"
-@@ -1523,6 +1526,18 @@ static int git_default_core_config(const char *var, const char *value,
+@@ -1545,6 +1548,18 @@ static int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
