@@ -163,7 +163,7 @@ zopen_append_to_zoslib_env() {
 cat <<EOF
 GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
 GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
-GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
+ZOPEN_GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 ASCII_TERMINFO|set|PROJECT_ROOT/../../ncurses/ncurses/share/terminfo/
 GIT_CONFIG_SYSTEM|set|PROJECT_ROOT/etc/gitconfig
 EOF
