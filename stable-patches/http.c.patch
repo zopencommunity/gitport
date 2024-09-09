@@ -1,0 +1,55 @@
+diff --git a/http.c b/http.c
+index 623ed23489..145413a57c 100644
+--- a/http.c
++++ b/http.c
+@@ -1037,6 +1037,15 @@ static int get_curl_http_version_opt(const char *version_string, long *opt)
+ 
+ #endif
+ 
++static void set_from_env(char **var, const char *envname)
++{
++	const char *val = getenv(envname);
++	if (val) {
++		FREE_AND_NULL(*var);
++		*var = xstrdup(val);
++	}
++}
++
+ static CURL *get_curl_handle(void)
+ {
+ 	CURL *result = curl_easy_init();
+@@ -1116,7 +1125,6 @@ static CURL *get_curl_handle(void)
+ 	if (ssl_cipherlist != NULL && *ssl_cipherlist)
+ 		curl_easy_setopt(result, CURLOPT_SSL_CIPHER_LIST,
+ 				ssl_cipherlist);
+-
+ 	if (ssl_cert)
+ 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
+ 	if (ssl_cert_type)
+@@ -1277,15 +1285,6 @@ static CURL *get_curl_handle(void)
+ 	return result;
+ }
+ 
+-static void set_from_env(char **var, const char *envname)
+-{
+-	const char *val = getenv(envname);
+-	if (val) {
+-		FREE_AND_NULL(*var);
+-		*var = xstrdup(val);
+-	}
+-}
+-
+ void http_init(struct remote *remote, const char *url, int proactive_auth)
+ {
+ 	char *low_speed_limit;
+@@ -1367,6 +1366,10 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
+ 	set_from_env(&ssl_key_type, "GIT_SSL_KEY_TYPE");
+ 	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
+ 	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
++#ifdef __MVS__
++  if (!ssl_cainfo)
++	  set_from_env(&ssl_cainfo, "ZOPEN_GIT_SSL_CAINFO");
++#endif
+ 
+ 	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
+ 
