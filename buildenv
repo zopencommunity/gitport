@@ -2,6 +2,7 @@
 # Set up environment variables for general build tool to operate
 #
 export ZOPEN_BUILD_LINE="STABLE"
+export ZOPEN_CATEGORIES="development source_control"
 
 # bump: git-version /GIT_VERSION="(.*)"/ https://github.com/git/git.git|*
 GIT_VERSION="2.46.1"
