@@ -1,15 +1,17 @@
 diff --git a/utf8.c b/utf8.c
-index 6bfaefa28e..e27b5443a8 100644
+index 6bfaefa28e..7e0e6e67ea 100644
 --- a/utf8.c
 +++ b/utf8.c
-@@ -1,5 +1,6 @@
+@@ -1,5 +1,8 @@
++#define USE_THE_REPOSITORY_VARIABLE
++
  #include "git-compat-util.h"
  #include "strbuf.h"
 +#include "environment.h"
  #include "utf8.h"
  
  /* This code is originally from https://www.cl.cam.ac.uk/~mgk25/ucs/ */
-@@ -590,6 +591,20 @@ char *reencode_string_len(const char *in, size_t insz,
+@@ -590,6 +593,20 @@ char *reencode_string_len(const char *in, size_t insz,
  #endif
  	}
  

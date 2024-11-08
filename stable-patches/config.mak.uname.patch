@@ -1,38 +1,24 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index a7607a5676..dff992a902 100644
+index d5112168a4..17716314c0 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -638,16 +638,23 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+@@ -639,12 +639,19 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
  ifeq ($(uname_S),OS/390)
--	NO_SYS_POLL_H = YesPlease
--	NO_STRCASESTR = YesPlease
--	NO_REGEX = YesPlease
--	NO_MMAP = YesPlease
--	NO_NSEC = YesPlease
--	NO_STRLCPY = YesPlease
--	NO_MEMMEM = YesPlease
--	NO_GECOS_IN_PWENT = YesPlease
--	HAVE_STRINGS_H = YesPlease
--	NEEDS_MODE_TRANSLATION = YesPlease
-+  PERL_PATH = perl
-+  PERL_PATH_FOR_SCRIPTS = /bin/env perl
-+  SHELL_PATH = bash
-+  SHELL_PATH_FOR_SCRIPTS = /bin/env bash
-+  PYTHON_PATH = python
-+  NO_SYS_POLL_H = YesPlease
++	PERL_PATH = perl
++	PERL_PATH_FOR_SCRIPTS = /bin/env perl
++	SHELL_PATH = bash
++	SHELL_PATH_FOR_SCRIPTS = /bin/env bash
++	PYTHON_PATH = python
+ 	NO_SYS_POLL_H = YesPlease
 +	RUNTIME_PREFIX = YesPlease
-+  NO_STRCASESTR = YesPlease
-+  NO_REGEX = YesPlease
-+  NO_MMAP = YesPlease
-+  NO_NSEC = YesPlease
-+  NO_STRLCPY = YesPlease
-+  NO_MKDTEMP = YesPlease
-+  NO_MEMMEM = YesPlease
-+  NO_GECOS_IN_PWENT = YesPlease
-+  HAVE_STRINGS_H = YesPlease
-+  NEEDS_MODE_TRANSLATION = YesPlease
- endif
- ifeq ($(uname_S),MINGW)
-         ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
+ 	NO_STRCASESTR = YesPlease
+ 	NO_REGEX = YesPlease
+ 	NO_MMAP = YesPlease
+ 	NO_NSEC = YesPlease
+ 	NO_STRLCPY = YesPlease
++	NO_MKDTEMP = YesPlease
+ 	NO_MEMMEM = YesPlease
+ 	NO_GECOS_IN_PWENT = YesPlease
+ 	HAVE_STRINGS_H = YesPlease
