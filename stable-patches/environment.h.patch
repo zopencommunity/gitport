@@ -1,15 +1,15 @@
 diff --git a/environment.h b/environment.h
-index e5351c9..fa21e86 100644
+index 923e12661e..ed3a77ae84 100644
 --- a/environment.h
 +++ b/environment.h
-@@ -134,6 +134,10 @@ extern unsigned long big_file_threshold;
+@@ -169,7 +169,9 @@ extern size_t delta_base_cache_limit;
+ extern unsigned long big_file_threshold;
  extern unsigned long pack_size_limit_cfg;
  extern int max_allowed_tree_depth;
- 
+-
 +#ifdef __MVS__
 +extern int utf8_ccsid;
 +#endif
-+
- /*
-  * Accessors for the core.sharedrepository config which lazy-load the value
-  * from the config (if not already set). The "reset" function can be
+ extern int core_preload_index;
+ extern int precomposed_unicode;
+ extern int protect_hfs;
