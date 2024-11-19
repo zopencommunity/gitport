@@ -1,0 +1,22 @@
+diff --git a/quote.c b/quote.c
+index 3c05194496..3643312db7 100644
+--- a/quote.c
++++ b/quote.c
+@@ -217,6 +217,8 @@ int sq_dequote_to_strvec(char *arg, struct strvec *array)
+  */
+ #define X8(x)   x, x, x, x, x, x, x, x
+ #define X16(x)  X8(x), X8(x)
++#define X64(x)  X16(x), X16(x), X16(x), X16(x)
++#define X128(x) X64(x), X64(x)
+ static signed char const cq_lookup[256] = {
+ 	/*           0    1    2    3    4    5    6    7 */
+ 	/* 0x00 */   1,   1,   1,   1,   1,   1,   1, 'a',
+@@ -227,7 +229,7 @@ static signed char const cq_lookup[256] = {
+ 	/* 0x58 */  -1,  -1,  -1,  -1,'\\',  -1,  -1,  -1,
+ 	/* 0x60 */ X16(-1), X8(-1),
+ 	/* 0x78 */  -1,  -1,  -1,  -1,  -1,  -1,  -1,   1,
+-	/* 0x80 */ /* set to 0 */
++	/* 0x80 */ X128(-1)
+ };
+ 
+ static inline int cq_must_quote(char c)
