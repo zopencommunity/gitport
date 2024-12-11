@@ -1,6 +1,4 @@
 #
-# Set up environment variables for general build tool to operate
-#
 export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_CATEGORIES="development source_control"
 
@@ -70,6 +68,10 @@ zopen_install_all()
   fi
   # Copy new contributor tools git-jump as per instructions
   cp contrib/git-jump/git-jump $ZOPEN_INSTALL_DIR/bin
+
+  mkdir -p $ZOPEN_INSTALL_DIR/share/bash-completion/completions
+  cp -vr contrib/completion/* $ZOPEN_INSTALL_DIR/share/bash-completion/completions/ 
+  ln -s git-completion.bash $ZOPEN_INSTALL_DIR/share/bash-completion/completions/git
 }
 # Run a 'zopen_pre_check' routine to clean out any GIT environment variables 
 # that might interfere with a new GIT operation during the test run
