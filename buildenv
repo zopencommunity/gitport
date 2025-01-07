@@ -3,7 +3,7 @@ export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_CATEGORIES="development source_control"
 
 # bump: git-version /GIT_VERSION="(.*)"/ https://github.com/git/git.git|*
-GIT_VERSION="2.47.0"
+GIT_VERSION="2.47.1"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
 export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python"
