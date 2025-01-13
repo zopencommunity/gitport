@@ -3,7 +3,7 @@ export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_CATEGORIES="development source_control"
 
 # bump: git-version /GIT_VERSION="(.*)"/ https://github.com/git/git.git|*
-GIT_VERSION="2.47.1"
+GIT_VERSION="2.48.0"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
 export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python"
@@ -164,8 +164,6 @@ ZZ
 
 zopen_append_to_zoslib_env() {
 cat <<EOF
-GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
-GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 ZOPEN_GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 ASCII_TERMINFO|set|PROJECT_ROOT/../../ncurses/ncurses/share/terminfo/
 GIT_CONFIG_SYSTEM|set|PROJECT_ROOT/etc/gitconfig
