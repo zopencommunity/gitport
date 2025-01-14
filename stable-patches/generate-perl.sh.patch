@@ -1,0 +1,13 @@
+diff --git a/generate-perl.sh b/generate-perl.sh
+index 65f122ebfc..154ae533f8 100755
+--- a/generate-perl.sh
++++ b/generate-perl.sh
+@@ -19,7 +19,7 @@ OUTPUT="$5"
+ 
+ sed -e '1{' \
+     -e "	/^#!.*perl/!b" \
+-    -e "	s|#!.*perl|#!$PERL_PATH|" \
++    -e "	s|#!.*perl|#!$PERL_PATH_FOR_SCRIPTS|" \
+     -e "	r $PERL_HEADER" \
+     -e '	G' \
+     -e '}' \
