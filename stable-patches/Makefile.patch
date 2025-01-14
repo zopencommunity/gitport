@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index 97e8385b66..3c7078115f 100644
+index 97e8385b66..08ab16ee92 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,8 @@ include shared.mak
@@ -20,7 +20,7 @@ index 97e8385b66..3c7078115f 100644
  # Define NO_PERL if you do not want Perl scripts or libraries at all.
  #
  # Define NO_PERL_CPAN_FALLBACKS if you do not want to install bundled
-@@ -896,9 +900,15 @@ BINDIR_PROGRAMS_NO_X += git-cvsserver
+@@ -896,15 +900,22 @@ BINDIR_PROGRAMS_NO_X += git-cvsserver
  ifndef SHELL_PATH
  	SHELL_PATH = /bin/sh
  endif
@@ -36,7 +36,14 @@ index 97e8385b66..3c7078115f 100644
  ifndef PYTHON_PATH
  	PYTHON_PATH = /usr/bin/python
  endif
-@@ -1372,7 +1382,7 @@ UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
+ 
+ export PERL_PATH
+ export PYTHON_PATH
++export PERL_PATH_FOR_SCRIPTS
+ 
+ TEST_SHELL_PATH = $(SHELL_PATH)
+ 
+@@ -1372,7 +1383,7 @@ UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
  
  # xdiff and reftable libs may in turn depend on what is in libgit.a
  GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
@@ -45,7 +52,7 @@ index 97e8385b66..3c7078115f 100644
  
  GIT_USER_AGENT = git/$(GIT_VERSION)
  
-@@ -2298,9 +2308,10 @@ perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
+@@ -2298,9 +2309,10 @@ perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
  gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
  gitwebstaticdir_SQ = $(subst ','\'',$(gitwebstaticdir))
  
@@ -57,7 +64,7 @@ index 97e8385b66..3c7078115f 100644
  PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
  TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
  DIFF_SQ = $(subst ','\'',$(DIFF))
-@@ -2543,7 +2554,7 @@ hook-list.h: generate-hooklist.sh Documentation/githooks.txt
+@@ -2543,7 +2555,7 @@ hook-list.h: generate-hooklist.sh Documentation/githooks.txt
  
  SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):\
  	$(localedir_SQ):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
@@ -66,12 +73,12 @@ index 97e8385b66..3c7078115f 100644
  	$(perllibdir_SQ)
  GIT-SCRIPT-DEFINES: FORCE
  	@FLAGS='$(SCRIPT_DEFINES)'; \
-@@ -3181,7 +3192,7 @@ GIT-BUILD-OPTIONS: FORCE
- 		-e "s|@NO_UNIX_SOCKETS@|\'$(NO_UNIX_SOCKETS)\'|" \
- 		-e "s|@PAGER_ENV@|\'$(PAGER_ENV)\'|" \
- 		-e "s|@PERL_LOCALEDIR@|\'$(perl_localedir_SQ)\'|" \
--		-e "s|@PERL_PATH@|\'$(PERL_PATH_SQ)\'|" \
-+		-e "s|@PERL_PATH@|\'$(PERL_PATH_FOR_SCRIPTS_SQ)\'|" \
- 		-e "s|@PYTHON_PATH@|\'$(PYTHON_PATH_SQ)\'|" \
- 		-e "s|@RUNTIME_PREFIX@|\'$(RUNTIME_PREFIX_OPTION)\'|" \
- 		-e "s|@SANITIZE_ADDRESS@|\'$(SANITIZE_ADDRESS)\'|" \
+@@ -2794,7 +2806,7 @@ endif
+ 
+ exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
+ exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
+-	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
++	'-DGIT_EXEC_PATH="$(gitexecdir_relative_SQ)"' \
+ 	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+ 	'-DBINDIR="$(bindir_relative_SQ)"' \
+ 	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'

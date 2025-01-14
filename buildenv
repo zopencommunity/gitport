@@ -6,11 +6,11 @@ export ZOPEN_CATEGORIES="development source_control"
 GIT_VERSION="2.48.0"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
-export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python"
+export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk"
 
 export ZOPEN_STABLE_URL="https://github.com/git/git.git"
 export ZOPEN_STABLE_TAG="v${GIT_VERSION}"
-export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python"
+export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk"
 
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
@@ -112,7 +112,9 @@ zopen_post_install()
   set -e
   $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport
   $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport
+  rm -rf httpgitport gitport 
   set +e
+  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport 2>&1 | grep -q "RUNTIME_PREFIX requested, but prefix computation failed" && exit 1
 
   mkdir -p "$1/etc"
   touch "$1/etc/gitconfig" # empty it out to avoid error with --system option
@@ -164,6 +166,8 @@ ZZ
 
 zopen_append_to_zoslib_env() {
 cat <<EOF
+GIT_TEMPLATE_DIR|set|PROJECT_ROOT/share/git-core/templates
+GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 ZOPEN_GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 ASCII_TERMINFO|set|PROJECT_ROOT/../../ncurses/ncurses/share/terminfo/
 GIT_CONFIG_SYSTEM|set|PROJECT_ROOT/etc/gitconfig
