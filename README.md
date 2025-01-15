@@ -3,46 +3,10 @@
 # Git on z/OS
 Git is a popular version control system that is widely used in the open source community. 
 
-## Pre-requisites
-Git on z/OS has the following dependencies:
-* bash - https://github.com/ZOSOpenTools/bashport/releases
-* perl - https://github.com/ZOSOpenTools/perlport/releases
-* less - (default pager) //github.com/ZOSOpenTools/lessport/releases
-* ncurses - https://github.com/ZOSOpenTools/ncursesport/releases
-
-Once you set up these dependences, you can then install Git.
-
 ## Obtaining Git on z/OS
-Git on z/OS can be downloaded from https://github.com/ZOSOpenTools/gitport/releases.
+Git on z/OS can be downloaded from https://github.com/zopencommunity/gitport/releases.
 
-If you have curl on your system, you can download the latest version with:
-```
-curl -L -o gitport.pax.Z https://pathtogit.pax.Z
-```
-You can then extract the pax.Z as follows:
-```
-pax -rf gitport.pax.Z
-cd git-*
-```
-
-## Setting up a CA Certificate
-To obtain a CA certificate, you can download the recommended CA certificates extracted from Mozilla here:
-https://curl.se/docs/caextract.html
-
-If you have [zopen](https://zosopentools.github.io/meta/#/Guides/zopen) in your path, you can use the `zopen update-cacerts` command to download the latest CA certificate.
-
-Once you have a CA Certificate on your file system, you can set the GIT_SSL_CAINFO environment variable to point to it.
-```
-export GIT_SSL_CAINFO=/path/to/my/cacert.pem
-```
-
-
-## Setting up Git on z/OS
-Once installed, you will need to source the .env file as follows:
-
-`. ./.env`
-
-This will set the PATH, LIBPATH, MANPATH and other Git environment variables.
+However, it is recommended that you obtain Git via the [zopen package manager](https://zopen.community/#/Guides/QuickStart).
 
 ## Encoding considerations
 Git on z/OS leverages Git's `.gitattributes` support to enable support for various encodings, documented [here](https://git-scm.com/docs/gitattributes). 
@@ -103,7 +67,6 @@ cd git
 ls -lT # you will notice that all files are now tagged as 819
 ```
 
-
 ### Binary files
 To specify a binary encoding, you can use the binary attribute as follows:
 ```
@@ -125,4 +88,4 @@ You can specify multiple working-tree-encoding attributes, where the later attri
 ### Migration considerations
 If you are migrating from Rocket Software's Git, then the good news is that Git on z/OS should be compatible. 
 
-If you encounter any issues, please open an issue under https://github.com/ZOSOpenTools/gitport/issues.
+If you encounter any issues, please open an issue under https://github.com/zopencommunity/gitport/issues.
