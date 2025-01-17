@@ -8,6 +8,8 @@ Git on z/OS can be downloaded from https://github.com/zopencommunity/gitport/rel
 
 However, it is recommended that you obtain Git via the [zopen package manager](https://zopen.community/#/Guides/QuickStart).
 
+Use `zopen install git` to install git.
+
 ## Encoding considerations
 Git on z/OS leverages Git's `.gitattributes` support to enable support for various encodings, documented [here](https://git-scm.com/docs/gitattributes). 
 `.gitattributes` can be specified globally, or locally in repositories to determine the encoding of working tree files.
