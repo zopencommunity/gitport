@@ -6,11 +6,11 @@ export ZOPEN_CATEGORIES="development source_control"
 GIT_VERSION="2.48.1"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
-export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk"
+export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zedc_ascii openssl expat gettext coreutils diffutils bash tar check_python gawk"
 
 export ZOPEN_STABLE_URL="https://github.com/git/git.git"
 export ZOPEN_STABLE_TAG="v${GIT_VERSION}"
-export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk"
+export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zedc_ascii openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk"
 
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
@@ -29,11 +29,11 @@ export ZOPEN_INSTALL_OPTS=""
 export ZOPEN_CHECK_OPTS='test'
 export ZOPEN_COMP=CLANG
 
-export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
+export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZEDC_ASCII_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
 
-export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
-export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
-export ZOPEN_EXTRA_LIBS="${ZOPEN_EXTRA_LIBS} -lz -lcurl -lssl -lcrypto"
+export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
+export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
+export ZOPEN_EXTRA_LIBS="${ZOPEN_EXTRA_LIBS} -lcurl -lssl -lcrypto"
 export ZOPEN_EXTRA_CFLAGS="-O2"
 export CURL_LDFLAGS="-lcurl"
 export CURL_CFLAGS="-I\${CURL_HOME}/include"
