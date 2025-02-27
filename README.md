@@ -108,6 +108,148 @@ If you are migrating from Rocket Software's Git, then the good news is that Git 
 
 If you encounter any issues, please open an issue under https://github.com/zopencommunity/gitport/issues.
 
+## Git Performance considerations
+
+**1. Data Reduction Strategies:**
+
+These strategies focus on minimizing the amount of data Git needs to process, leading to direct reductions in MIPS consumption and improved performance.
+
+*   **1.1. Shallow Clones:**
+
+    * **Description:**  Limit the download depth of commit history during cloning.  Instead of fetching the entire history, a shallow clone retrieves only the most recent commits, significantly reducing data transfer, especially beneficial for pipelines and automated tasks that don't require full history.
+
+    * **Usage Example:**
+
+       To perform a shallow clone with a depth of 1 (only the latest commit):
+
+       ```bash
+       git clone --depth=1 <repo-url> my-repo
+       ```
+
+       For pipelines, using `--depth=1` is often sufficient as build processes typically only need the current commit for building and testing.
+
+    * **Benefit:**  Substantially reduced clone times, network transfer, and MIPS usage, particularly in pipeline environments. This is highly recommended for CI/CD workflows where commit history beyond the most recent is often unnecessary.
+
+*   **1.2. Sparse Checkouts:**
+
+    * **Description:**  Process only a subset of repository files by specifying required directories and files. This reduces disk space, network transfer, and system workload.
+
+    * **Usage Example:**
+
+       To checkout only the `moduleA` and `common` directories:
+
+       1. **Initialize sparse checkout:**
+          ```bash
+          git clone <repo-url> my-repo
+          cd my-repo
+          git sparse-checkout init --cone
+          ```
+       2. **Define directories:**
+          ```bash
+          git sparse-checkout set moduleA common
+          ```
+
+    * **Benefit:** Reduced MIPS, faster operations, and lower disk space usage. Consider GitLab's custom "git strategies" for pipeline integration (see: [https://gitlab.com/gitlab-org/gitlab-runner/-/issues/26631](https://gitlab.com/gitlab-org/gitlab-runner/-/issues/26631)).
+
+*   **1.3. Avoid Downloading Large Files:**
+
+    * **Description:** Prevent download of unnecessary large binary files (blobs) during cloning.
+
+    * **Implementation:** Use the `--filter=blob:none` option with `git clone`:
+
+      ```bash
+      git clone --filter=blob:none <repo-url>
+      ```
+
+    * **Benefit:** Reduced network transfer, disk I/O, and processing of irrelevant data, lowering MIPS.
+
+**2. Protocol Optimization:**
+
+Optimizing the communication protocol can reduce overhead and improve efficiency.
+
+*   **2.1. Utilize SSH instead of HTTPS:**
+
+    * **Description:** Employ SSH (using `ssh://` or `git@<host>:<repo>` format in Git URLs) instead of HTTPS for Git operations.  *(Note: The original text's mention of `git://` for SSH might be a misunderstanding; clarify intended protocol if needed.)* SSH can minimize overhead from TLS/SSL handshakes and certificate verification.
+
+    * **Implementation:** Configure Git to use SSH URLs for repository access.
+
+    * **Benefit:** Reduced MIPS usage by minimizing TLS/SSL processing overhead.
+
+**3. Git Configuration Tuning:**
+
+These configuration options allow for fine-tuning Git's behavior to reduce resource consumption and enhance performance. **Back up `$HOME/.gitconfig` before making changes.**
+
+*   **3.1. Compression and Garbage Collection:**
+
+    *   **3.1.1. Lower Compression Level (`core.compression`):**
+        *   **Purpose:** Reduce CPU usage by decreasing or disabling Git object compression.
+        *   **Configuration:**
+            ```bash
+            git config --global core.compression <level>  # 0 for no compression, 1-9 for levels
+            git config --global core.compression 0      # Disable compression
+            ```
+        *   **Consideration:** Trade-off between CPU and disk space. Test `core.compression 0` before exploring zEDC.
+
+    *   **3.1.2. Minimize Garbage Collection (`gc.auto`):**
+        *   **Purpose:** Prevent performance dips by disabling automatic garbage collection.
+        *   **Configuration:**
+            ```bash
+            git config --global gc.auto 0
+            ```
+        *   **Consideration:** May require manual `git gc` periodically.
+
+*   **3.2. Performance-Enhancing Features:**
+
+    *   **3.2.1. `core.ignoreStat`:**
+        *   **Purpose:** Skip `lstat()` calls for change detection, beneficial if `lstat()` is slow on z/OS.
+        *   **Configuration:**
+            ```bash
+            git config --global core.ignoreStat true
+            ```
+        *   **Consideration:** Default is `false`. Evaluate `lstat()` performance on z/OS.
+
+    *   **3.2.2. `feature.manyFiles` Optimizations:**
+        *   **Purpose:** Optimize for repositories with many files, improving commands like `git status` and `git checkout`.
+        *   **Configuration:**
+            ```bash
+            git config --global feature.manyFiles true
+            git config --global index.skipHash true
+            git config --global index.version 4
+            git config --global core.untrackedCache true
+            ```
+        *   **Sub-options:** `index.skipHash`, `index.version`, `core.untrackedCache`.
+
+*   **3.3. Checkout Parallelization:**
+
+    *   **3.3.1. Parallel Checkout Workers (`checkout.workers`, `checkout.thresholdForParallelism`):**
+        *   **Purpose:** Control parallel workers for checkout operations.
+        *   **Configuration:**
+            ```bash
+            git config --global checkout.workers <n>         # -1 for all cores
+            git config --global checkout.thresholdForParallelism <files> # e.g., 1000+
+            ```
+        *   **Consideration:** Performance depends on storage type and core count. Experiment for optimal values.
+
+*   **3.4. Repack Optimization:**
+
+    *   **3.4.1. Bitmap Indexes during Repacking (`repack.writeBitmaps`):**
+        *   **Purpose:** Speed up clones/fetches by creating bitmap indexes during `git repack -a`.
+        *   **Configuration:**
+            ```bash
+            git config --global repack.writeBitmaps true  # For bare repos (default)
+            git config --global repack.writeBitmaps false # Consider enabling for non-bare
+            ```
+        *   **Consideration:** Increases disk space and repack time but improves long-term fetch/clone performance.
+
+    *   **3.4.2. Packed Git Window Size (`core.packedGitWindowSize`):**
+        *   **Purpose:** Tune memory mapping for pack files.
+        *   **Configuration:**
+            ```bash
+            git config --global core.packedGitWindowSize <bytes> # Adjust based on system memory
+            ```
+        *   **Consideration:** Experiment to find the optimal value based on memory and pack file sizes.
+
+
 ## Troubleshooting
 TBD
 
