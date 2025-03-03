@@ -110,144 +110,188 @@ If you encounter any issues, please open an issue under https://github.com/zopen
 
 ## Git Performance considerations
 
-**1. Data Reduction Strategies:**
+## Optimizing Git Performance
 
-These strategies focus on minimizing the amount of data Git needs to process, leading to direct reductions in MIPS consumption and improved performance.
+Efficient Git operations are vital for optimized resource utilization on z/OS, particularly in development and CI/CD environments.  This document presents key strategies to enhance Git performance and reduce MIPS, contributing to improved system efficiency.
 
-*   **1.1. Shallow Clones:**
+# Git Performance Considerations
 
-    * **Description:**  Limit the download depth of commit history during cloning.  Instead of fetching the entire history, a shallow clone retrieves only the most recent commits, significantly reducing data transfer, especially beneficial for pipelines and automated tasks that don't require full history.
+This document provides various strategies to improve Git performance. It covers approaches that reduce the amount of data processed by Git, fine-tuning configuration parameters, and addresses specific considerations for encoding conversions in the working tree. Each section offers explanations and examples to help users optimize Git operations in large repositories, CI/CD environments, and systems with high I/O demands.
 
-    * **Usage Example:**
+## 1. Data Reduction Strategies
 
-       To perform a shallow clone with a depth of 1 (only the latest commit):
+Data reduction strategies are centered around minimizing the amount of data that Git must download, process, or store. By reducing the data footprint, you not only decrease network usage and disk I/O but also lower the CPU cycles required during operations.
 
-       ```bash
-       git clone --depth=1 <repo-url> my-repo
-       ```
+### Shallow Clones
 
-       For pipelines, using `--depth=1` is often sufficient as build processes typically only need the current commit for building and testing.
+- **Purpose:**  
+  Shallow clones limit the history depth that Git downloads. Instead of cloning the entire commit history of a repository, a shallow clone retrieves only the latest commits (often just the most recent commit). This is particularly useful in **CI/CD pipelines** or automated builds where the full commit history is not needed.
 
-    * **Benefit:**  Substantially reduced clone times, network transfer, and MIPS usage, particularly in pipeline environments. This is highly recommended for CI/CD workflows where commit history beyond the most recent is often unnecessary.
+- **Benefits:**  
+  - **Reduced Data Transfer:** Only a subset of the commit history is downloaded, which saves bandwidth.  
+  - **Faster Cloning:** Cloning operations become much quicker as less data is processed.  
+  - **Lower CPU and Memory Usage:** With fewer commits to process, the resource consumption is significantly reduced.
 
-*   **1.2. Sparse Checkouts:**
+- **Example Command:**
+  ```bash
+  git clone --depth=1 <repo-url> my-repo
+  ```
+  This command tells Git to perform a shallow clone with a depth of 1, meaning only the latest commit is cloned.
 
-    * **Description:**  Process only a subset of repository files by specifying required directories and files. This reduces disk space, network transfer, and system workload.
+### Sparse Checkouts
 
-    * **Usage Example:**
+- **Purpose:**  
+  Sparse checkouts allow you to restrict the working directory to a specific subset of files or directories within the repository. This is highly beneficial for large repositories where only a few directories are required for a particular task. 
 
-       To checkout only the `moduleA` and `common` directories:
+- **Benefits:**  
+  - **Reduced Disk Usage:** Only the necessary files are checked out, saving disk space.
+  - **Improved Performance:** Fewer files mean less overhead for file system operations, leading to faster checkout and status commands.
 
-       1. **Initialize sparse checkout:**
-          ```bash
-          git clone <repo-url> my-repo
-          cd my-repo
-          git sparse-checkout init --cone
-          ```
-       2. **Define directories:**
-          ```bash
-          git sparse-checkout set moduleA common
-          ```
+- **Example Workflow:**
+  1. Clone the repository normally:
+     ```bash
+     git clone <repo-url> my-repo
+     cd my-repo
+     ```
+  2. Initialize sparse checkout mode:
+     ```bash
+     git sparse-checkout init --cone
+     ```
+  3. Specify the directories to be checked out:
+     ```bash
+     git sparse-checkout set src include
+     ```
+  This setup ensures that only the directories `src` and `include` are present in the working directory, thereby reducing unnecessary data processing.
 
-    * **Benefit:** Reduced MIPS, faster operations, and lower disk space usage. Consider GitLab's custom "git strategies" for pipeline integration (see: [https://gitlab.com/gitlab-org/gitlab-runner/-/issues/26631](https://gitlab.com/gitlab-org/gitlab-runner/-/issues/26631)).
+### Avoid Downloading Large Binaries
 
-*   **1.3. Avoid Downloading Large Files:**
+- **Purpose:**  
+  In repositories containing large binary files or blobs that are not needed for every operation, you can instruct Git to filter these out during the cloning process. This helps in managing bandwidth and disk space effectively.
 
-    * **Description:** Prevent download of unnecessary large binary files (blobs) during cloning.
+- **Benefits:**  
+  - **Efficient Network Usage:** By not downloading large blobs, you reduce the time and data needed for cloning.
+  - **Lower Processing Overhead:** Git spends less time handling unnecessary large objects.
 
-    * **Implementation:** Use the `--filter=blob:none` option with `git clone`:
+- **Example Command:**
+  ```bash
+  git clone --filter=blob:none <repo-url>
+  ```
+  This command uses the `--filter=blob:none` option to prevent Git from downloading any large file blobs, making the clone operation leaner and faster.
 
-      ```bash
-      git clone --filter=blob:none <repo-url>
-      ```
+---
 
-    * **Benefit:** Reduced network transfer, disk I/O, and processing of irrelevant data, lowering MIPS.
+## 2. Additional Strategies
 
-**2. Protocol Optimization:**
+Beyond data reduction, there are several additional strategies that can further enhance Git performance by optimizing internal Git processes and leveraging system resources more effectively.
 
-Optimizing the communication protocol can reduce overhead and improve efficiency.
+### Advanced Parallelization
 
-*   **2.1. Utilize SSH instead of HTTPS:**
+- **Purpose:**  
+  Git can take advantage of multiple processors by parallelizing certain operations. This includes parallel checkouts and repack operations which are critical for large repositories.
 
-    * **Description:** Employ SSH (using `ssh://` or `git@<host>:<repo>` format in Git URLs) instead of HTTPS for Git operations.  *(Note: The original text's mention of `git://` for SSH might be a misunderstanding; clarify intended protocol if needed.)* SSH can minimize overhead from TLS/SSL handshakes and certificate verification.
+- **Benefits:**  
+  - **Reduced Checkout Time:** Parallel workers can process multiple files concurrently.
+  - **Better Resource Utilization:** Full utilization of available CPU cores leads to overall performance improvement.
 
-    * **Implementation:** Configure Git to use SSH URLs for repository access.
+- **Example Configuration:**
+  ```bash
+  git config --global checkout.workers -1         # Use all available cores
+  git config --global checkout.thresholdForParallelism 1000
+  ```
+  These settings instruct Git to use all available CPU cores for checkout operations and to trigger parallelism when the number of files exceeds a certain threshold.
 
-    * **Benefit:** Reduced MIPS usage by minimizing TLS/SSL processing overhead.
+### Compression and Garbage Collection
 
-**3. Git Configuration Tuning:**
+*   **Lower Compression Level (`core.compression`):**
+    *   **Purpose:** Reduce CPU usage by decreasing or disabling Git object compression.
+    *   **Configuration:**
+        ```bash
+        git config --global core.compression <level>  # 0 for no compression, 1-9 for levels
+        git config --global core.compression 0      # Disable compression
+        ```
+    *   **Consideration:** Trade-off between CPU and disk space.
 
-These configuration options allow for fine-tuning Git's behavior to reduce resource consumption and enhance performance. **Back up `$HOME/.gitconfig` before making changes.**
+*   **Minimize Garbage Collection (`gc.auto`):**
+    *   **Purpose:** Prevent performance dips by disabling automatic garbage collection.
+    *   **Configuration:**
+        ```bash
+        git config --global gc.auto 0
+        ```
+    *   **Consideration:** May require manual `git gc` periodically.
 
-*   **3.1. Compression and Garbage Collection:**
+### Performance-Enhancing Features
 
-    *   **3.1.1. Lower Compression Level (`core.compression`):**
-        *   **Purpose:** Reduce CPU usage by decreasing or disabling Git object compression.
-        *   **Configuration:**
-            ```bash
-            git config --global core.compression <level>  # 0 for no compression, 1-9 for levels
-            git config --global core.compression 0      # Disable compression
-            ```
-        *   **Consideration:** Trade-off between CPU and disk space. Test `core.compression 0` before exploring zEDC.
+*   **`core.ignoreStat`:**
+    *   **Purpose:** Skip `lstat()` calls for change detection, beneficial if `lstat()` is slow on z/OS.
+    *   **Configuration:**
+        ```bash
+        git config --global core.ignoreStat true
+        ```
+    *   **Consideration:** Default is `false`. Evaluate `lstat()` performance on z/OS.
 
-    *   **3.1.2. Minimize Garbage Collection (`gc.auto`):**
-        *   **Purpose:** Prevent performance dips by disabling automatic garbage collection.
-        *   **Configuration:**
-            ```bash
-            git config --global gc.auto 0
-            ```
-        *   **Consideration:** May require manual `git gc` periodically.
+*   **`feature.manyFiles` Optimizations:**
+    *   **Purpose:** Optimize for repositories with many files, improving commands like `git status` and `git checkout`.
+    *   **Configuration:**
+        ```bash
+        git config --global feature.manyFiles true
+        git config --global index.skipHash true
+        git config --global index.version 4
+        git config --global core.untrackedCache true
+        ```
+    *   **Sub-options:** `index.skipHash`, `index.version`, `core.untrackedCache`.
 
-*   **3.2. Performance-Enhancing Features:**
 
-    *   **3.2.1. `core.ignoreStat`:**
-        *   **Purpose:** Skip `lstat()` calls for change detection, beneficial if `lstat()` is slow on z/OS.
-        *   **Configuration:**
-            ```bash
-            git config --global core.ignoreStat true
-            ```
-        *   **Consideration:** Default is `false`. Evaluate `lstat()` performance on z/OS.
+### Profiling and Diagnostics
 
-    *   **3.2.2. `feature.manyFiles` Optimizations:**
-        *   **Purpose:** Optimize for repositories with many files, improving commands like `git status` and `git checkout`.
-        *   **Configuration:**
-            ```bash
-            git config --global feature.manyFiles true
-            git config --global index.skipHash true
-            git config --global index.version 4
-            git config --global core.untrackedCache true
-            ```
-        *   **Sub-options:** `index.skipHash`, `index.version`, `core.untrackedCache`.
+- **Purpose:**  
+  Profiling tools and diagnostics such as `GIT_TRACE` help identify bottlenecks in Git operations. This enables targeted performance tuning based on actual system behavior.
 
-*   **3.3. Checkout Parallelization:**
+- **Benefits:**  
+  - **Insight into Operations:** Detailed trace logs can reveal which steps are consuming the most time.
+  - **Guided Optimization:** With clear diagnostics, it becomes easier to apply the right tuning adjustments to configuration settings.
 
-    *   **3.3.1. Parallel Checkout Workers (`checkout.workers`, `checkout.thresholdForParallelism`):**
-        *   **Purpose:** Control parallel workers for checkout operations.
-        *   **Configuration:**
-            ```bash
-            git config --global checkout.workers <n>         # -1 for all cores
-            git config --global checkout.thresholdForParallelism <files> # e.g., 1000+
-            ```
-        *   **Consideration:** Performance depends on storage type and core count. Experiment for optimal values.
+- **Usage:**  
+  Set the environment variable before running Git commands:
+  ```bash
+  export GIT_TRACE=1
+  export GIT_PERFORMANCE=1
+  ```
+  This will output detailed trace information that can be analyzed to optimize performance further.
 
-*   **3.4. Repack Optimization:**
 
-    *   **3.4.1. Bitmap Indexes during Repacking (`repack.writeBitmaps`):**
-        *   **Purpose:** Speed up clones/fetches by creating bitmap indexes during `git repack -a`.
-        *   **Configuration:**
-            ```bash
-            git config --global repack.writeBitmaps true  # For bare repos (default)
-            git config --global repack.writeBitmaps false # Consider enabling for non-bare
-            ```
-        *   **Consideration:** Increases disk space and repack time but improves long-term fetch/clone performance.
+## 4. Working-Tree-Encoding: Performance Considerations
 
-    *   **3.4.2. Packed Git Window Size (`core.packedGitWindowSize`):**
-        *   **Purpose:** Tune memory mapping for pack files.
-        *   **Configuration:**
-            ```bash
-            git config --global core.packedGitWindowSize <bytes> # Adjust based on system memory
-            ```
-        *   **Consideration:** Experiment to find the optimal value based on memory and pack file sizes.
+The `working-tree-encoding` or `zos-working-tree-encoding` attribute is designed to repository contents to a different encoding in the working directory. Although this is useful for projects that operate on a different encoding, it comes at a performance cost due to the on-the-fly conversions performed by the `iconv` library.
+
+### How Working-Tree-Encoding Works
+
+  When you define a `working-tree-encoding` in a `.gitattributes` file, Git automatically converts files from the repository's storage encoding to the specified encoding in the working tree during checkout. Conversely, when files are added or modified, Git converts them back to the repositoryâs encoding.
+
+- **Conversion Process:**  
+  This conversion is handled by the `iconv` library, a library that transforms the fileâs encoding. While this ensures that files are accessible in the desired format, it introduces additional CPU overhead.
+
+### Performance Impact
+
+- **Using a Global Wildcard:**  
+  Applying a global wildcard (i.e., `*`) for the `working-tree-encoding` attribute means that every file in the repository will undergo this conversion. For example:
+  ```gitattributes
+  * text zos-working-tree-encoding=ibm-1047
+  ```
+  **Impact:**  
+  - **High CPU Usage:** Every file, regardless of type, is subject to encoding conversion.
+  - **Slower Operations:** In repositories with a large number of files, this can significantly slow down checkouts, status checks, and other file operations.
+
+### Use More Specific Patterns to Reduce Overhead
+
+- **Targeting Specific File Types:**  
+  Instead of applying the encoding conversion universally, restrict it to only those file types that require a specific encoding. For example, you may only need to convert source files, such as `.cob` or `.c` files:
+  ```gitattributes
+  *.cob text working-tree-encoding=ibm-1047
+  *.c text working-tree-encoding=ibm-1047
+  ```
+  **Benefits:**  
+  - **Reduced Conversion Load:** Only a subset of files is processed by `iconv`, alleviating the performance penalty.
+  - **Focused Resource Usage:** System resources are concentrated on files that actually benefit from encoding conversion, improving overall efficiency.
 
 
 ## Troubleshooting
