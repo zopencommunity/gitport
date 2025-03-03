@@ -220,9 +220,6 @@ Beyond data reduction, there are several additional strategies that can further 
     *   **Configuration:**
         ```bash
         git config --global feature.manyFiles true
-        git config --global index.skipHash true
-        git config --global index.version 4
-        git config --global core.untrackedCache true
         ```
     *   **Sub-options:** `index.skipHash`, `index.version`, `core.untrackedCache`.
 
@@ -237,7 +234,7 @@ Beyond data reduction, there are several additional strategies that can further 
 ### Profiling and Diagnostics
 
 - **Purpose:**  
-  Diagnostic environment variables such as `GIT_TRACE` and `GIT_PERFORMANCE` help identify bottlenecks in Git operations. With the added logs, this can enable targeted performance tuning based on actual system behavior.
+  Diagnostic environment variables such as `GIT_TRACE` and `GIT_TRACE_PERFORMANCE` help identify bottlenecks in Git operations. With the added logs, this can enable targeted performance tuning based on actual system behavior.
 
 - **Benefits:**  
   - **Insight into Operations:** Detailed trace logs can reveal which steps are consuming the most time.
@@ -246,7 +243,7 @@ Beyond data reduction, there are several additional strategies that can further 
   Set the environment variable before running Git commands:
   ```bash
   export GIT_TRACE=1
-  export GIT_PERFORMANCE=1
+  export GIT_TRACE_PERFORMANCE=1
   ```
   This will output detailed trace information that can be analyzed to optimize performance further.
 
