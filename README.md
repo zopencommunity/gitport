@@ -108,15 +108,9 @@ If you are migrating from Rocket Software's Git, then the good news is that Git 
 
 If you encounter any issues, please open an issue under https://github.com/zopencommunity/gitport/issues.
 
-## Git Performance considerations
+# Git Performance considerations
 
-## Optimizing Git Performance
-
-Efficient Git operations are vital for optimized resource utilization on z/OS, particularly in development and CI/CD environments.  This document presents key strategies to enhance Git performance and reduce MIPS, contributing to improved system efficiency.
-
-# Git Performance Considerations
-
-This document provides various strategies to improve Git performance. It covers approaches that reduce the amount of data processed by Git, fine-tuning configuration parameters, and addresses specific considerations for encoding conversions in the working tree. Each section offers explanations and examples to help users optimize Git operations in large repositories, CI/CD environments, and systems with high I/O demands.
+This section provides various strategies to improve Git performance. It covers approaches that reduce the amount of data processed by Git, fine-tuning configuration parameters, and addresses specific considerations for encoding conversions in the working tree. Each section offers explanations and examples to help users optimize Git operations in large repositories, CI/CD environments, and systems with high I/O demands.
 
 ## 1. Data Reduction Strategies
 
@@ -125,7 +119,7 @@ Data reduction strategies are centered around minimizing the amount of data that
 ### Shallow Clones
 
 - **Purpose:**  
-  Shallow clones limit the history depth that Git downloads. Instead of cloning the entire commit history of a repository, a shallow clone retrieves only the latest commits (often just the most recent commit). This is particularly useful in **CI/CD pipelines** or automated builds where the full commit history is not needed.
+  Shallow clones limit the history depth that Git downloads. Instead of cloning the entire commit history of a repository, a shallow clone (`--depth=n`) retrieves only the latest commits (often just the most recent commit). This is particularly useful in **CI/CD pipelines** or automated builds where the full commit history is not needed.
 
 - **Benefits:**  
   - **Reduced Data Transfer:** Only a subset of the commit history is downloaded, which saves bandwidth.  
@@ -136,7 +130,7 @@ Data reduction strategies are centered around minimizing the amount of data that
   ```bash
   git clone --depth=1 <repo-url> my-repo
   ```
-  This command tells Git to perform a shallow clone with a depth of 1, meaning only the latest commit is cloned.
+  This command tells Git to perform a shallow clone with a depth of 1, meaning only the latest commit is cloned. This is particularly useful in in CI/CD build pipelines where logs are not accessed.
 
 ### Sparse Checkouts
 
@@ -203,13 +197,13 @@ Beyond data reduction, there are several additional strategies that can further 
 ### Compression and Garbage Collection
 
 *   **Lower Compression Level (`core.compression`):**
-    *   **Purpose:** Reduce CPU usage by decreasing or disabling Git object compression.
+    *   **Purpose:** Reduce CPU usage and improves fetch and clone performance by decreasing or disabling Git object compression.
     *   **Configuration:**
         ```bash
         git config --global core.compression <level>  # 0 for no compression, 1-9 for levels
         git config --global core.compression 0      # Disable compression
         ```
-    *   **Consideration:** Trade-off between CPU and disk space.
+    *   **Consideration:** Trade-off between CPU and disk space. 
 
 *   **Minimize Garbage Collection (`gc.auto`):**
     *   **Purpose:** Prevent performance dips by disabling automatic garbage collection.
@@ -220,14 +214,6 @@ Beyond data reduction, there are several additional strategies that can further 
     *   **Consideration:** May require manual `git gc` periodically.
 
 ### Performance-Enhancing Features
-
-*   **`core.ignoreStat`:**
-    *   **Purpose:** Skip `lstat()` calls for change detection, beneficial if `lstat()` is slow on z/OS.
-    *   **Configuration:**
-        ```bash
-        git config --global core.ignoreStat true
-        ```
-    *   **Consideration:** Default is `false`. Evaluate `lstat()` performance on z/OS.
 
 *   **`feature.manyFiles` Optimizations:**
     *   **Purpose:** Optimize for repositories with many files, improving commands like `git status` and `git checkout`.
@@ -240,15 +226,21 @@ Beyond data reduction, there are several additional strategies that can further 
         ```
     *   **Sub-options:** `index.skipHash`, `index.version`, `core.untrackedCache`.
 
+*   **`core.ignoreStat`:**
+    *   **Purpose:** Skip `lstat()` calls for change detection, beneficial if `lstat()` is slow on your system.
+    *   **Configuration:**
+        ```bash
+        git config --global core.ignoreStat true
+        ```
+    *   **Consideration:** Default is `false`. Evaluate `lstat()` performance on z/OS.
 
 ### Profiling and Diagnostics
 
 - **Purpose:**  
-  Profiling tools and diagnostics such as `GIT_TRACE` help identify bottlenecks in Git operations. This enables targeted performance tuning based on actual system behavior.
+  Diagnostic environment variables such as `GIT_TRACE` and `GIT_PERFORMANCE` help identify bottlenecks in Git operations. With the added logs, this can enable targeted performance tuning based on actual system behavior.
 
 - **Benefits:**  
   - **Insight into Operations:** Detailed trace logs can reveal which steps are consuming the most time.
-  - **Guided Optimization:** With clear diagnostics, it becomes easier to apply the right tuning adjustments to configuration settings.
 
 - **Usage:**  
   Set the environment variable before running Git commands:
@@ -265,10 +257,10 @@ The `working-tree-encoding` or `zos-working-tree-encoding` attribute is designed
 
 ### How Working-Tree-Encoding Works
 
-  When you define a `working-tree-encoding` in a `.gitattributes` file, Git automatically converts files from the repository's storage encoding to the specified encoding in the working tree during checkout. Conversely, when files are added or modified, Git converts them back to the repositoryâs encoding.
+  When you define a `working-tree-encoding` in a `.gitattributes` file, Git automatically converts files from the repository's storage encoding to the specified encoding in the working tree during checkout. Conversely, when files are added or modified, Git converts them back to the repository's encoding.
 
 - **Conversion Process:**  
-  This conversion is handled by the `iconv` library, a library that transforms the fileâs encoding. While this ensures that files are accessible in the desired format, it introduces additional CPU overhead.
+  This conversion is handled by the `iconv` library, a library that transforms the file's encoding. While this ensures that files are accessible in the desired format, it introduces additional CPU overhead.
 
 ### Performance Impact
 
@@ -286,8 +278,8 @@ The `working-tree-encoding` or `zos-working-tree-encoding` attribute is designed
 - **Targeting Specific File Types:**  
   Instead of applying the encoding conversion universally, restrict it to only those file types that require a specific encoding. For example, you may only need to convert source files, such as `.cob` or `.c` files:
   ```gitattributes
-  *.cob text working-tree-encoding=ibm-1047
-  *.c text working-tree-encoding=ibm-1047
+  *.cob text zos-working-tree-encoding=ibm-1047
+  *.c text zos-working-tree-encoding=ibm-1047
   ```
   **Benefits:**  
   - **Reduced Conversion Load:** Only a subset of files is processed by `iconv`, alleviating the performance penalty.
