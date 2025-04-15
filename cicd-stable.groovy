@@ -10,6 +10,6 @@ node('linux')
         }
 
         stage('Build') {
-                build job: 'Port-Pipeline', parameters: [string(name: 'PORT_GITHUB_REPO', value: 'https://github.com/zopencommunity/gitport.git'), string(name: 'PORT_DESCRIPTION', value: 'a distributed version control system' ), string(name: 'BUILD_LINE', value: 'STABLE')]
+                build job: 'Port-Pipeline', parameters: [string(name: 'PORT_GITHUB_REPO', value: 'https://github.com/zopencommunity/gitport.git'), string(name: 'PORT_DESCRIPTION', value: 'a distributed version control system' ), string(name: 'BUILD_LINE', value: 'STABLE'), string(name: 'NODE_LABEL', value: "v3r1" )]
         }
 }
