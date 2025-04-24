@@ -172,7 +172,7 @@ GIT_EXEC_PATH|set|PROJECT_ROOT/libexec/git-core
 ZOPEN_GIT_SSL_CAINFO|set|PROJECT_ROOT/cacert.pem
 ASCII_TERMINFO|set|PROJECT_ROOT/../../ncurses/ncurses/share/terminfo/
 GIT_CONFIG_SYSTEM|set|PROJECT_ROOT/etc/gitconfig
-GIT_CONFIG_SYSTEM|set|PROJECT_ROOT/etc/gitattributes
+GIT_ATTR_SYSTEM|set|PROJECT_ROOT/etc/gitattributes
 _ENCODE_FILE_NEW|unset|
 EOF
 }
