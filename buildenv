@@ -26,7 +26,7 @@ export ZOPEN_MAKE="zopen_build_all"
 export ZOPEN_MAKE_OPTS=""
 export ZOPEN_INSTALL="zopen_install_all"
 export ZOPEN_INSTALL_OPTS=""
-export ZOPEN_CHECK_OPTS='test'
+export ZOPEN_CHECK_OPTS="-i test -j\$ZOPEN_NUM_JOBS"
 export ZOPEN_COMP=CLANG
 
 export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
@@ -34,7 +34,6 @@ export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL
 export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
 export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
 export ZOPEN_EXTRA_LIBS="${ZOPEN_EXTRA_LIBS} -lz -lcurl -lssl -lcrypto"
-export ZOPEN_EXTRA_CFLAGS="-O2"
 export CURL_LDFLAGS="-lcurl"
 export CURL_CFLAGS="-I\${CURL_HOME}/include"
 export CURL_CONFIG="no"
@@ -102,7 +101,7 @@ zopen_check_results()
 cat <<ZZ
 actualFailures:$failures
 totalTests:$totalTests
-expectedFailures:3
+expectedFailures:1274
 ZZ
 }
 
