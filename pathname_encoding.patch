@@ -1,0 +1,1621 @@
+diff --git i/Makefile w/Makefile
+index 7315507..e85ff76 100644
+--- i/Makefile
++++ w/Makefile
+@@ -20,6 +20,8 @@ include shared.mak
+ #
+ # Define SHELL_PATH to a POSIX shell if your /bin/sh is broken.
+ #
++# Define SHELL_PATH_FOR_SCRIPTS to a POSIX shell if your /bin/sh is broken.
++#
+ # Define SANE_TOOL_PATH to a colon-separated list of paths to prepend
+ # to PATH if your tools in /usr/bin are broken.
+ #
+@@ -216,6 +218,8 @@ include shared.mak
+ #
+ # Define PERL_PATH to the path of your Perl binary (usually /usr/bin/perl).
+ #
++# Define PERL_PATH_FOR_SCRIPTS to a Perl binary if your /usr/bin/perl is broken.
++#
+ # Define NO_PERL if you do not want Perl scripts or libraries at all.
+ #
+ # Define NO_PERL_CPAN_FALLBACKS if you do not want to install bundled
+@@ -905,15 +909,22 @@ BINDIR_PROGRAMS_NO_X += git-cvsserver
+ ifndef SHELL_PATH
+ 	SHELL_PATH = /bin/sh
+ endif
++ifndef SHELL_PATH_FOR_SCRIPTS
++	SHELL_PATH_FOR_SCRIPTS = /bin/sh
++endif
+ ifndef PERL_PATH
+ 	PERL_PATH = /usr/bin/perl
+ endif
++ifndef PERL_PATH_FOR_SCRIPTS
++	PERL_PATH_FOR_SCRIPTS = /usr/bin/perl
++endif
+ ifndef PYTHON_PATH
+ 	PYTHON_PATH = /usr/bin/python
+ endif
+ 
+ export PERL_PATH
+ export PYTHON_PATH
++export PERL_PATH_FOR_SCRIPTS
+ 
+ TEST_SHELL_PATH = $(SHELL_PATH)
+ 
+@@ -1386,7 +1397,7 @@ UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
+ 
+ # xdiff and reftable libs may in turn depend on what is in libgit.a
+ GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
+-EXTLIBS =
++EXTLIBS = $(ZOPEN_EXTRA_LIBS)
+ 
+ GIT_USER_AGENT = git/$(GIT_VERSION)
+ 
+@@ -2331,9 +2342,10 @@ perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
+ gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
+ gitwebstaticdir_SQ = $(subst ','\'',$(gitwebstaticdir))
+ 
+-SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
++SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH_FOR_SCRIPTS))
+ TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
+ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
++PERL_PATH_FOR_SCRIPTS_SQ = $(subst ','\'',$(PERL_PATH_FOR_SCRIPTS))
+ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
+ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
+ DIFF_SQ = $(subst ','\'',$(DIFF))
+@@ -2576,7 +2588,7 @@ hook-list.h: generate-hooklist.sh Documentation/githooks.adoc
+ 
+ SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):\
+ 	$(localedir_SQ):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
+-	$(gitwebdir_SQ):$(PERL_PATH_SQ):$(PAGER_ENV):\
++	$(gitwebdir_SQ):$(PERL_PATH_FOR_SCRIPTS_SQ):$(PAGER_ENV):\
+ 	$(perllibdir_SQ)
+ GIT-SCRIPT-DEFINES: FORCE
+ 	@FLAGS='$(SCRIPT_DEFINES)'; \
+@@ -2831,7 +2843,7 @@ endif
+ 
+ exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
+ exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
+-	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
++	'-DGIT_EXEC_PATH="$(gitexecdir_relative_SQ)"' \
+ 	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+ 	'-DBINDIR="$(bindir_relative_SQ)"' \
+ 	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'
+diff --git i/attr.c w/attr.c
+index 0bd2750..9e17884 100644
+--- i/attr.c
++++ w/attr.c
+@@ -873,9 +873,10 @@ static struct attr_stack *read_attr(struct index_state *istate,
+ 
+ const char *git_attr_system_file(void)
+ {
+-	static const char *system_wide;
++	char *system_wide = xstrdup_or_null(getenv("GIT_ATTR_SYSTEM"));
+ 	if (!system_wide)
+ 		system_wide = system_path(ETC_GITATTRIBUTES);
++	normalize_path_copy(system_wide, system_wide);
+ 	return system_wide;
+ }
+ 
+diff --git i/blame.c w/blame.c
+index a15ddf9..7dae5c7 100644
+--- i/blame.c
++++ w/blame.c
+@@ -274,6 +274,11 @@ static struct commit *fake_working_tree_commit(struct repository *r,
+ 		if (strbuf_read(&buf, 0, 0) < 0)
+ 			die_errno("failed to read from stdin");
+ 	}
++#ifdef __MVS__
++	int autocvtToASCII;
++	validate_codeset(r->index, path, &autocvtToASCII);
++	if (autocvtToASCII)
++#endif
+ 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
+ 	origin->file.ptr = buf.buf;
+ 	origin->file.size = buf.len;
+diff --git i/builtin.h w/builtin.h
+index 993a583..fdf237a 100644
+--- i/builtin.h
++++ w/builtin.h
+@@ -254,5 +254,7 @@ int cmd_verify_pack(int argc, const char **argv, const char *prefix, struct repo
+ int cmd_show_ref(int argc, const char **argv, const char *prefix, struct repository *repo);
+ int cmd_pack_refs(int argc, const char **argv, const char *prefix, struct repository *repo);
+ int cmd_replace(int argc, const char **argv, const char *prefix, struct repository *repo);
+-
++#ifdef __MVS__
++  extern int setbinaryfd(int);
++#endif
+ #endif
+diff --git i/builtin/archive.c w/builtin/archive.c
+index 13ea730..f0da605 100644
+--- i/builtin/archive.c
++++ w/builtin/archive.c
+@@ -12,6 +12,10 @@
+ static void create_output_file(const char *output_file)
+ {
+ 	int output_fd = xopen(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
++#ifdef __MVS__
++        if (__setfdbinary(output_fd))
++		die_errno(_("could not tag archive file '%s'"), output_file);
++#endif
+ 	if (output_fd != 1) {
+ 		if (dup2(output_fd, 1) < 0)
+ 			die_errno(_("could not redirect output"));
+diff --git i/builtin/hash-object.c w/builtin/hash-object.c
+index a25f040..40ab473 100644
+--- i/builtin/hash-object.c
++++ w/builtin/hash-object.c
+@@ -62,6 +62,10 @@ static void hash_object(const char *path, const char *type, const char *vpath,
+ {
+ 	int fd;
+ 	fd = xopen(path, O_RDONLY);
++#ifdef __MVS__
++	if (__setfdbinary(fd))
++	  die_errno("Cannot set to binary '%s'", path);
++#endif  
+ 	hash_fd(fd, type, vpath, flags, literally);
+ }
+ 
+diff --git i/combine-diff.c w/combine-diff.c
+index 9527f31..a353f04 100644
+--- i/combine-diff.c
++++ w/combine-diff.c
+@@ -1074,6 +1074,10 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
+ 			ssize_t done;
+ 			int is_file, i;
+ 
++#ifdef __MVS__
++      __disableautocvt(fd);      
++#endif
++
+ 			elem->mode = canon_mode(st.st_mode);
+ 			/* if symlinks don't work, assume symlink if all parents
+ 			 * are symlinks
+diff --git i/compat/stat.c w/compat/stat.c
+index a2d3931..0b1b408 100644
+--- i/compat/stat.c
++++ w/compat/stat.c
+@@ -25,7 +25,7 @@ static inline mode_t mode_native_to_git(mode_t native_mode)
+ 
+ int git_stat(const char *path, struct stat *buf)
+ {
+-	int rc = stat(path, buf);
++	int rc = zos_stat(path, buf);
+ 	if (rc == 0)
+ 		buf->st_mode = mode_native_to_git(buf->st_mode);
+ 	return rc;
+@@ -41,7 +41,7 @@ int git_fstat(int fd, struct stat *buf)
+ 
+ int git_lstat(const char *path, struct stat *buf)
+ {
+-	int rc = lstat(path, buf);
++	int rc = zos_lstat(path, buf);
+ 	if (rc == 0)
+ 		buf->st_mode = mode_native_to_git(buf->st_mode);
+ 	return rc;
+diff --git i/config.c w/config.c
+index 658569a..2304258 100644
+--- i/config.c
++++ w/config.c
+@@ -34,6 +34,9 @@
+ #include "object-store-ll.h"
+ #include "pager.h"
+ #include "path.h"
++#ifdef __MVS__
++#include "read-cache-ll.h"
++#endif
+ #include "utf8.h"
+ #include "color.h"
+ #include "refs.h"
+@@ -1504,6 +1507,23 @@ static int git_default_core_config(const char *var, const char *value,
+ 		return 0;
+ 	}
+ 
++ #ifdef __MVS__
++	if (!strcmp(var, "core.ignorefiletags")) {
++		ignore_file_tags = git_config_bool(var, value);
++		return 0;
++	}
++
++	if (!strcmp(var, "core.utf8ccsid")) {
++		utf8_ccsid = git_config_ulong(var, value, ctx->kvi);
++		return 0;
++	}
++
++	if (!strcmp(var, "core.worktreefilenameencoding")) {
++		FREE_AND_NULL(git_worktree_filename_encoding);
++		return git_config_string(&git_worktree_filename_encoding, var, value);
++	}
++#endif
++
+ 	if (!strcmp(var, "core.safecrlf")) {
+ 		int eol_rndtrp_die;
+ 		if (value && !strcasecmp(value, "warn")) {
+diff --git i/config.mak.uname w/config.mak.uname
+index b12d4e1..67afd64 100644
+--- i/config.mak.uname
++++ w/config.mak.uname
+@@ -639,12 +639,19 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+ 	SHELL_PATH = /usr/coreutils/bin/bash
+ endif
+ ifeq ($(uname_S),OS/390)
++	PERL_PATH = perl
++	PERL_PATH_FOR_SCRIPTS = /bin/env perl
++	SHELL_PATH = bash
++	SHELL_PATH_FOR_SCRIPTS = /bin/env bash
++	PYTHON_PATH = python
+ 	NO_SYS_POLL_H = YesPlease
++	RUNTIME_PREFIX = YesPlease
+ 	NO_STRCASESTR = YesPlease
+ 	NO_REGEX = YesPlease
+ 	NO_MMAP = YesPlease
+ 	NO_NSEC = YesPlease
+ 	NO_STRLCPY = YesPlease
++	NO_MKDTEMP = YesPlease
+ 	NO_MEMMEM = YesPlease
+ 	NO_GECOS_IN_PWENT = YesPlease
+ 	HAVE_STRINGS_H = YesPlease
+diff --git i/configure.ac w/configure.ac
+index 5923edc..ea8b042 100644
+--- i/configure.ac
++++ w/configure.ac
+@@ -463,6 +463,9 @@ else
+             CC_LD_DYNPATH=-Wl,+b,
+           else
+              CC_LD_DYNPATH=
++             if test "$(uname -s)" = "OS/390"; then
++                CC_LD_DYNPATH=-L
++             fi
+              AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
+           fi
+       fi
+diff --git i/convert.c w/convert.c
+index 9cc0ca2..0daf195 100644
+--- i/convert.c
++++ w/convert.c
+@@ -6,6 +6,7 @@
+ #include "config.h"
+ #include "convert.h"
+ #include "copy.h"
++#include "environment.h"
+ #include "gettext.h"
+ #include "hex.h"
+ #include "object-store-ll.h"
+@@ -385,12 +386,16 @@ static int check_roundtrip(const char *enc_name)
+ static const char *default_encoding = "UTF-8";
+ 
+ static int encode_to_git(const char *path, const char *src, size_t src_len,
+-			 struct strbuf *buf, const char *enc, int conv_flags)
++			 struct strbuf *buf, const char *enc,
++			 enum convert_crlf_action attr_action, int conv_flags)
+ {
+ 	char *dst;
+ 	size_t dst_len;
+ 	int die_on_error = conv_flags & CONV_WRITE_OBJECT;
+ 
++	if (attr_action == CRLF_BINARY) {
++		return 0;
++	}
+ 	/*
+ 	 * No encoding is specified or there is nothing to encode.
+ 	 * Tell the caller that the content was not modified.
+@@ -411,6 +416,12 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+ 		return 0;
+ 
+ 	trace_encoding("source", path, enc, src, src_len);
++#ifdef __MVS__
++  // If UTF CCSID == 819 (ISO8859-1), do not convert ISO8859-1 tagged files
++  if (utf8_ccsid == 819 && strcasecmp("ISO8859-1", enc) == 0)
++	return 0;
++#endif
++
+ 	dst = reencode_string_len(src, src_len, default_encoding, enc,
+ 				  &dst_len);
+ 	if (!dst) {
+@@ -420,6 +431,9 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+ 		 * would fail and we would leave the user with a messed-up
+ 		 * working tree. Let's try to avoid this by screaming loud.
+ 		 */
++	       if (attr_action == CRLF_BINARY) {
++			return 0;
++		}
+ 		const char* msg = _("failed to encode '%s' from %s to %s");
+ 		if (die_on_error)
+ 			die(msg, path, enc, default_encoding);
+@@ -476,10 +490,14 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+ }
+ 
+ static int encode_to_worktree(const char *path, const char *src, size_t src_len,
+-			      struct strbuf *buf, const char *enc)
++			      struct strbuf *buf, enum convert_crlf_action attr_action,
++			      const char *enc)
+ {
+ 	char *dst;
+ 	size_t dst_len;
++if (attr_action == CRLF_BINARY) {
++    return 0;
++}
+ 
+ 	/*
+ 	 * No encoding is specified or there is nothing to encode.
+@@ -1316,18 +1334,36 @@ static int git_path_check_ident(struct attr_check_item *check)
+ 
+ static struct attr_check *check;
+ 
++static const char* get_platform() {
++       struct utsname uname_info;
++
++       if (uname(&uname_info))
++	die(_("uname() failed with error '%s' (%d)\n"),
++		strerror(errno),
++		errno);
++
++  if (!strcmp(uname_info.sysname, "OS/390"))
++    return "zos";
++  return uname_info.sysname;
++}
++
+ void convert_attrs(struct index_state *istate,
+ 		   struct conv_attrs *ca, const char *path)
+ {
+ 	struct attr_check_item *ccheck = NULL;
++	struct strbuf platform_working_tree_encoding = STRBUF_INIT;
++
++	strbuf_addf(&platform_working_tree_encoding, "%s-working-tree-encoding", get_platform());
+ 
+ 	if (!check) {
+ 		check = attr_check_initl("crlf", "ident", "filter",
+ 					 "eol", "text", "working-tree-encoding",
++					 platform_working_tree_encoding.buf,
+ 					 NULL);
+ 		user_convert_tail = &user_convert;
+ 		git_config(read_convert_config, NULL);
+ 	}
++		strbuf_release(&platform_working_tree_encoding);
+ 
+ 	git_check_attr(istate, path, check);
+ 	ccheck = check->items;
+@@ -1348,6 +1384,8 @@ void convert_attrs(struct index_state *istate,
+ 			ca->crlf_action = CRLF_TEXT_CRLF;
+ 	}
+ 	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
++	if (git_path_check_encoding(ccheck + 6))
++	    ca->working_tree_encoding = git_path_check_encoding(ccheck + 6);
+ 
+ 	/* Save attr and make a decision for action */
+ 	ca->attr_action = ca->crlf_action;
+@@ -1444,7 +1482,7 @@ int convert_to_git(struct index_state *istate,
+ 		len = dst->len;
+ 	}
+ 
+-	ret |= encode_to_git(path, src, len, dst, ca.working_tree_encoding, conv_flags);
++	ret |= encode_to_git(path, src, len, dst, ca.working_tree_encoding, ca.attr_action, conv_flags);
+ 	if (ret && dst) {
+ 		src = dst->buf;
+ 		len = dst->len;
+@@ -1472,7 +1510,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
+ 	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
+ 		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
+ 
+-	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
++	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, ca.attr_action, conv_flags);
+ 	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
+ 	ident_to_git(dst->buf, dst->len, dst, ca.ident);
+ }
+@@ -1504,7 +1542,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+ 		}
+ 	}
+ 
+-	ret |= encode_to_worktree(path, src, len, dst, ca->working_tree_encoding);
++	ret |= encode_to_worktree(path, src, len, dst, ca->attr_action, ca->working_tree_encoding);
+ 	if (ret) {
+ 		src = dst->buf;
+ 		len = dst->len;
+diff --git i/copy.c w/copy.c
+index b668209..e0067b4 100644
+--- i/copy.c
++++ w/copy.c
+@@ -19,6 +19,9 @@ int copy_fd(int ifd, int ofd)
+ 		if (write_in_full(ofd, buffer, len) < 0)
+ 			return COPY_WRITE_ERROR;
+ 	}
++#ifdef __MVS__
++  __copyfdccsid(ifd, ofd);
++#endif
+ 	return 0;
+ }
+ 
+diff --git i/diff.c w/diff.c
+index c89c15d..0d2e3a0 100644
+--- i/diff.c
++++ w/diff.c
+@@ -4125,6 +4125,7 @@ int diff_populate_filespec(struct repository *r,
+ 	int check_binary = options ? options->check_binary : 0;
+ 	int err = 0;
+ 	int conv_flags = global_conv_flags_eol;
++  int autocvtToASCII;
+ 	/*
+ 	 * demote FAIL to WARN to allow inspecting the situation
+ 	 * instead of refusing.
+@@ -4197,9 +4198,18 @@ int diff_populate_filespec(struct repository *r,
+ 			s->is_binary = 1;
+ 			return 0;
+ 		}
++#ifdef __MVS__
++    validate_codeset(r->index, s->path, &autocvtToASCII);
++#endif
+ 		fd = open(s->path, O_RDONLY);
+ 		if (fd < 0)
+ 			goto err_empty;
++
++#ifdef __MVS__
++    if (!autocvtToASCII)
++      __disableautocvt(fd);
++#endif
++
+ 		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
+ 		close(fd);
+ 		s->should_munmap = 1;
+@@ -4303,6 +4313,10 @@ static void prep_temp_blob(struct index_state *istate,
+ 		blob = buf.buf;
+ 		size = buf.len;
+ 	}
++  
++#ifdef __MVS__
++  tag_file_as_working_tree_encoding(istate, path, temp->tempfile->fd);
++#endif
+ 	if (write_in_full(temp->tempfile->fd, blob, size) < 0 ||
+ 	    close_tempfile_gently(temp->tempfile))
+ 		die_errno("unable to write temp-file");
+diff --git i/entry.c w/entry.c
+index 81b321e..f7dd58f 100644
+--- i/entry.c
++++ w/entry.c
+@@ -1,4 +1,5 @@
+ #define USE_THE_REPOSITORY_VARIABLE
++#define _AE_BIMODAL 1
+ 
+ #include "git-compat-util.h"
+ #include "object-store-ll.h"
+@@ -16,6 +17,658 @@
+ #include "entry.h"
+ #include "parallel-checkout.h"
+ 
++#ifdef __MVS__ 
++
++
++#include "environment.h"   
++
++#include <iconv.h>
++#include <errno.h>
++#include <_Nascii.h>
++
++extern const char *get_worktree_filename_encoding(void);
++
++
++// Helper function to perform the core iconv conversion.
++// Returns a newly allocated string or NULL on error.
++static char *do_iconv_convert(const char *input_str, const char *to_enc, const char *from_enc) {
++    if (!input_str || !to_enc || !from_enc || strcmp(to_enc, from_enc) == 0) {
++        // If no input, or encodings are the same, or no specific encoding,
++        // just duplicate the string (or return NULL if that's preferred for "no conversion")
++        // For filename paths, it's often better to xstrdup to maintain ownership consistency.
++        return input_str ? xstrdup(input_str) : NULL;
++    }
++
++    iconv_t cd;
++    char *original_input_ptr = (char *)input_str; // iconv() modifies inbuf
++    size_t input_len = strlen(input_str);
++    
++    // Estimate output buffer size. For UTF-8 <-> EBCDIC (single byte focus),
++    // output_len is often <= input_len * 2 (worst case for some chars to UTF-8 can be 3 bytes).
++    // A safer bet for general conversion might be input_len * 4 for max UTF-8 expansion, plus null.
++    // Let's start with a reasonable multiplier. Max USS path is 1023.
++    size_t output_buffer_size = (input_len * 2) + 1; // Initial conservative estimate, +1 for null
++    if (output_buffer_size < 128) output_buffer_size = 128; // Minimum buffer
++
++    char *output_buffer = xmalloc(output_buffer_size);
++    char *output_ptr = output_buffer;
++    size_t output_len_avail = output_buffer_size - 1; // Reserve space for null terminator
++
++    cd = iconv_open(to_enc, from_enc);
++    if (cd == (iconv_t)-1) {
++        error("iconv_open from '%s' to '%s' failed: %s", from_enc, to_enc, strerror(errno));
++        // Potentially check get_filename_conversion_error_policy() here if you want
++        // different behavior than just erroring out (e.g., return original string).
++        free(output_buffer);
++        return NULL; // Or xstrdup(input_str) if policy is to bypass on error
++    }
++
++    size_t iconv_ret = iconv(cd, &original_input_ptr, &input_len, &output_ptr, &output_len_avail);
++
++    if (iconv_ret == (size_t)-1) {
++        error("iconv conversion from '%s' to '%s' for input '%.*s...' failed: %s (errno %d)",
++              from_enc, to_enc, 20, input_str, strerror(errno), errno);
++        // TODO: Implement error policy from get_filename_conversion_error_policy()
++        // For EILSEQ/EINVAL: substitute, error, or return original?
++        // For E2BIG: reallocate output_buffer and retry (more complex).
++        // For now, fail by returning NULL.
++        iconv_close(cd);
++        free(output_buffer);
++        return NULL; // Or xstrdup(input_str) if policy is to bypass
++    }
++    *output_ptr = '\0'; // Null-terminate the converted string
++
++    if (iconv_close(cd) != 0) {
++        warning("iconv_close after converting from '%s' to '%s' failed: %s",
++                from_enc, to_enc, strerror(errno));
++        // Conversion succeeded, so we can still use the result.
++    }
++
++    // It's possible the buffer was overallocated.
++    // To save memory, you could realloc down to strlen(output_buffer) + 1,
++    // or simply return a strdup of the buffer up to the actual length.
++    // For simplicity now, we return the potentially larger buffer.
++    // A strdup is safer:
++    // char *final_result = xstrdup(output_buffer);
++    // free(output_buffer);
++    // return final_result;
++    // However, xstrdup after filling is an extra copy.
++    // For now, let's assume output_buffer is okay.
++    // A better approach if reallocating is not done for E2BIG:
++    // char *shrunk_buffer = xrealloc(output_buffer, (output_ptr - output_buffer) + 1);
++    // return shrunk_buffer;
++    // For simplicity, let's just return what we have.
++    return output_buffer;
++}
++
++char *git_utf8_to_worktree_enc(const char *utf8_str) {
++    const char *target_enc = get_worktree_filename_encoding(); // From config.c accessors
++    if (!target_enc || strcmp(target_enc, "UTF-8") == 0) {
++        // No conversion needed, or target is UTF-8
++        return utf8_str ? xstrdup(utf8_str) : NULL;
++    }
++    return do_iconv_convert(utf8_str, target_enc, "UTF-8");
++}
++
++char *git_worktree_enc_to_utf8(const char *worktree_enc_str) {
++    const char *source_enc = get_worktree_filename_encoding(); // From config.c accessors
++    if (!source_enc || strcmp(source_enc, "UTF-8") == 0) {
++        // No conversion needed, or source is already UTF-8 (should not happen if configured)
++        return worktree_enc_str ? xstrdup(worktree_enc_str) : NULL;
++    }
++    return do_iconv_convert(worktree_enc_str, "UTF-8", source_enc);
++}
++
++// This version modifies a static struct dirent to return UTF-8 d_name.
++struct dirent *zos_readdir(DIR *dirp) {
++#ifdef __MVS__
++    static struct dirent static_de_buffer; // Static buffer for the returned dirent
++    // Ensure d_name is large enough. POSIX NAME_MAX is usually 255.
++    // If struct dirent has d_name as char d_name[], this static buffer approach is okay.
++    // If d_name is char *d_name, this approach needs careful thought about memory management
++    // for d_name itself if it's dynamically allocated. Standard readdir returns a pointer
++    // to a static struct or one within the DIR structure.
++
++    struct dirent *de_sys; // Pointer to dirent from system readdir
++
++    // Assuming dirp was opened by zos_opendir, which would have handled
++    // EBCDIC mode for the stream if __opendir_e was used.
++    // If using standard readdir() and the stream is EBCDIC, d_name will be EBCDIC.
++    // If a __readdir_e exists and should be used, wrap it with __ae_thread_swapmode.
++    // For this example, let's assume standard readdir() is called on the (potentially EBCDIC) stream.
++    
++    int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE); // If calling __readdir_e
++    de_sys = __readdir_e(dirp); // Or perhaps __readdir_e(dirp)
++    __ae_thread_swapmode(original_thread_mode); // If calling __readdir_e
++    
++    if (!de_sys) {
++        return NULL; // End of directory or error
++    }
++
++    // Copy essential members from system's dirent to our static buffer
++    // The members available in struct dirent can vary.
++    // d_ino is POSIX standard. d_type is a common BSD/Linux extension.
++    static_de_buffer.d_ino = de_sys->d_ino;
++    #if defined(HAVE_STRUCT_DIRENT_D_TYPE) || defined(_DIRENT_HAVE_D_TYPE) || defined(__USE_BSD) || defined(__DARWIN_UNIX03)
++    static_de_buffer.d_type = de_sys->d_type;
++    #else
++    // If d_type is not available, you might need to stat the file to get its type,
++    // or Git's calling code handles this. For now, set to unknown if not available.
++    // static_de_buffer.d_type = DT_UNKNOWN; // DT_UNKNOWN is usually defined
++    #endif
++    // Other members like d_off, d_reclen are less commonly used directly by Git's core logic
++    // for filename processing, but copy if necessary for your Git version/usage.
++
++    const char *target_encoding = get_worktree_filename_encoding();
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        // de_sys->d_name is EBCDIC, convert it to UTF-8
++        char *utf8_name = git_worktree_enc_to_utf8(de_sys->d_name);
++        if (!utf8_name) {
++            if (errno == 0 && de_sys->d_name[0] != '\0') {
++                 errno = EILSEQ;
++            }
++            warning_errno("zos_readdir: Failed to convert d_name (len %d, starts 0x%02X) from EBCDIC to UTF-8 for entry in dir opened via zos_opendir. Returning NULL for this entry.",
++                          (int)strlen(de_sys->d_name), (unsigned char)de_sys->d_name[0]);
++            return NULL; // Skip this entry by returning NULL
++        }
++
++        // Copy the converted UTF-8 name into our static buffer's d_name field.
++        // Ensure null termination and protect against overflow.
++        // sizeof(static_de_buffer.d_name) refers to the size of the array in struct dirent.
++        strlcpy(static_de_buffer.d_name, utf8_name, sizeof(static_de_buffer.d_name) - 1);
++        static_de_buffer.d_name[sizeof(static_de_buffer.d_name) - 1] = '\0';
++        
++        trace_printf("zos_readdir: converted EBCDIC d_name (orig starts 0x%02X) to UTF-8 d_name '%s'\n", 
++            (unsigned char)de_sys->d_name[0], static_de_buffer.d_name);
++        
++        free(utf8_name); // We copied it, so free the allocated buffer
++    } else {
++        // No conversion needed, or worktree_enc is already UTF-8.
++        // Copy original d_name (which should be UTF-8 compatible).
++        strlcpy(static_de_buffer.d_name, de_sys->d_name, sizeof(static_de_buffer.d_name) - 1);
++        static_de_buffer.d_name[sizeof(static_de_buffer.d_name) - 1] = '\0';
++        trace_printf("zos_readdir: using ASCII/UTF-8 d_name '%s'\n", static_de_buffer.d_name);
++    }
++    
++    return &static_de_buffer;
++
++#else // Not __MVS__
++    return readdir(dirp);
++#endif
++}
++
++// Your zos_open function
++int zos_open(const char *path, int flags, ...) {
++    va_list ap;
++    va_start(ap, flags);
++    // mode_t perms = va_arg(ap, mode_t); // Using mode_t is technically more correct
++    int perms_int = 0; // Default if not O_CREAT
++    if (flags & O_CREAT) {
++        perms_int = va_arg(ap, int); // As per your original usage
++    }
++    mode_t perms = (mode_t)perms_int;
++    va_end(ap);
++
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    int fd = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            // git_utf8_to_worktree_enc should ideally call error_errno for detailed iconv errors
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_open: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        if (flags & O_CREAT) {
++             fd = __open_e(converted_path, flags, perms);
++        } else {
++             fd = __open_e(converted_path, flags);
++        }
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call; // Restore errno from the actual syscall
++        free(converted_path);
++        return fd;
++    } else {
++        trace_printf("zos_open: ASCII path for '%s'\n", path);
++        return __open_ascii(path, flags, perms); // Using standard open
++    }
++#else // Not __MVS__
++    // Standard open for non-z/OS builds
++   return __open_ascii(path, flags, perms); // Using standard open
++#endif
++}
++
++char *__ptr32 *__ptr32 __uss_base_address(void) {
++  static char *__ptr32 *__ptr32 res = 0;
++  if (res == 0) {
++    res = ((char *__ptr32 *__ptr32 *__ptr32 *__ptr32 *)0)[4][136][6];
++  }
++  return res;
++}
++
++
++// Wrapper for stat
++int zos_stat(const char *path, struct stat *buf) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_stat: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __stat_e(converted_path, buf); // Assuming __lstat_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++        return ret;
++    } else {
++        trace_printf("zos_stat: ASCII path for '%s'\n", path);
++        return __stat_a(path, buf); // Using standard stat
++    }
++#else // Not __MVS__
++    trace_printf("zos_stat: ASCII path for '%s'\n", path);
++    return __stat_a(path, buf);
++#endif
++}
++
++// Wrapper for lstat
++int zos_lstat(const char *path, struct stat *buf) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_lstat: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __lstat_e(converted_path, buf); // Assuming __lstat_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++        return ret;
++    } else {
++        trace_printf("zos_lstat: ASCII path for '%s'\n", path);
++        return __lstat_a(path, buf); // Using standard lstat
++    }
++#else // Not __MVS__
++    trace_printf("zos_lstat: ASCII path for '%s'\n", path);
++    return __lstat_a(path, buf);
++#endif
++}
++
++// Wrapper for fopen
++FILE *zos_fopen(const char *path, const char *mode) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    char* converted_mode = NULL;
++    FILE *fp = NULL;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return NULL;
++        }
++        // Mode string also needs conversion.
++        converted_mode = git_utf8_to_worktree_enc(mode);
++        if (!converted_mode) {
++            if (errno == 0) errno = EILSEQ;
++            free(converted_path);
++            return NULL;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_fopen: EBCDIC path for '%s' (orig: '%s'), mode '%s' (orig: '%s') with encoding '%s'\n",
++                     converted_path, path, converted_mode, mode, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        fp = __fopen_e(converted_path, converted_mode); // Assuming __fopen_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++        free(converted_mode);
++        return fp;
++    } else {
++        trace_printf("zos_fopen: ASCII path for '%s', mode '%s'\n", path, mode);
++        return __fopen_ascii(path, mode); // Using standard fopen
++    }
++#else // Not __MVS__
++    return __fopen_ascii(path, mode);
++#endif
++}
++
++// Wrapper for unlink
++int zos_unlink(const char *path) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_unlink: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __unlink_e(converted_path); // Assuming __unlink_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++        return ret;
++    } else {
++        trace_printf("zos_unlink: ASCII path for '%s'\n", path);
++        return __unlink_a(path); // Using standard unlink
++    }
++#else // Not __MVS__
++    return __unlink_a(path);
++#endif
++}
++
++// Wrapper for rmdir
++int zos_rmdir(const char *path) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_rmdir: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __rmdir_e(converted_path); // Assuming __rmdir_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++        return ret;
++    } else {
++        trace_printf("zos_rmdir: ASCII path for '%s'\n", path);
++        return __rmdir_a(path); // Using standard rmdir
++    }
++#else // Not __MVS__
++    return __rmdir_a(path);
++#endif
++}
++
++// Wrapper for mkdir
++int zos_mkdir(const char *path, mode_t mode) {
++#if 0 //def __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_mkdir: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __mkdir_e(converted_path, mode); // Assuming __mkdir_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++        return ret;
++    } else {
++        trace_printf("zos_mkdir: ASCII path for '%s'\n", path);
++        return __mkdir_a(path, mode); // Using standard mkdir
++    }
++#else // Not __MVS__
++    trace_printf("zos_mkdir: ASCII path for '%s'\n", path);
++    return __mkdir_a(path, mode);
++#endif
++}
++
++// Wrapper for rename
++int zos_rename(const char *oldpath, const char *newpath) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_oldpath = NULL;
++    char* converted_newpath = NULL;
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_oldpath = git_utf8_to_worktree_enc(oldpath);
++        if (!converted_oldpath) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        converted_newpath = git_utf8_to_worktree_enc(newpath);
++        if (!converted_newpath) {
++            if (errno == 0) errno = EILSEQ;
++            free(converted_oldpath);
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_rename: EBCDIC oldpath '%s' (orig: '%s'), newpath '%s' (orig: '%s') with encoding '%s'\n",
++                     converted_oldpath, oldpath, converted_newpath, newpath, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __rename_e(converted_oldpath, converted_newpath); // Assuming __rename_e exists
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_oldpath);
++        free(converted_newpath);
++        return ret;
++    } else {
++        trace_printf("zos_rename: ASCII oldpath '%s', newpath '%s'\n", oldpath, newpath);
++        return __rename_a(oldpath, newpath); // Using standard rename
++    }
++#else // Not __MVS__
++    return __rename_a(oldpath, newpath);
++#endif
++}
++
++// Wrapper for readlink
++ssize_t zos_readlink(const char *path, char *buf, size_t bufsize) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_path = NULL;
++    ssize_t ret = -1;
++    int saved_errno_call = 0;
++    char *ebcdic_link_content_buf = NULL; // Buffer for EBCDIC link content
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_path = git_utf8_to_worktree_enc(path);
++        if (!converted_path) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        ebcdic_link_content_buf = xmalloc(bufsize); 
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_readlink: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_path, path, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __readlink_e(converted_path, ebcdic_link_content_buf, bufsize -1); 
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_path);
++
++        if (ret > 0) {
++            ebcdic_link_content_buf[ret] = '\0'; 
++            char *utf8_link_content = git_worktree_enc_to_utf8(ebcdic_link_content_buf);
++            if (utf8_link_content) {
++                strlcpy(buf, utf8_link_content, bufsize);
++                buf[bufsize - 1] = '\0'; 
++                ret = strlen(buf); 
++                free(utf8_link_content);
++            } else {
++                if (errno == 0) errno = EILSEQ; 
++                ret = -1; 
++            }
++        }
++        free(ebcdic_link_content_buf); // Free even if git_worktree_enc_to_utf8 failed or ret <=0
++        return ret;
++    } else {
++        trace_printf("zos_readlink: ASCII path for '%s'\n", path);
++        return __readlink(path, buf, bufsize); 
++    }
++#else // Not __MVS__
++    return __readlink(path, buf, bufsize);
++#endif
++}
++
++// Wrapper for symlink
++int zos_symlink(const char *target, const char *linkpath) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_target = NULL;   
++    char* converted_linkpath = NULL; 
++    int ret = -1;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_linkpath = git_utf8_to_worktree_enc(linkpath);
++        if (!converted_linkpath) {
++            if (errno == 0) errno = EILSEQ;
++            return -1;
++        }
++        converted_target = git_utf8_to_worktree_enc(target);
++        if (!converted_target) {
++            if (errno == 0) errno = EILSEQ;
++            free(converted_linkpath);
++            return -1;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_symlink: EBCDIC target '%s' (orig: '%s'), linkpath '%s' (orig: '%s') with encoding '%s'\n",
++                     converted_target, target, converted_linkpath, linkpath, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        ret = __symlink_e(converted_target, converted_linkpath); 
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_target);
++        free(converted_linkpath);
++        return ret;
++    } else {
++        trace_printf("zos_symlink: ASCII target '%s', linkpath '%s'\n", target, linkpath);
++        return symlink(target, linkpath); 
++    }
++#else // Not __MVS__
++    return symlink(target, linkpath);
++#endif
++}
++
++// Wrapper for opendir
++DIR *zos_opendir(const char *name) {
++#ifdef __MVS__
++    const char *target_encoding = get_worktree_filename_encoding();
++    bool isConverted = false;
++    char* converted_name = NULL;
++    DIR *dirp = NULL;
++    int saved_errno_call = 0;
++
++    if (target_encoding && strcmp(target_encoding, "UTF-8") != 0) {
++        converted_name = git_utf8_to_worktree_enc(name);
++        if (!converted_name) {
++            if (errno == 0) errno = EILSEQ;
++            return NULL;
++        }
++        isConverted = true;
++    }
++
++    if (isConverted) {
++        trace_printf("zos_opendir: EBCDIC path for '%s' (orig: '%s') with encoding '%s'\n", converted_name, name, target_encoding);
++        int original_thread_mode = __ae_thread_swapmode(__AE_EBCDIC_MODE);
++        dirp = __opendir_e(converted_name); 
++        saved_errno_call = errno;
++        __ae_thread_swapmode(original_thread_mode);
++        errno = saved_errno_call;
++        free(converted_name);
++        return dirp;
++    } else {
++        trace_printf("zos_opendir: ASCII path for '%s'\n", name);
++        return opendir(name); 
++    }
++#else // Not __MVS__
++    return opendir(name);
++#endif
++}
++
++
++#endif
++
+ static void create_directories(const char *path, int path_len,
+ 			       const struct checkout *state)
+ {
+@@ -89,6 +742,9 @@ static int create_file(const char *path, unsigned int mode)
+ 	return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
+ }
+ 
++
++
++
+ void *read_blob_entry(const struct cache_entry *ce, size_t *size)
+ {
+ 	enum object_type type;
+@@ -127,6 +783,24 @@ int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
+ 	return 0;
+ }
+ 
++#ifdef __MVS__
++void tag_file_as_working_tree_encoding(struct index_state *istate, char* path, int fd) {
++	struct conv_attrs ca;
++	convert_attrs(istate, &ca, path);
++  if (ca.attr_action != CRLF_BINARY) {
++    if (ca.working_tree_encoding)
++      __chgfdcodeset(fd, ca.working_tree_encoding); 
++    else
++      __chgfdccsid(fd, utf8_ccsid);
++  }
++  else {
++    __setfdbinary(fd);
++  }
++
++  __disableautocvt(fd);
++}
++#endif
++
+ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+ 				 struct stream_filter *filter,
+ 				 const struct checkout *state, int to_tempfile,
+@@ -139,6 +813,10 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+ 	if (fd < 0)
+ 		return -1;
+ 
++#ifdef __MVS__
++  tag_file_as_working_tree_encoding(state->istate, path, fd);
++#endif
++
+ 	result |= stream_blob_to_fd(fd, &ce->oid, filter, 1);
+ 	*fstat_done = fstat_checkout_output(fd, state, statbuf);
+ 	result |= close(fd);
+@@ -385,6 +1063,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+ 			return error_errno("unable to create file %s", path);
+ 		}
+ 
++#ifdef __MVS__
++    tag_file_as_working_tree_encoding(state->istate, path, fd);
++#endif
++
+ 		wrote = write_in_full(fd, new_blob, size);
+ 		if (!to_tempfile)
+ 			fstat_done = fstat_checkout_output(fd, state, &st);
+@@ -487,6 +1169,25 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
+ 	struct stat st;
+ 	struct conv_attrs ca_buf;
+ 
++
++#ifdef __MVS__
++  const char* git_utf8_ccsid_str = getenv("GIT_UTF8_CCSID");
++
++  if (git_utf8_ccsid_str != NULL) {
++      char* endptr;
++      errno = 0;
++      long conv = strtol(git_utf8_ccsid_str, &endptr, 10);
++
++      if (!conv) {
++          perror("Error converting GIT_UTF8_CCSID to short");
++      } else if (endptr == git_utf8_ccsid_str) {
++          fprintf(stderr, "No digits were found in GIT_UTF8_CCSID\n");
++      } else {
++          utf8_ccsid = conv;
++      }
++  }
++#endif
++
+ 	if (ce->ce_flags & CE_WT_REMOVE) {
+ 		if (topath)
+ 			/*
+diff --git i/environment.c w/environment.c
+index 9e4c778..e2d13e6 100644
+--- i/environment.c
++++ w/environment.c
+@@ -46,6 +46,11 @@ char *git_attributes_file;
+ int zlib_compression_level = Z_BEST_SPEED;
+ int pack_compression_level = Z_DEFAULT_COMPRESSION;
+ int fsync_object_files = -1;
++#ifdef __MVS__
++int ignore_file_tags = 0;
++int utf8_ccsid = 1208;
++char* git_worktree_filename_encoding = NULL;
++#endif
+ int use_fsync = -1;
+ enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
+ enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
+@@ -207,6 +212,11 @@ const char *get_commit_output_encoding(void)
+ 	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+ }
+ 
++const char *get_worktree_filename_encoding(void)
++{
++	return git_worktree_filename_encoding ? git_worktree_filename_encoding : "UTF-8";
++}
++
+ int use_optional_locks(void)
+ {
+ 	return git_env_bool(GIT_OPTIONAL_LOCKS_ENVIRONMENT, 1);
+diff --git i/environment.h w/environment.h
+index 45e690f..ebb1cc8 100644
+--- i/environment.h
++++ w/environment.h
+@@ -157,7 +157,9 @@ extern size_t packed_git_limit;
+ extern unsigned long big_file_threshold;
+ extern unsigned long pack_size_limit_cfg;
+ extern int max_allowed_tree_depth;
+-
++#ifdef __MVS__
++extern int utf8_ccsid;
++#endif
+ extern int core_preload_index;
+ extern int precomposed_unicode;
+ extern int protect_hfs;
+@@ -197,9 +199,11 @@ extern int repository_format_precious_objects;
+ 
+ const char *get_log_output_encoding(void);
+ const char *get_commit_output_encoding(void);
++extern const char *get_worktree_filename_encoding(void);
+ 
+ extern char *git_commit_encoding;
+ extern char *git_log_output_encoding;
++extern char *git_worktree_filename_encoding;
+ 
+ extern char *editor_program;
+ extern char *askpass_program;
+diff --git i/exec-cmd.c w/exec-cmd.c
+index 507e67d..494abf8 100644
+--- i/exec-cmd.c
++++ w/exec-cmd.c
+@@ -158,8 +158,8 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
+  */
+ static int git_get_exec_path_zos(struct strbuf *buf)
+ {
+-	char *dir = __getprogramdir();
+-	char *exe = getprogname();
++	volatile char * volatile dir = __getprogramdir();
++	volatile char * volatile exe = getprogname();
+ 	if (dir && exe) {
+ 		strbuf_addf(buf, "%s/%s", dir, exe);
+ 		return 0;
+diff --git i/generate-perl.sh w/generate-perl.sh
+index 65f122e..154ae53 100755
+--- i/generate-perl.sh
++++ w/generate-perl.sh
+@@ -19,7 +19,7 @@ OUTPUT="$5"
+ 
+ sed -e '1{' \
+     -e "	/^#!.*perl/!b" \
+-    -e "	s|#!.*perl|#!$PERL_PATH|" \
++    -e "	s|#!.*perl|#!$PERL_PATH_FOR_SCRIPTS|" \
+     -e "	r $PERL_HEADER" \
+     -e '	G' \
+     -e '}' \
+diff --git i/git-compat-util.h w/git-compat-util.h
+index e123288..7d06ec9 100644
+--- i/git-compat-util.h
++++ w/git-compat-util.h
+@@ -258,7 +258,11 @@ static inline int _have_unix_sockets(void)
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <stddef.h>
++#define release stdlib_release
++#define fetch stdlib_fetch
+ #include <stdlib.h>
++#undef fetch
++#undef release
+ #include <stdarg.h>
+ #include <stdbool.h>
+ #include <string.h>
+@@ -979,6 +983,57 @@ char *gitstrdup(const char *s);
+ FILE *git_fopen(const char*, const char*);
+ #endif
+ 
++#ifdef __MVS__
++int zos_open(const char *path, int flags, ...);
++int zos_stat(const char *path, struct stat *buf);
++int zos_lstat(const char *path, struct stat *buf);
++int lstat_orig(const char *path, struct stat *buf) asm("@@A00136");
++int stat_orig(const char *path, struct stat *buf) asm("@@A00132");
++FILE *zos_fopen(const char *path, const char *mode);
++int zos_unlink(const char *path);
++int zos_rmdir(const char *path);
++int zos_mkdir(const char *path, mode_t mode);
++int zos_rename(const char *oldpath, const char *newpath);
++ssize_t zos_readlink(const char *path, char *buf, size_t bufsize);
++int zos_symlink(const char *target, const char *linkpath);
++DIR *zos_opendir(const char *name);
++struct dirent *zos_readdir(DIR *dirp); // Added zos_readdir
++
++
++// --- Macro Redirections ---
++// These redirect standard POSIX function calls to your zos_* wrappers.
++
++#undef open
++#define open zos_open
++
++#undef fopen
++#define fopen zos_fopen
++
++#undef unlink
++#define unlink zos_unlink
++
++#undef rmdir
++#define rmdir zos_rmdir
++
++#undef mkdir
++#define mkdir(a,b) zos_mkdir(a,b)
++
++#undef rename
++#define rename zos_rename
++
++#undef readlink
++#define readlink zos_readlink
++
++#undef symlink
++#define symlink zos_symlink
++
++#undef opendir
++#define opendir zos_opendir
++
++#undef readdir // Added readdir macro
++#define readdir zos_readdir // Added readdir macro
++#endif
++
+ #ifdef SNPRINTF_RETURNS_BOGUS
+ #ifdef snprintf
+ #undef snprintf
+diff --git i/http.c w/http.c
+index 0c9a872..81f686e 100644
+--- i/http.c
++++ w/http.c
+@@ -1072,7 +1072,6 @@ static CURL *get_curl_handle(void)
+ 	if (ssl_cipherlist != NULL && *ssl_cipherlist)
+ 		curl_easy_setopt(result, CURLOPT_SSL_CIPHER_LIST,
+ 				ssl_cipherlist);
+-
+ 	if (ssl_cert)
+ 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
+ 	if (ssl_cert_type)
+@@ -1335,6 +1334,10 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
+ 	set_from_env(&ssl_key_type, "GIT_SSL_KEY_TYPE");
+ 	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
+ 	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
++#ifdef __MVS__
++  if (!ssl_cainfo)
++	  set_from_env(&ssl_cainfo, "ZOPEN_GIT_SSL_CAINFO");
++#endif
+ 
+ 	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
+ 
+diff --git i/lockfile.c w/lockfile.c
+index 1d5ed01..ca7ee77 100644
+--- i/lockfile.c
++++ w/lockfile.c
+@@ -83,6 +83,9 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+ 
+ 	strbuf_addstr(&filename, LOCK_SUFFIX);
+ 	lk->tempfile = create_tempfile_mode(filename.buf, mode);
++#ifdef __MVS__
++	__setfdbinary(lk->tempfile->fd);
++#endif
+ 	strbuf_release(&filename);
+ 	return lk->tempfile ? lk->tempfile->fd : -1;
+ }
+diff --git i/object-file.c w/object-file.c
+index 726e41a..6e8e9f8 100644
+--- i/object-file.c
++++ w/object-file.c
+@@ -42,6 +42,12 @@
+ #include "loose.h"
+ #include "object-file-convert.h"
+ 
++#ifdef __MVS__
++#include <_Ccsid.h>
++#include "read-cache-ll.h"
++#endif
++
++
+ /* The maximum size for an object header. */
+ #define MAX_HEADER_LEN 32
+ 
+@@ -2814,18 +2820,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+ 	return ret;
+ }
+ 
++#ifdef __MVS__
++void validate_codeset(struct index_state *istate, const char *path, int* autoconvertToASCII) {
++       struct conv_attrs ca;
++  struct stat st;
++  unsigned short attr_ccsid;
++  unsigned short file_ccsid;
++
++  if (ignore_file_tags)
++    return;
++
++  *autoconvertToASCII = 0;
++       convert_attrs(istate, &ca, path);
++  if (ca.attr_action == CRLF_BINARY) {
++    attr_ccsid = FT_BINARY;
++  }
++  else if (ca.working_tree_encoding) {
++    attr_ccsid = __toCcsid(ca.working_tree_encoding);
++  }
++  else {
++    attr_ccsid = utf8_ccsid;
++  }
++
++  if (stat(path, &st) < 0)
++    return;
++
++  file_ccsid = st.st_tag.ft_ccsid;
++
++  if (file_ccsid == FT_UNTAGGED) {
++    die("File %s is untagged, set the correct file tag (using the chtag command).", path);
++  }
++
++  if (attr_ccsid != file_ccsid) {
++    if (file_ccsid == 1047 && attr_ccsid == 819) {
++      *autoconvertToASCII = 1;
++      return;
++    }
++    // Allow tag mixing of 819 and 1208
++    if ((file_ccsid == 819 || file_ccsid == 1208) && (attr_ccsid == 1208 || attr_ccsid == 819)) {
++      return;
++    }
++    // Don't check for binary files, just add them
++    if (attr_ccsid == FT_BINARY)
++      return;
++
++   char attr_csname[_XOPEN_PATH_MAX] = {0};
++    char file_csname[_XOPEN_PATH_MAX] = {0};
++    if (attr_ccsid != FT_BINARY) {
++      __toCSName(attr_ccsid, attr_csname);
++    } else {
++      snprintf(attr_csname, _XOPEN_PATH_MAX, "%s", "binary");
++    }
++    if (file_ccsid != FT_BINARY) {
++      __toCSName(file_ccsid, file_csname);
++    } else {
++      snprintf(file_csname, _XOPEN_PATH_MAX, "%s", "binary");
++    }
++    die("%s added file: file tag (%s) does not match working-tree-encoding (%s)", path, file_csname, attr_csname);
++  }
++}
++#endif
++
+ int index_path(struct index_state *istate, struct object_id *oid,
+ 	       const char *path, struct stat *st, unsigned flags)
+ {
+ 	int fd;
+ 	struct strbuf sb = STRBUF_INIT;
+ 	int rc = 0;
++	struct conv_attrs ca;
++	int autocvtToASCII;
+ 
+ 	switch (st->st_mode & S_IFMT) {
+ 	case S_IFREG:
++#ifdef __MVS__
++    validate_codeset(istate, path, &autocvtToASCII);
++#endif
+ 		fd = open(path, O_RDONLY);
+ 		if (fd < 0)
+ 			return error_errno("open(\"%s\")", path);
++#ifdef __MVS__
++    if (!autocvtToASCII)
++      __disableautocvt(fd);
++#endif
+ 		if (index_fd(istate, oid, fd, st, OBJ_BLOB, path, flags) < 0)
+ 			return error(_("%s: failed to insert into database"),
+ 				     path);
+diff --git i/quote.c w/quote.c
+index b9f6bdc..307a3a2 100644
+--- i/quote.c
++++ w/quote.c
+@@ -219,6 +219,8 @@ int sq_dequote_to_strvec(char *arg, struct strvec *array)
+  */
+ #define X8(x)   x, x, x, x, x, x, x, x
+ #define X16(x)  X8(x), X8(x)
++#define X64(x)  X16(x), X16(x), X16(x), X16(x)
++#define X128(x) X64(x), X64(x)
+ static signed char const cq_lookup[256] = {
+ 	/*           0    1    2    3    4    5    6    7 */
+ 	/* 0x00 */   1,   1,   1,   1,   1,   1,   1, 'a',
+@@ -229,7 +231,7 @@ static signed char const cq_lookup[256] = {
+ 	/* 0x58 */  -1,  -1,  -1,  -1,'\\',  -1,  -1,  -1,
+ 	/* 0x60 */ X16(-1), X8(-1),
+ 	/* 0x78 */  -1,  -1,  -1,  -1,  -1,  -1,  -1,   1,
+-	/* 0x80 */ /* set to 0 */
++	/* 0x80 */ X128(-1)
+ };
+ 
+ static inline int cq_must_quote(char c)
+diff --git i/read-cache-ll.h w/read-cache-ll.h
+index 71b49d9..0d9a47b 100644
+--- i/read-cache-ll.h
++++ w/read-cache-ll.h
+@@ -474,6 +474,10 @@ struct cache_entry *refresh_cache_entry(struct index_state *, struct cache_entry
+ 
+ void set_alternate_index_output(const char *);
+ 
++#ifdef __MVS__
++extern int ignore_file_tags;
++#endif
++
+ extern int verify_index_checksum;
+ extern int verify_ce_order;
+ 
+diff --git i/read-cache.c w/read-cache.c
+index e678c13..037aa76 100644
+--- i/read-cache.c
++++ w/read-cache.c
+@@ -235,6 +235,9 @@ static int ce_compare_data(struct index_state *istate,
+ 	int fd = git_open_cloexec(ce->name, O_RDONLY);
+ 
+ 	if (fd >= 0) {
++#ifdef __MVS__
++    __disableautocvt(fd);
++#endif
+ 		struct object_id oid;
+ 		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
+ 			match = !oideq(&oid, &ce->oid);
+diff --git i/t/test-lib.sh w/t/test-lib.sh
+index 9001ed3..693e09b 100644
+--- i/t/test-lib.sh
++++ w/t/test-lib.sh
+@@ -1566,7 +1566,7 @@ fi
+ 
+ # Use -P to resolve symlinks in our working directory so that the cwd
+ # in subprocesses like git equals our $PWD (for pathname comparisons).
+-cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
++cd "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
+ 
+ start_test_output "$0"
+ 
+diff --git i/utf8.c w/utf8.c
+index 35a0251..b5877f2 100644
+--- i/utf8.c
++++ w/utf8.c
+@@ -3,6 +3,9 @@
+ #include "git-compat-util.h"
+ #include "strbuf.h"
+ #include "utf8.h"
++#ifdef __MVS__
++extern int utf8_ccsid;
++#endif
+ 
+ /* This code is originally from https://www.cl.cam.ac.uk/~mgk25/ucs/ */
+ 
+@@ -592,6 +595,20 @@ char *reencode_string_len(const char *in, size_t insz,
+ #endif
+ 	}
+ 
++#ifdef __MVS__
++  if (utf8_ccsid == 819) {
++    //HACK: For backwards compat UTF CCSID=819, ISO8859-1 really means utf-8 in the z/OS world
++    if (strcasecmp("ISO8859-1", in_encoding) == 0) {
++      in_encoding = "UTF-8";
++      out_encoding = "UTF-8";
++    }
++    if (strcasecmp("ISO8859-1", out_encoding) == 0) {
++      in_encoding = "UTF-8";
++      out_encoding = "UTF-8";
++    }
++  }
++#endif
++
+ 	conv = iconv_open(out_encoding, in_encoding);
+ 	if (conv == (iconv_t) -1) {
+ 		in_encoding = fallback_encoding(in_encoding);
