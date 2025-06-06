@@ -6,11 +6,11 @@ export ZOPEN_CATEGORIES="development source_control"
 GIT_VERSION="2.49.0"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
-export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk zusage"
+export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk zusage libpsl libssh2"
 
 export ZOPEN_STABLE_URL="https://github.com/git/git.git"
 export ZOPEN_STABLE_TAG="v${GIT_VERSION}"
-export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk zusage"
+export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk zusage libpsl libssh2"
 
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
