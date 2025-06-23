@@ -1,13 +1,14 @@
 diff --git i/lockfile.c w/lockfile.c
-index 1d5ed01..ca7ee77 100644
+index 1d5ed01..6e07a1a 100644
 --- i/lockfile.c
 +++ w/lockfile.c
-@@ -83,6 +83,9 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -83,6 +83,10 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
  
  	strbuf_addstr(&filename, LOCK_SUFFIX);
  	lk->tempfile = create_tempfile_mode(filename.buf, mode);
 +#ifdef __MVS__
-+	__setfdbinary(lk->tempfile->fd);
++	if (lk->tempfile)
++		__setfdbinary(lk->tempfile->fd);
 +#endif
  	strbuf_release(&filename);
  	return lk->tempfile ? lk->tempfile->fd : -1;
