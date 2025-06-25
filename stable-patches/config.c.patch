@@ -1,18 +1,16 @@
-diff --git a/config.c b/config.c
-index 50f2d17b39..8cc8aab4d2 100644
---- a/config.c
-+++ b/config.c
-@@ -33,6 +33,9 @@
- #include "object-store-ll.h"
- #include "pager.h"
- #include "path.h"
-+#ifdef __MVS__
+diff --git i/config.c w/config.c
+index b18b561..5fbd081 100644
+--- i/config.c
++++ w/config.c
+@@ -21,6 +21,7 @@
+ #include "gettext.h"
+ #include "git-zlib.h"
+ #include "ident.h"
 +#include "read-cache-ll.h"
-+#endif
- #include "utf8.h"
- #include "color.h"
- #include "refs.h"
-@@ -1508,6 +1511,18 @@ static int git_default_core_config(const char *var, const char *value,
+ #include "repository.h"
+ #include "lockfile.h"
+ #include "mailmap.h"
+@@ -1499,6 +1500,18 @@ static int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
