@@ -1,16 +1,16 @@
-diff --git a/convert.c b/convert.c
-index c4ddc4de81..010515a085 100644
---- a/convert.c
-+++ b/convert.c
-@@ -5,6 +5,7 @@
+diff --git i/convert.c w/convert.c
+index b5f7cf6..42dd688 100644
+--- i/convert.c
++++ w/convert.c
+@@ -6,6 +6,7 @@
  #include "config.h"
  #include "convert.h"
  #include "copy.h"
 +#include "environment.h"
  #include "gettext.h"
  #include "hex.h"
- #include "object-store-ll.h"
-@@ -384,12 +385,16 @@ static int check_roundtrip(const char *enc_name)
+ #include "object-file.h"
+@@ -385,12 +386,16 @@ static int check_roundtrip(const char *enc_name)
  static const char *default_encoding = "UTF-8";
  
  static int encode_to_git(const char *path, const char *src, size_t src_len,
@@ -28,7 +28,7 @@ index c4ddc4de81..010515a085 100644
  	/*
  	 * No encoding is specified or there is nothing to encode.
  	 * Tell the caller that the content was not modified.
-@@ -410,6 +415,12 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+@@ -411,6 +416,12 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  		return 0;
  
  	trace_encoding("source", path, enc, src, src_len);
@@ -41,7 +41,7 @@ index c4ddc4de81..010515a085 100644
  	dst = reencode_string_len(src, src_len, default_encoding, enc,
  				  &dst_len);
  	if (!dst) {
-@@ -419,6 +430,9 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+@@ -420,6 +431,9 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  		 * would fail and we would leave the user with a messed-up
  		 * working tree. Let's try to avoid this by screaming loud.
  		 */
@@ -51,7 +51,7 @@ index c4ddc4de81..010515a085 100644
  		const char* msg = _("failed to encode '%s' from %s to %s");
  		if (die_on_error)
  			die(msg, path, enc, default_encoding);
-@@ -475,10 +489,14 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+@@ -476,10 +490,14 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  }
  
  static int encode_to_worktree(const char *path, const char *src, size_t src_len,
@@ -67,7 +67,7 @@ index c4ddc4de81..010515a085 100644
  
  	/*
  	 * No encoding is specified or there is nothing to encode.
-@@ -1309,18 +1327,36 @@ static int git_path_check_ident(struct attr_check_item *check)
+@@ -1316,18 +1334,36 @@ static int git_path_check_ident(struct attr_check_item *check)
  
  static struct attr_check *check;
  
@@ -104,7 +104,7 @@ index c4ddc4de81..010515a085 100644
  
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
-@@ -1341,6 +1377,8 @@ void convert_attrs(struct index_state *istate,
+@@ -1348,6 +1384,8 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
@@ -113,7 +113,7 @@ index c4ddc4de81..010515a085 100644
  
  	/* Save attr and make a decision for action */
  	ca->attr_action = ca->crlf_action;
-@@ -1434,7 +1472,7 @@ int convert_to_git(struct index_state *istate,
+@@ -1444,7 +1482,7 @@ int convert_to_git(struct index_state *istate,
  		len = dst->len;
  	}
  
@@ -122,7 +122,7 @@ index c4ddc4de81..010515a085 100644
  	if (ret && dst) {
  		src = dst->buf;
  		len = dst->len;
-@@ -1462,7 +1500,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
+@@ -1472,7 +1510,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
  	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
  		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
  
@@ -131,7 +131,7 @@ index c4ddc4de81..010515a085 100644
  	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
  	ident_to_git(dst->buf, dst->len, dst, ca.ident);
  }
-@@ -1494,7 +1532,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1504,7 +1542,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
  		}
  	}
  

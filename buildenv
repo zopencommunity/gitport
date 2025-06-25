@@ -3,7 +3,7 @@ export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_CATEGORIES="development source_control"
 
 # bump: git-version /GIT_VERSION="(.*)"/ https://github.com/git/git.git|*
-GIT_VERSION="2.49.0"
+GIT_VERSION="2.50.0"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
 export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk zusage libpsl libssh2"
@@ -72,7 +72,6 @@ zopen_install_all()
 
   mkdir -p $ZOPEN_INSTALL_DIR/share/bash-completion/completions
   cp -vr contrib/completion/* $ZOPEN_INSTALL_DIR/share/bash-completion/completions/ 
-  ln -s git-completion.bash $ZOPEN_INSTALL_DIR/share/bash-completion/completions/git
 }
 # Run a 'zopen_pre_check' routine to clean out any GIT environment variables 
 # that might interfere with a new GIT operation during the test run
