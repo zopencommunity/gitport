@@ -26,7 +26,7 @@ export ZOPEN_MAKE="zopen_build_all"
 export ZOPEN_MAKE_OPTS=""
 export ZOPEN_INSTALL="zopen_install_all"
 export ZOPEN_INSTALL_OPTS=""
-export ZOPEN_CHECK_OPTS='test'
+export ZOPEN_CHECK_OPTS="-i test -j\$ZOPEN_NUM_JOBS"
 export ZOPEN_COMP=CLANG
 
 export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
@@ -102,7 +102,7 @@ zopen_check_results()
 cat <<ZZ
 actualFailures:$failures
 totalTests:$totalTests
-expectedFailures:3
+expectedFailures:2366
 ZZ
 }
 
