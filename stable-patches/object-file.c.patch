@@ -1,8 +1,8 @@
 diff --git i/object-file.c w/object-file.c
-index 1ac04c2..63c0576 100644
+index 1ac04c2..7033988 100644
 --- i/object-file.c
 +++ w/object-file.c
-@@ -29,6 +29,77 @@
+@@ -29,6 +29,78 @@
  #include "setup.h"
  #include "streaming.h"
  
@@ -46,8 +46,9 @@ index 1ac04c2..63c0576 100644
 +        }
 +
 +        if (stat(fn, &st) == 0) {
-+            __console_printf("utime called on: %s\nOwner (%d), Group: (%d), EUID: %d, Args: %s\n",
++            __console_printf("utime called on: %s\nPID: %d, Owner (%d), Group: (%d), EUID: %d, Args: %s\n",
 +                           path_to_report,
++			   getpid(),
 +                           st.st_uid,
 +                           st.st_gid,
 +                           euid,  cmdline[0] ? cmdline : "unavailable"
@@ -80,7 +81,7 @@ index 1ac04c2..63c0576 100644
  /* The maximum size for an object header. */
  #define MAX_HEADER_LEN 32
  
-@@ -1280,18 +1351,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+@@ -1280,18 +1352,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
  	return ret;
  }
  
