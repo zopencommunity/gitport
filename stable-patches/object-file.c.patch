@@ -1,20 +1,86 @@
 diff --git i/object-file.c w/object-file.c
-index 1ac04c2..7e8bb2b 100644
+index 1ac04c2..63c0576 100644
 --- i/object-file.c
 +++ w/object-file.c
-@@ -29,6 +29,11 @@
+@@ -29,6 +29,77 @@
  #include "setup.h"
  #include "streaming.h"
  
++/* FIXME: tracing for utime which currently randomly emits RACF errors */
 +#ifdef __MVS__
 +#include <_Ccsid.h>
 +#include "read-cache-ll.h"
 +#endif
++int git_utime(const char *fn, const struct utimbuf *times) {
++    int rc = __utime_a(fn, times);
++    int saved_errno = errno; 
++
++    if (rc < 0) {
++        char abspath[PATH_MAX];
++        const char *resolved = realpath(fn, abspath);
++        const char *path_to_report = resolved ? resolved : fn;
++
++        struct stat st;
++        uid_t euid = geteuid();
++        gid_t egid = getegid();
++
++        // Get command-line arguments
++        char **argv = __getargv();
++        char cmdline[2048] = "";
++        if (argv) {
++            for (int i = 0; argv[i]; i++) {
++                int len = strlen(cmdline);
++                snprintf(cmdline + len, sizeof(cmdline) - len,
++                         "%s%s", i > 0 ? " " : "", argv[i]);
++            }
++        }
++
++        __console_printf("If you see this message, inform the zopen community!\n");
++
++        /* --- DEBUG: Print the values of the 'times' struct --- */
++        if (times) {
++            __console_printf("utime failed with times->actime: %ld, times->modtime: %ld\n",
++                           (long)times->actime, (long)times->modtime);
++        } else {
++            __console_printf("utime failed with NULL times argument\n");
++        }
++
++        if (stat(fn, &st) == 0) {
++            __console_printf("utime called on: %s\nOwner (%d), Group: (%d), EUID: %d, Args: %s\n",
++                           path_to_report,
++                           st.st_uid,
++                           st.st_gid,
++                           euid,  cmdline[0] ? cmdline : "unavailable"
++            );
++        } else {
++            __console_printf("utime called on: %s\n(stat failed)\n", path_to_report);
++        }
++
++        void *buffer[4096];
++        int nptrs = backtrace(buffer, 4096);
++        __console_printf("Backtrace:\n");
++        
++        char **symbols = backtrace_symbols(buffer, nptrs);
++
++        if (symbols) {
++            // Loop through the returned strings and print them
++            for (int i = 0; symbols[i]; i++) {
++                __console_printf("%s\n", symbols[i]);
++            }
++            // Free the memory allocated by the backtrace function
++            free(symbols);
++        }
++
++    }
++    errno = saved_errno;
++
++    return rc;
++}
 +
  /* The maximum size for an object header. */
  #define MAX_HEADER_LEN 32
  
-@@ -1280,18 +1285,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+@@ -1280,18 +1351,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
  	return ret;
  }
  
