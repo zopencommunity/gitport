@@ -1,8 +1,16 @@
-diff --git a/environment.c b/environment.c
-index 90632a39bc..b580112319 100644
---- a/environment.c
-+++ b/environment.c
-@@ -51,6 +51,10 @@ const char *git_hooks_path;
+diff --git i/environment.c w/environment.c
+index ae1427b..47e9f71 100644
+--- i/environment.c
++++ w/environment.c
+@@ -26,6 +26,7 @@
+ #include "repository.h"
+ #include "config.h"
+ #include "refs.h"
++#include "read-cache-ll.h"
+ #include "fmt-merge-msg.h"
+ #include "commit.h"
+ #include "strvec.h"
+@@ -57,6 +58,10 @@ char *git_attributes_file;
  int zlib_compression_level = Z_BEST_SPEED;
  int pack_compression_level = Z_DEFAULT_COMPRESSION;
  int fsync_object_files = -1;
@@ -13,3 +21,22 @@ index 90632a39bc..b580112319 100644
  int use_fsync = -1;
  enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
  enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
+@@ -423,6 +428,18 @@ static int git_default_core_config(const char *var, const char *value,
+ 		return 0;
+ 	}
+ 
++#ifdef __MVS__
++	if (!strcmp(var, "core.ignorefiletags")) {
++		ignore_file_tags = git_config_bool(var, value);
++		return 0;
++	}
++
++	if (!strcmp(var, "core.utf8ccsid")) {
++		utf8_ccsid = git_config_ulong(var, value, ctx->kvi);
++		return 0;
++	}
++#endif
++
+ 	if (!strcmp(var, "core.safecrlf")) {
+ 		int eol_rndtrp_die;
+ 		if (value && !strcasecmp(value, "warn")) {

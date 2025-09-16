@@ -1,14 +1,14 @@
 diff --git i/environment.h w/environment.h
-index 3d98461..4ef6f7f 100644
+index 8cfce41..4319b77 100644
 --- i/environment.h
 +++ w/environment.h
-@@ -155,6 +155,9 @@ extern int pack_compression_level;
+@@ -158,6 +158,9 @@ extern int pack_compression_level;
  extern unsigned long pack_size_limit_cfg;
  extern int max_allowed_tree_depth;
  
 +#ifdef __MVS__
 +extern int utf8_ccsid;
 +#endif
- extern int core_preload_index;
  extern int precomposed_unicode;
  extern int protect_hfs;
+ extern int protect_ntfs;

@@ -1,5 +1,5 @@
 diff --git i/convert.c w/convert.c
-index b5f7cf6..42dd688 100644
+index c7d6a85..3611aea 100644
 --- i/convert.c
 +++ w/convert.c
 @@ -6,6 +6,7 @@
@@ -67,7 +67,7 @@ index b5f7cf6..42dd688 100644
  
  	/*
  	 * No encoding is specified or there is nothing to encode.
-@@ -1316,18 +1334,36 @@ static int git_path_check_ident(struct attr_check_item *check)
+@@ -1316,18 +1334,35 @@ static int git_path_check_ident(struct attr_check_item *check)
  
  static struct attr_check *check;
  
@@ -89,7 +89,6 @@ index b5f7cf6..42dd688 100644
  {
  	struct attr_check_item *ccheck = NULL;
 +	struct strbuf platform_working_tree_encoding = STRBUF_INIT;
-+
 +	strbuf_addf(&platform_working_tree_encoding, "%s-working-tree-encoding", get_platform());
  
  	if (!check) {
@@ -98,13 +97,13 @@ index b5f7cf6..42dd688 100644
 +					 platform_working_tree_encoding.buf,
  					 NULL);
  		user_convert_tail = &user_convert;
- 		git_config(read_convert_config, NULL);
+ 		repo_config(the_repository, read_convert_config, NULL);
  	}
-+		strbuf_release(&platform_working_tree_encoding);
++	strbuf_release(&platform_working_tree_encoding);
  
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
-@@ -1348,6 +1384,8 @@ void convert_attrs(struct index_state *istate,
+@@ -1348,6 +1383,8 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
@@ -113,7 +112,7 @@ index b5f7cf6..42dd688 100644
  
  	/* Save attr and make a decision for action */
  	ca->attr_action = ca->crlf_action;
-@@ -1444,7 +1482,7 @@ int convert_to_git(struct index_state *istate,
+@@ -1444,7 +1481,7 @@ int convert_to_git(struct index_state *istate,
  		len = dst->len;
  	}
  
@@ -122,7 +121,7 @@ index b5f7cf6..42dd688 100644
  	if (ret && dst) {
  		src = dst->buf;
  		len = dst->len;
-@@ -1472,7 +1510,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
+@@ -1472,7 +1509,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
  	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
  		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
  
@@ -131,7 +130,7 @@ index b5f7cf6..42dd688 100644
  	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
  	ident_to_git(dst->buf, dst->len, dst, ca.ident);
  }
-@@ -1504,7 +1542,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1504,7 +1541,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
  		}
  	}
  
