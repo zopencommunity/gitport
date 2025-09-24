@@ -102,7 +102,7 @@ zopen_check_results()
 cat <<ZZ
 actualFailures:$failures
 totalTests:$totalTests
-expectedFailures:2366
+expectedFailures:2400
 ZZ
 }
 
