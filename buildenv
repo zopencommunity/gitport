@@ -108,14 +108,6 @@ ZZ
 
 zopen_post_install()
 {
-  # Validate that git clone work for https and git protocols
-  set -e
-  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport
-  $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport
-  rm -rf httpgitport gitport 
-  set +e
-  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport 2>&1 | grep -q "RUNTIME_PREFIX requested, but prefix computation failed" && exit 1
-
   mkdir -p "$1/etc"
   touch "$1/etc/gitconfig" # empty it out to avoid error with --system option
   touch "$1/etc/gitattributes" # empty it out to avoid error with --system option
@@ -125,6 +117,12 @@ zopen_post_install()
     printSoftError "zopen update-cacert failed"
     return 4
   fi
+
+  # Validate that git clone work for https and git protocols
+  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport || exit 1
+  $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport || exit 1
+  rm -rf httpgitport gitport 
+  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport 2>&1 | grep -q "RUNTIME_PREFIX requested, but prefix computation failed" && exit 1
 
   # Install man pages from ${GIT_MANPAGES_URL}
   GIT_SRC_DIR="${PWD}"
