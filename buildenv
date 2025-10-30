@@ -124,10 +124,10 @@ zopen_post_install()
 
 
   # Validate that git clone work for https and git protocols
-  GIT_TRACE=1 $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport || exit 1
-  GIT_TRACE=1 $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport || exit 1
+  GIT_TRACE=1 $1/bin/git clone https://github.com/zopencommunity/gitport.git httpgitport || exit 1
+  # GIT_TRACE=1 $1/bin/git clone git@github.com:zopencommunity/gitport.git gitport || exit 1 - requires # ssh key
   rm -rf httpgitport gitport 
-  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport 2>&1 | grep -q "RUNTIME_PREFIX requested, but prefix computation failed" && exit 1
+  $1/bin/git clone https://github.com/zopencommunity/gitport.git httpgitport 2>&1 | grep -q "RUNTIME_PREFIX requested, but prefix computation failed" && exit 1
   rm -rf httpgitport
 
   # Install man pages from ${GIT_MANPAGES_URL}
