@@ -114,16 +114,21 @@ zopen_post_install()
   touch "$1/etc/gitattributes" # empty it out to avoid error with --system option
 
   # Install a cacert.pem to be used (optionally) by the customer
-  if ! $MYDIR/zopen update-cacert -f $1 ; then
+  if ! $MYDIR/zopen update-cacert -f "$1" ; then
     printSoftError "zopen update-cacert failed"
     return 4
   fi
+  unset SSL_CERT_FILE
+  unset GIT_SSL_CAINFO
+  unset CURL_CA_BUNDLE
+
 
   # Validate that git clone work for https and git protocols
-  $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport || exit 1
-  $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport || exit 1
+  GIT_TRACE=1 $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport || exit 1
+  GIT_TRACE=1 $1/bin/git clone git@github.com:ZOSOpenTools/gitport.git gitport || exit 1
   rm -rf httpgitport gitport 
   $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport 2>&1 | grep -q "RUNTIME_PREFIX requested, but prefix computation failed" && exit 1
+  rm -rf httpgitport
 
   # Install man pages from ${GIT_MANPAGES_URL}
   GIT_SRC_DIR="${PWD}"

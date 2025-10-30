@@ -1,0 +1,19 @@
+diff --git a/repository.c b/repository.c
+index ecd6911..55a2678 100644
+--- a/repository.c
++++ b/repository.c
+@@ -452,7 +452,13 @@ int repo_hold_locked_index(struct repository *repo,
+ 			   struct lock_file *lf,
+ 			   int flags)
+ {
++	int fd;
+ 	if (!repo->index_file)
+ 		BUG("the repo hasn't been setup");
+-	return hold_lock_file_for_update(lf, repo->index_file, flags);
++	fd = hold_lock_file_for_update(lf, repo->index_file, flags);
++#ifdef __MVS__
++	if (fd >= 0)
++		__setfdbinary(fd);
++#endif
++	return fd;
+ }

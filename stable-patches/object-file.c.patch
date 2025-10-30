@@ -1,8 +1,30 @@
-diff --git i/object-file.c w/object-file.c
-index 1ac04c2..655907b 100644
---- i/object-file.c
-+++ w/object-file.c
-@@ -1280,18 +1280,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
+diff --git a/object-file.c b/object-file.c
+index 2bc36ab..22872d8 100644
+--- a/object-file.c
++++ b/object-file.c
+@@ -711,6 +711,10 @@ static int create_tmpfile(struct repository *repo,
+ 	strbuf_add(tmp, filename, dirlen);
+ 	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
+ 	fd = git_mkstemp_mode(tmp->buf, 0444);
++#ifdef __MVS__
++	if (fd >= 0)
++		__setfdbinary(fd);
++#endif
+ 	if (fd < 0 && dirlen && errno == ENOENT) {
+ 		/*
+ 		 * Make sure the directory exists; note that the contents
+@@ -728,6 +732,10 @@ static int create_tmpfile(struct repository *repo,
+ 		/* Try again */
+ 		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
+ 		fd = git_mkstemp_mode(tmp->buf, 0444);
++#ifdef __MVS__
++		if (fd >= 0)
++			__setfdbinary(fd);
++#endif
+ 	}
+ 	return fd;
+ }
+@@ -1269,18 +1277,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
  	return ret;
  }
  
