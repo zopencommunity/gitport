@@ -121,6 +121,7 @@ zopen_post_install()
   unset SSL_CERT_FILE
   unset GIT_SSL_CAINFO
   unset CURL_CA_BUNDLE
+  unset ZOPEN_IN_ZOPEN_BUILD
 
   GIT_TRACE=1 GIT_CURL_VERBOSE=1 $1/bin/git clone https://github.com/ZOSOpenTools/gitport.git httpgitport || exit 1
   rm -rf httpgitport 
