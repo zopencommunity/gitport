@@ -2,7 +2,7 @@
 
 # Git
 
-The Git version control system
+z/OS Port of the Git version control system
 
 # Installation and Usage
 
