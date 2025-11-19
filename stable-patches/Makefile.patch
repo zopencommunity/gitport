@@ -1,7 +1,7 @@
-diff --git a/Makefile b/Makefile
-index 97e8385b66..08ab16ee92 100644
---- a/Makefile
-+++ b/Makefile
+diff --git i/Makefile w/Makefile
+index 7e0f77e298..9a6c598885 100644
+--- i/Makefile
++++ w/Makefile
 @@ -20,6 +20,8 @@ include shared.mak
  #
  # Define SHELL_PATH to a POSIX shell if your /bin/sh is broken.
@@ -11,7 +11,7 @@ index 97e8385b66..08ab16ee92 100644
  # Define SANE_TOOL_PATH to a colon-separated list of paths to prepend
  # to PATH if your tools in /usr/bin are broken.
  #
-@@ -215,6 +217,8 @@ include shared.mak
+@@ -214,6 +216,8 @@ include shared.mak
  #
  # Define PERL_PATH to the path of your Perl binary (usually /usr/bin/perl).
  #
@@ -20,7 +20,7 @@ index 97e8385b66..08ab16ee92 100644
  # Define NO_PERL if you do not want Perl scripts or libraries at all.
  #
  # Define NO_PERL_CPAN_FALLBACKS if you do not want to install bundled
-@@ -896,15 +900,22 @@ BINDIR_PROGRAMS_NO_X += git-cvsserver
+@@ -914,15 +918,22 @@ BINDIR_PROGRAMS_NO_X += git-cvsserver
  ifndef SHELL_PATH
  	SHELL_PATH = /bin/sh
  endif
@@ -43,16 +43,16 @@ index 97e8385b66..08ab16ee92 100644
  
  TEST_SHELL_PATH = $(SHELL_PATH)
  
-@@ -1372,7 +1383,7 @@ UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
+@@ -941,7 +952,7 @@ RUST_LIB = $(RUST_TARGET_DIR)/libgitcore.a
+ endif
  
- # xdiff and reftable libs may in turn depend on what is in libgit.a
- GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
+ GITLIBS = common-main.o $(LIB_FILE)
 -EXTLIBS =
 +EXTLIBS = $(ZOPEN_EXTRA_LIBS)
  
  GIT_USER_AGENT = git/$(GIT_VERSION)
  
-@@ -2298,9 +2309,10 @@ perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
+@@ -2409,9 +2420,10 @@ perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
  gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
  gitwebstaticdir_SQ = $(subst ','\'',$(gitwebstaticdir))
  
@@ -64,7 +64,7 @@ index 97e8385b66..08ab16ee92 100644
  PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
  TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
  DIFF_SQ = $(subst ','\'',$(DIFF))
-@@ -2543,7 +2555,7 @@ hook-list.h: generate-hooklist.sh Documentation/githooks.txt
+@@ -2654,7 +2666,7 @@ hook-list.h: generate-hooklist.sh Documentation/githooks.adoc
  
  SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):\
  	$(localedir_SQ):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
@@ -73,7 +73,7 @@ index 97e8385b66..08ab16ee92 100644
  	$(perllibdir_SQ)
  GIT-SCRIPT-DEFINES: FORCE
  	@FLAGS='$(SCRIPT_DEFINES)'; \
-@@ -2794,7 +2806,7 @@ endif
+@@ -2884,7 +2896,7 @@ endif
  
  exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
  exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
