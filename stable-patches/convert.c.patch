@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index c7d6a85..7ba09e2 100644
+index c7d6a85..f3db530 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -6,6 +6,7 @@
@@ -78,21 +78,26 @@ index c7d6a85..7ba09e2 100644
  
  	/*
  	 * No encoding is specified or there is nothing to encode.
-@@ -1316,18 +1338,35 @@ static int git_path_check_ident(struct attr_check_item *check)
+@@ -1316,18 +1338,40 @@ static int git_path_check_ident(struct attr_check_item *check)
  
  static struct attr_check *check;
  
-+static const char* get_platform() {
-+       struct utsname uname_info;
++static const char *get_platform(void)
++{
++	static char platform_name[64];
++	struct utsname uname_info;
 +
-+       if (uname(&uname_info))
-+	die(_("uname() failed with error '%s' (%d)\n"),
-+		strerror(errno),
-+		errno);
++	if (uname(&uname_info))
++		die(_("uname() failed with error '%s' (%d)"),
++			strerror(errno),
++			errno);
 +
-+  if (!strcmp(uname_info.sysname, "OS/390"))
-+    return "zos";
-+  return uname_info.sysname;
++	/* Map OS/390 to 'zos' for platform-specific encoding attributes */
++	if (!strcmp(uname_info.sysname, "OS/390"))
++		return "zos";
++	
++	xsnprintf(platform_name, sizeof(platform_name), "%s", uname_info.sysname);
++	return platform_name;
 +}
 +
  void convert_attrs(struct index_state *istate,
@@ -114,7 +119,7 @@ index c7d6a85..7ba09e2 100644
  
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
-@@ -1348,6 +1387,8 @@ void convert_attrs(struct index_state *istate,
+@@ -1348,6 +1392,8 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
@@ -123,7 +128,7 @@ index c7d6a85..7ba09e2 100644
  
  	/* Save attr and make a decision for action */
  	ca->attr_action = ca->crlf_action;
-@@ -1444,7 +1485,7 @@ int convert_to_git(struct index_state *istate,
+@@ -1444,7 +1490,7 @@ int convert_to_git(struct index_state *istate,
  		len = dst->len;
  	}
  
@@ -132,7 +137,7 @@ index c7d6a85..7ba09e2 100644
  	if (ret && dst) {
  		src = dst->buf;
  		len = dst->len;
-@@ -1472,7 +1513,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
+@@ -1472,7 +1518,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
  	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
  		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
  
@@ -141,7 +146,7 @@ index c7d6a85..7ba09e2 100644
  	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
  	ident_to_git(dst->buf, dst->len, dst, ca.ident);
  }
-@@ -1504,7 +1545,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1504,7 +1550,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
  		}
  	}
  
@@ -150,7 +155,7 @@ index c7d6a85..7ba09e2 100644
  	if (ret) {
  		src = dst->buf;
  		len = dst->len;
-@@ -2058,3 +2099,84 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
+@@ -2058,3 +2104,84 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
  
  	return CA_CLASS_STREAMABLE;
  }
