@@ -1,20 +1,18 @@
 diff --git a/object-file.c b/object-file.c
-index 2bc36ab..e6acf81 100644
+index e7e4c33..b792cb4 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -29,6 +29,11 @@
+@@ -29,6 +29,9 @@
  #include "setup.h"
- #include "streaming.h"
- 
+ #include "tempfile.h"
+ #include "tmp-objdir.h"
 +#ifdef __MVS__
-+#include <_Ccsid.h>
-+#include "read-cache-ll.h"
++#include <zos.h>
 +#endif
-+
+ 
  /* The maximum size for an object header. */
  #define MAX_HEADER_LEN 32
- 
-@@ -711,6 +716,10 @@ static int create_tmpfile(struct repository *repo,
+@@ -831,6 +834,10 @@ static int create_tmpfile(struct repository *repo,
  	strbuf_add(tmp, filename, dirlen);
  	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
  	fd = git_mkstemp_mode(tmp->buf, 0444);
@@ -25,7 +23,7 @@ index 2bc36ab..e6acf81 100644
  	if (fd < 0 && dirlen && errno == ENOENT) {
  		/*
  		 * Make sure the directory exists; note that the contents
-@@ -728,6 +737,10 @@ static int create_tmpfile(struct repository *repo,
+@@ -848,6 +855,10 @@ static int create_tmpfile(struct repository *repo,
  		/* Try again */
  		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
  		fd = git_mkstemp_mode(tmp->buf, 0444);
@@ -36,74 +34,7 @@ index 2bc36ab..e6acf81 100644
  	}
  	return fd;
  }
-@@ -1269,18 +1282,88 @@ int index_fd(struct index_state *istate, struct object_id *oid,
- 	return ret;
- }
- 
-+#ifdef __MVS__
-+void validate_codeset(struct index_state *istate, const char *path, int* autoconvertToASCII) {
-+       struct conv_attrs ca;
-+  struct stat st;
-+  unsigned short attr_ccsid;
-+  unsigned short file_ccsid;
-+
-+  if (ignore_file_tags)
-+    return;
-+
-+  *autoconvertToASCII = 0;
-+       convert_attrs(istate, &ca, path);
-+  if (ca.attr_action == CRLF_BINARY) {
-+    attr_ccsid = FT_BINARY;
-+  }
-+  else if (ca.working_tree_encoding) {
-+    attr_ccsid = __toCcsid(ca.working_tree_encoding);
-+  }
-+  else {
-+    attr_ccsid = utf8_ccsid;
-+  }
-+
-+  if (stat(path, &st) < 0)
-+    return;
-+
-+  file_ccsid = st.st_tag.ft_ccsid;
-+
-+  if (file_ccsid == FT_UNTAGGED) {
-+    die("File %s is untagged, set the correct file tag (using the chtag command).", path);
-+  }
-+
-+  if (attr_ccsid != file_ccsid) {
-+    if (file_ccsid == 1047 && attr_ccsid == 819) {
-+      *autoconvertToASCII = 1;
-+      return;
-+    }
-+    // Allow tag mixing of 819 and 1208
-+    if ((file_ccsid == 819 || file_ccsid == 1208) && (attr_ccsid == 1208 || attr_ccsid == 819)) {
-+      return;
-+    }
-+    // Don't check for binary files, just add them
-+    if (attr_ccsid == FT_BINARY)
-+      return;
-+
-+   char attr_csname[_XOPEN_PATH_MAX] = {0};
-+    char file_csname[_XOPEN_PATH_MAX] = {0};
-+    if (attr_ccsid != FT_BINARY) {
-+      __toCSName(attr_ccsid, attr_csname);
-+    } else {
-+      snprintf(attr_csname, _XOPEN_PATH_MAX, "%s", "binary");
-+    }
-+    if (file_ccsid != FT_BINARY) {
-+      __toCSName(file_ccsid, file_csname);
-+    } else {
-+      snprintf(file_csname, _XOPEN_PATH_MAX, "%s", "binary");
-+    }
-+    die("%s added file: file tag (%s) does not match working-tree-encoding (%s)", path, file_csname, attr_csname);
-+  }
-+}
-+#endif
-+
- int index_path(struct index_state *istate, struct object_id *oid,
- 	       const char *path, struct stat *st, unsigned flags)
- {
+@@ -1649,12 +1660,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;

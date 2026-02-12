@@ -1,8 +1,18 @@
 diff --git a/lockfile.c b/lockfile.c
-index 1d5ed01..5dba02a 100644
+index 67082a9..f5193d8 100644
 --- a/lockfile.c
 +++ b/lockfile.c
-@@ -83,6 +83,10 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -6,6 +6,9 @@
+ #include "abspath.h"
+ #include "gettext.h"
+ #include "lockfile.h"
++#ifdef __MVS__
++#include <zos.h>
++#endif
+ 
+ /*
+  * path = absolute or relative path name
+@@ -83,6 +86,10 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
  
  	strbuf_addstr(&filename, LOCK_SUFFIX);
  	lk->tempfile = create_tempfile_mode(filename.buf, mode);

@@ -1,5 +1,5 @@
 diff --git a/utf8.c b/utf8.c
-index 35a0251939..b5877f22f0 100644
+index 96460cc..7f7985c 100644
 --- a/utf8.c
 +++ b/utf8.c
 @@ -3,6 +3,9 @@
@@ -12,7 +12,7 @@ index 35a0251939..b5877f22f0 100644
  
  /* This code is originally from https://www.cl.cam.ac.uk/~mgk25/ucs/ */
  
-@@ -592,6 +595,20 @@ char *reencode_string_len(const char *in, size_t insz,
+@@ -605,6 +608,20 @@ char *reencode_string_len(const char *in, size_t insz,
  #endif
  	}
  

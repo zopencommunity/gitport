@@ -1,0 +1,14 @@
+diff --git a/convert.h b/convert.h
+index 0a6e408..dcab447 100644
+--- a/convert.h
++++ b/convert.h
+@@ -237,4 +237,9 @@ enum conv_attrs_classification {
+ enum conv_attrs_classification classify_conv_attrs(
+ 	const struct conv_attrs *ca);
+ 
++#ifdef __MVS__
++void tag_file_as_working_tree_encoding(struct index_state *istate, char* path, int fd);
++void validate_codeset(struct index_state *istate, const char *path, int* autoconvertToASCII);
++#endif
++
+ #endif /* CONVERT_H */

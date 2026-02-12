@@ -1,8 +1,18 @@
 diff --git a/repository.c b/repository.c
-index ecd6911..55a2678 100644
+index c7e7521..a95755b 100644
 --- a/repository.c
 +++ b/repository.c
-@@ -452,7 +452,13 @@ int repo_hold_locked_index(struct repository *repo,
+@@ -15,6 +15,9 @@
+ #include "trace2.h"
+ #include "promisor-remote.h"
+ #include "refs.h"
++#ifdef __MVS__
++#include <zos.h>
++#endif
+ 
+ /*
+  * We do not define `USE_THE_REPOSITORY_VARIABLE` in this file because we do
+@@ -446,7 +449,13 @@ int repo_hold_locked_index(struct repository *repo,
  			   struct lock_file *lf,
  			   int flags)
  {

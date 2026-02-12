@@ -1,7 +1,7 @@
-diff --git i/convert.c w/convert.c
-index c7d6a85..3611aea 100644
---- i/convert.c
-+++ w/convert.c
+diff --git a/convert.c b/convert.c
+index c7d6a85..0135379 100644
+--- a/convert.c
++++ b/convert.c
 @@ -6,6 +6,7 @@
  #include "config.h"
  #include "convert.h"
@@ -10,7 +10,19 @@ index c7d6a85..3611aea 100644
  #include "gettext.h"
  #include "hex.h"
  #include "object-file.h"
-@@ -385,12 +386,16 @@ static int check_roundtrip(const char *enc_name)
+@@ -19,6 +20,11 @@
+ #include "trace.h"
+ #include "utf8.h"
+ #include "merge-ll.h"
++#ifdef __MVS__
++#include <zos.h>
++#include <_Ccsid.h>
++#include "read-cache-ll.h"
++#endif
+ 
+ /*
+  * convert.c - convert a file when checking it out and checking it in.
+@@ -385,12 +391,16 @@ static int check_roundtrip(const char *enc_name)
  static const char *default_encoding = "UTF-8";
  
  static int encode_to_git(const char *path, const char *src, size_t src_len,
@@ -28,7 +40,7 @@ index c7d6a85..3611aea 100644
  	/*
  	 * No encoding is specified or there is nothing to encode.
  	 * Tell the caller that the content was not modified.
-@@ -411,6 +416,12 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+@@ -411,6 +421,12 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  		return 0;
  
  	trace_encoding("source", path, enc, src, src_len);
@@ -41,7 +53,7 @@ index c7d6a85..3611aea 100644
  	dst = reencode_string_len(src, src_len, default_encoding, enc,
  				  &dst_len);
  	if (!dst) {
-@@ -420,6 +431,9 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+@@ -420,6 +436,9 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  		 * would fail and we would leave the user with a messed-up
  		 * working tree. Let's try to avoid this by screaming loud.
  		 */
@@ -51,7 +63,7 @@ index c7d6a85..3611aea 100644
  		const char* msg = _("failed to encode '%s' from %s to %s");
  		if (die_on_error)
  			die(msg, path, enc, default_encoding);
-@@ -476,10 +490,14 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+@@ -476,10 +495,14 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  }
  
  static int encode_to_worktree(const char *path, const char *src, size_t src_len,
@@ -67,7 +79,7 @@ index c7d6a85..3611aea 100644
  
  	/*
  	 * No encoding is specified or there is nothing to encode.
-@@ -1316,18 +1334,35 @@ static int git_path_check_ident(struct attr_check_item *check)
+@@ -1316,18 +1339,35 @@ static int git_path_check_ident(struct attr_check_item *check)
  
  static struct attr_check *check;
  
@@ -103,7 +115,7 @@ index c7d6a85..3611aea 100644
  
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
-@@ -1348,6 +1383,8 @@ void convert_attrs(struct index_state *istate,
+@@ -1348,6 +1388,8 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
@@ -112,7 +124,7 @@ index c7d6a85..3611aea 100644
  
  	/* Save attr and make a decision for action */
  	ca->attr_action = ca->crlf_action;
-@@ -1444,7 +1481,7 @@ int convert_to_git(struct index_state *istate,
+@@ -1444,7 +1486,7 @@ int convert_to_git(struct index_state *istate,
  		len = dst->len;
  	}
  
@@ -121,7 +133,7 @@ index c7d6a85..3611aea 100644
  	if (ret && dst) {
  		src = dst->buf;
  		len = dst->len;
-@@ -1472,7 +1509,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
+@@ -1472,7 +1514,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
  	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
  		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
  
@@ -130,7 +142,7 @@ index c7d6a85..3611aea 100644
  	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
  	ident_to_git(dst->buf, dst->len, dst, ca.ident);
  }
-@@ -1504,7 +1541,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1504,7 +1546,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
  		}
  	}
  
@@ -139,3 +151,86 @@ index c7d6a85..3611aea 100644
  	if (ret) {
  		src = dst->buf;
  		len = dst->len;
+@@ -2058,3 +2100,82 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
+ 
+ 	return CA_CLASS_STREAMABLE;
+ }
++
++
++#ifdef __MVS__
++
++void tag_file_as_working_tree_encoding(struct index_state *istate, char* path, int fd) {
++        struct conv_attrs ca;
++        convert_attrs(istate, &ca, path);
++  if (ca.attr_action != CRLF_BINARY) {
++    if (ca.working_tree_encoding)
++      __chgfdcodeset(fd, ca.working_tree_encoding);
++    else
++      __chgfdccsid(fd, utf8_ccsid);
++  }
++  else {
++    __setfdbinary(fd);
++  }
++
++  __disableautocvt(fd);
++}
++
++void validate_codeset(struct index_state *istate, const char *path, int* autoconvertToASCII) {
++	struct conv_attrs ca;
++	struct stat st;
++	unsigned short attr_ccsid;
++	unsigned short file_ccsid;
++
++	if (ignore_file_tags)
++		return;
++
++	*autoconvertToASCII = 0;
++	convert_attrs(istate, &ca, path);
++	if (ca.attr_action == CRLF_BINARY) {
++		attr_ccsid = FT_BINARY;
++	}
++	else if (ca.working_tree_encoding) {
++		attr_ccsid = __toCcsid(ca.working_tree_encoding);
++	}
++	else {
++		attr_ccsid = utf8_ccsid;
++	}
++
++	if (stat(path, &st) < 0)
++		return;
++
++	file_ccsid = st.st_tag.ft_ccsid;
++
++	if (file_ccsid == FT_UNTAGGED) {
++		die("File %s is untagged, set the correct file tag (using the chtag command).", path);
++	}
++
++	if (attr_ccsid != file_ccsid) {
++		if (file_ccsid == 1047 && attr_ccsid == 819) {
++			*autoconvertToASCII = 1;
++			return;
++		}
++		// Allow tag mixing of 819 and 1208
++		if ((file_ccsid == 819 || file_ccsid == 1208) && (attr_ccsid == 1208 || attr_ccsid == 819)) {
++			return;
++		}
++		// Don't check for binary files, just add them
++		if (attr_ccsid == FT_BINARY)
++			return;
++
++		char attr_csname[_XOPEN_PATH_MAX] = {0};
++		char file_csname[_XOPEN_PATH_MAX] = {0};
++		if (attr_ccsid != FT_BINARY) {
++			__toCSName(attr_ccsid, attr_csname);
++		} else {
++			snprintf(attr_csname, _XOPEN_PATH_MAX, "%s", "binary");
++		}
++		if (file_ccsid != FT_BINARY) {
++			__toCSName(file_ccsid, file_csname);
++		} else {
++			snprintf(file_csname, _XOPEN_PATH_MAX, "%s", "binary");
++		}
++		die("%s added file: file tag (%s) does not match working-tree-encoding (%s)", path, file_csname, attr_csname);
++	}
++}
++#endif

@@ -1,8 +1,19 @@
 diff --git a/exec-cmd.c b/exec-cmd.c
-index 507e67d528..494abf8cc2 100644
+index 507e67d..7db0ca6 100644
 --- a/exec-cmd.c
 +++ b/exec-cmd.c
-@@ -158,8 +158,8 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
+@@ -9,6 +9,10 @@
+ #include "trace.h"
+ #include "trace2.h"
+ 
++#ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
++#include <zos.h>
++#endif
++
+ #if defined(RUNTIME_PREFIX)
+ 
+ #if defined(HAVE_NS_GET_EXECUTABLE_PATH)
+@@ -158,8 +162,8 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
   */
  static int git_get_exec_path_zos(struct strbuf *buf)
  {

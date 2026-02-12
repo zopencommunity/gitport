@@ -1,8 +1,8 @@
 diff --git a/blame.c b/blame.c
-index b830654..f2458c3 100644
+index cb0b083..eb7dad0 100644
 --- a/blame.c
 +++ b/blame.c
-@@ -267,6 +267,11 @@ static struct commit *fake_working_tree_commit(struct repository *r,
+@@ -274,6 +274,11 @@ static struct commit *fake_working_tree_commit(struct repository *r,
  		if (strbuf_read(&buf, 0, 0) < 0)
  			die_errno("failed to read from stdin");
  	}
