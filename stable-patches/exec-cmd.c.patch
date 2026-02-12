@@ -1,5 +1,5 @@
 diff --git a/exec-cmd.c b/exec-cmd.c
-index 507e67d528..494abf8cc2 100644
+index 507e67d..494abf8 100644
 --- a/exec-cmd.c
 +++ b/exec-cmd.c
 @@ -158,8 +158,8 @@ static int git_get_exec_path_darwin(struct strbuf *buf)

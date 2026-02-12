@@ -1,8 +1,8 @@
-diff --git i/builtin/hash-object.c w/builtin/hash-object.c
-index 6a99ec2..5bbfcad 100644
---- i/builtin/hash-object.c
-+++ w/builtin/hash-object.c
-@@ -39,6 +39,10 @@ static void hash_object(const char *path, const char *type, const char *vpath,
+diff --git a/builtin/hash-object.c b/builtin/hash-object.c
+index 5d900a6..35c46f8 100644
+--- a/builtin/hash-object.c
++++ b/builtin/hash-object.c
+@@ -40,6 +40,10 @@ static void hash_object(const char *path, const char *type, const char *vpath,
  {
  	int fd;
  	fd = xopen(path, O_RDONLY);

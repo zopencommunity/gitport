@@ -1,8 +1,8 @@
 diff --git a/read-cache.c b/read-cache.c
-index b09128b..7bc57dd 100644
+index 0c07c3a..2c942a3 100644
 --- a/read-cache.c
 +++ b/read-cache.c
-@@ -244,6 +244,9 @@ static int ce_compare_data(struct index_state *istate,
+@@ -234,6 +234,9 @@ static int ce_compare_data(struct index_state *istate,
  	int fd = git_open_cloexec(ce->name, O_RDONLY);
  
  	if (fd >= 0) {

@@ -1,7 +1,7 @@
-diff --git i/builtin/archive.c w/builtin/archive.c
+diff --git a/builtin/archive.c b/builtin/archive.c
 index 13ea730..f0da605 100644
---- i/builtin/archive.c
-+++ w/builtin/archive.c
+--- a/builtin/archive.c
++++ b/builtin/archive.c
 @@ -12,6 +12,10 @@
  static void create_output_file(const char *output_file)
  {

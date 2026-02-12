@@ -1,8 +1,8 @@
 diff --git a/odb.c b/odb.c
-index 2a92a01..8a28e27 100644
+index ac70b6a..f43adf3 100644
 --- a/odb.c
 +++ b/odb.c
-@@ -73,6 +73,10 @@ int odb_mkstemp(struct object_database *odb,
+@@ -76,6 +76,10 @@ int odb_mkstemp(struct object_database *odb,
  	int mode = 0444;
  	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
  	fd = git_mkstemp_mode(temp_filename->buf, mode);
@@ -13,7 +13,7 @@ index 2a92a01..8a28e27 100644
  	if (0 <= fd)
  		return fd;
  
-@@ -80,7 +84,12 @@ int odb_mkstemp(struct object_database *odb,
+@@ -83,7 +87,12 @@ int odb_mkstemp(struct object_database *odb,
  	/* some mkstemp implementations erase temp_filename on failure */
  	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
  	safe_create_leading_directories(odb->repo, temp_filename->buf);

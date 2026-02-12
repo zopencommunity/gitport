@@ -1,7 +1,7 @@
-diff --git i/environment.c w/environment.c
-index ae1427b..47e9f71 100644
---- i/environment.c
-+++ w/environment.c
+diff --git a/environment.c b/environment.c
+index 8ffbf92..bef0b5d 100644
+--- a/environment.c
++++ b/environment.c
 @@ -26,6 +26,7 @@
  #include "repository.h"
  #include "config.h"
@@ -21,7 +21,7 @@ index ae1427b..47e9f71 100644
  int use_fsync = -1;
  enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
  enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-@@ -423,6 +428,18 @@ static int git_default_core_config(const char *var, const char *value,
+@@ -406,6 +411,18 @@ int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
