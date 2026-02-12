@@ -1,18 +1,8 @@
 diff --git a/odb.c b/odb.c
-index ac70b6a..35c2dc8 100644
+index ac70b6a..f43adf3 100644
 --- a/odb.c
 +++ b/odb.c
-@@ -27,6 +27,9 @@
- #include "tmp-objdir.h"
- #include "trace2.h"
- #include "write-or-die.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
- KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
- 	struct odb_source *, 1, fspathhash, fspatheq)
-@@ -76,6 +79,10 @@ int odb_mkstemp(struct object_database *odb,
+@@ -76,6 +76,10 @@ int odb_mkstemp(struct object_database *odb,
  	int mode = 0444;
  	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
  	fd = git_mkstemp_mode(temp_filename->buf, mode);
@@ -23,7 +13,7 @@ index ac70b6a..35c2dc8 100644
  	if (0 <= fd)
  		return fd;
  
-@@ -83,7 +90,12 @@ int odb_mkstemp(struct object_database *odb,
+@@ -83,7 +87,12 @@ int odb_mkstemp(struct object_database *odb,
  	/* some mkstemp implementations erase temp_filename on failure */
  	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
  	safe_create_leading_directories(odb->repo, temp_filename->buf);

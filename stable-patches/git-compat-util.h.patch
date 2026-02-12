@@ -1,0 +1,15 @@
+diff --git a/git-compat-util.h b/git-compat-util.h
+index bebcf9f..eca558e 100644
+--- a/git-compat-util.h
++++ b/git-compat-util.h
+@@ -371,6 +371,10 @@ static inline int git_has_dir_sep(const char *path)
+ #endif
+ #endif
+ 
++#ifdef __MVS__
++#include <zos.h>
++#endif
++
+ #if defined(__HP_cc) && (__HP_cc >= 61000)
+ #define NORETURN __attribute__((noreturn))
+ #define NORETURN_PTR

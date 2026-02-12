@@ -1,15 +1,8 @@
 diff --git a/builtin/archive.c b/builtin/archive.c
-index 13ea730..827bc18 100644
+index 13ea730..f0da605 100644
 --- a/builtin/archive.c
 +++ b/builtin/archive.c
-@@ -8,10 +8,17 @@
- #include "transport.h"
- #include "parse-options.h"
- #include "pkt-line.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
+@@ -12,6 +12,10 @@
  static void create_output_file(const char *output_file)
  {
  	int output_fd = xopen(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);

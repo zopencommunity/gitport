@@ -1,18 +1,8 @@
 diff --git a/diff.c b/diff.c
-index a68ddd2..4c20f3b 100644
+index a68ddd2..689cc66 100644
 --- a/diff.c
 +++ b/diff.c
-@@ -46,6 +46,9 @@
- #include "setup.h"
- #include "strmap.h"
- #include "ws.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
- #ifdef NO_FAST_WORKING_DIRECTORY
- #define FAST_WORKING_DIRECTORY 0
-@@ -4194,6 +4197,7 @@ int diff_populate_filespec(struct repository *r,
+@@ -4194,6 +4194,7 @@ int diff_populate_filespec(struct repository *r,
  	int check_binary = options ? options->check_binary : 0;
  	int err = 0;
  	int conv_flags = global_conv_flags_eol;
@@ -20,7 +10,7 @@ index a68ddd2..4c20f3b 100644
  	/*
  	 * demote FAIL to WARN to allow inspecting the situation
  	 * instead of refusing.
-@@ -4267,9 +4271,18 @@ int diff_populate_filespec(struct repository *r,
+@@ -4267,9 +4268,18 @@ int diff_populate_filespec(struct repository *r,
  			s->is_binary = 1;
  			return 0;
  		}
@@ -39,7 +29,7 @@ index a68ddd2..4c20f3b 100644
  		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
  		close(fd);
  		s->should_munmap = 1;
-@@ -4374,6 +4387,10 @@ static void prep_temp_blob(struct index_state *istate,
+@@ -4374,6 +4384,10 @@ static void prep_temp_blob(struct index_state *istate,
  		blob = buf.buf;
  		size = buf.len;
  	}

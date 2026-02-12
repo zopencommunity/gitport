@@ -1,18 +1,8 @@
 diff --git a/copy.c b/copy.c
-index b668209..3cd79b9 100644
+index b668209..e0067b4 100644
 --- a/copy.c
 +++ b/copy.c
-@@ -6,6 +6,9 @@
- #include "gettext.h"
- #include "strbuf.h"
- #include "abspath.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
- int copy_fd(int ifd, int ofd)
- {
-@@ -19,6 +22,9 @@ int copy_fd(int ifd, int ofd)
+@@ -19,6 +19,9 @@ int copy_fd(int ifd, int ofd)
  		if (write_in_full(ofd, buffer, len) < 0)
  			return COPY_WRITE_ERROR;
  	}

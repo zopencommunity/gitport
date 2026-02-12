@@ -1,18 +1,8 @@
 diff --git a/object-file.c b/object-file.c
-index e7e4c33..b792cb4 100644
+index e7e4c33..b08f7cd 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -29,6 +29,9 @@
- #include "setup.h"
- #include "tempfile.h"
- #include "tmp-objdir.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
- /* The maximum size for an object header. */
- #define MAX_HEADER_LEN 32
-@@ -831,6 +834,10 @@ static int create_tmpfile(struct repository *repo,
+@@ -831,6 +831,10 @@ static int create_tmpfile(struct repository *repo,
  	strbuf_add(tmp, filename, dirlen);
  	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
  	fd = git_mkstemp_mode(tmp->buf, 0444);
@@ -23,7 +13,7 @@ index e7e4c33..b792cb4 100644
  	if (fd < 0 && dirlen && errno == ENOENT) {
  		/*
  		 * Make sure the directory exists; note that the contents
-@@ -848,6 +855,10 @@ static int create_tmpfile(struct repository *repo,
+@@ -848,6 +852,10 @@ static int create_tmpfile(struct repository *repo,
  		/* Try again */
  		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
  		fd = git_mkstemp_mode(tmp->buf, 0444);
@@ -34,7 +24,7 @@ index e7e4c33..b792cb4 100644
  	}
  	return fd;
  }
-@@ -1649,12 +1660,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
+@@ -1649,12 +1657,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;

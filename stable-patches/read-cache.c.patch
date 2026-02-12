@@ -1,18 +1,8 @@
 diff --git a/read-cache.c b/read-cache.c
-index 0c07c3a..2a9c9bf 100644
+index 0c07c3a..2c942a3 100644
 --- a/read-cache.c
 +++ b/read-cache.c
-@@ -47,6 +47,9 @@
- #include "csum-file.h"
- #include "promisor-remote.h"
- #include "hook.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
- /* Mask for the name length in ce_flags in the on-disk index */
- 
-@@ -234,6 +237,9 @@ static int ce_compare_data(struct index_state *istate,
+@@ -234,6 +234,9 @@ static int ce_compare_data(struct index_state *istate,
  	int fd = git_open_cloexec(ce->name, O_RDONLY);
  
  	if (fd >= 0) {

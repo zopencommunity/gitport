@@ -1,18 +1,8 @@
 diff --git a/builtin/hash-object.c b/builtin/hash-object.c
-index 5d900a6..fd12042 100644
+index 5d900a6..35c46f8 100644
 --- a/builtin/hash-object.c
 +++ b/builtin/hash-object.c
-@@ -19,6 +19,9 @@
- #include "setup.h"
- #include "strbuf.h"
- #include "write-or-die.h"
-+#ifdef __MVS__
-+#include <zos.h>
-+#endif
- 
- static void hash_fd(int fd, const char *type, const char *path, unsigned flags)
- {
-@@ -40,6 +43,10 @@ static void hash_object(const char *path, const char *type, const char *vpath,
+@@ -40,6 +40,10 @@ static void hash_object(const char *path, const char *type, const char *vpath,
  {
  	int fd;
  	fd = xopen(path, O_RDONLY);
