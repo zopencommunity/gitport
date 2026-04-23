@@ -1,0 +1,13 @@
+--- a/imap-send.c	2026-04-23 02:24:40 -0400
++++ b/imap-send.c	2026-04-23 02:24:40 -0400
+@@ -246,8 +246,8 @@
+ 		for (i = 0; !found && i < num_subj_alt_names; i++) {
+ 			GENERAL_NAME *subj_alt_name = sk_GENERAL_NAME_value(subj_alt_names, i);
+ 			if (subj_alt_name->type == GEN_DNS &&
+-			    strlen((const char *)subj_alt_name->d.ia5->data) == (size_t)subj_alt_name->d.ia5->length &&
+-			    host_matches(hostname, (const char *)(subj_alt_name->d.ia5->data)))
++			    strlen((const char *)ASN1_STRING_get0_data(subj_alt_name->d.ia5)) == (size_t)ASN1_STRING_length(subj_alt_name->d.ia5) &&
++			    host_matches(hostname, (const char *)(ASN1_STRING_get0_data(subj_alt_name->d.ia5))))
+ 				found = 1;
+ 		}
+ 		sk_GENERAL_NAME_pop_free(subj_alt_names, GENERAL_NAME_free);
