@@ -1,7 +1,7 @@
-diff --git a/generate-perl.sh b/generate-perl.sh
-index 65f122ebfc..154ae533f8 100755
---- a/generate-perl.sh
-+++ b/generate-perl.sh
+diff --git a/tools/generate-perl.sh b/tools/generate-perl.sh
+index 796d835932..4441891559 100755
+--- a/tools/generate-perl.sh
++++ b/tools/generate-perl.sh
 @@ -19,7 +19,7 @@ OUTPUT="$5"
  
  sed -e '1{' \
