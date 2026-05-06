@@ -1,14 +1,18 @@
 diff --git a/lockfile.c b/lockfile.c
-index 7add2f136a..f9ffba3d80 100644
+index 7add2f1..e5aef33 100644
 --- a/lockfile.c
 +++ b/lockfile.c
-@@ -178,7 +178,10 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -178,7 +178,14 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
  
  	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
  	if (lk->tempfile)
 +	{
 +		__chgfdccsid(lk->tempfile->fd, 819);
  		lk->pid_tempfile = create_lock_pid_file(pid_path.buf, mode);
++		if (lk->pid_tempfile)
++		{
++			__chgfdccsid(lk->pid_tempfile->fd, 819);
++		}
 +	}
  
  	strbuf_release(&base_path);
