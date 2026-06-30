@@ -1,6 +1,6 @@
 diff --git a/t/t0082-zos-encoding.sh b/t/t0082-zos-encoding.sh
 new file mode 100755
-index 0000000..20a3cf1
+index 0000000..9bfe25e
 --- /dev/null
 +++ b/t/t0082-zos-encoding.sh
 @@ -0,0 +1,67 @@
@@ -17,9 +17,9 @@ index 0000000..20a3cf1
 +
 +test_expect_success 'setup repo with character not in IBM-1047' '
 +	git config core.ignorefiletags true &&
-+	git config core.zosEncodingFallback fail &&
++	git config core.iconvtranslit false &&
 +	git config core.utf8ccsid 1208 &&
-+	# C5 A7 is UTF-8 for Å§. It does not exist in IBM-1047.
++	# C5 A7 is UTF-8 for ŧ. It does not exist in IBM-1047.
 +	printf "\xc5\xa7" >fail_blob.txt &&
 +	git add fail_blob.txt &&
 +	git commit -m "add utf8 blob" &&
@@ -56,7 +56,7 @@ index 0000000..20a3cf1
 +'
 +
 +test_expect_success 'checkout succeeds with transliteration' '
-+	git config core.zosEncodingFallback transliterate &&
++	git config core.iconvtranslit true &&
 +	rm fail_blob.txt &&
 +	git checkout-index -f fail_blob.txt &&
 +

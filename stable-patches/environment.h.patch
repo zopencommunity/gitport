@@ -1,19 +1,14 @@
 diff --git a/environment.h b/environment.h
-index 123a71c..574ceb3 100644
+index 123a71c..811cfba 100644
 --- a/environment.h
 +++ b/environment.h
-@@ -174,6 +174,15 @@ extern int zlib_compression_level;
+@@ -174,6 +174,10 @@ extern int zlib_compression_level;
  extern int pack_compression_level;
  extern unsigned long pack_size_limit_cfg;
  
 +#ifdef __MVS__
-+enum zos_encoding_fallback {
-+	ZOS_ENCODING_FALLBACK_FAIL = 0,
-+	ZOS_ENCODING_FALLBACK_TRANSLITERATE = 1
-+};
 +extern int utf8_ccsid;
-+extern enum zos_encoding_fallback zos_encoding_fallback;
-+extern int zos_encoding_fallback_is_env_set;
++extern int iconv_translit;
 +#endif
  extern int precomposed_unicode;
  extern int protect_hfs;

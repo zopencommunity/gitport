@@ -1,5 +1,5 @@
 diff --git a/entry.c b/entry.c
-index 7817aee..b5d1b74 100644
+index 7817aee..69568f1 100644
 --- a/entry.c
 +++ b/entry.c
 @@ -85,8 +85,16 @@ static void remove_subtree(struct strbuf *path)
@@ -37,11 +37,17 @@ index 7817aee..b5d1b74 100644
  	} else {
  		return create_file(path, !symlink ? ce->ce_mode : 0666);
  	}
-@@ -139,7 +154,12 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+@@ -139,7 +154,18 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
  	if (fd < 0)
  		return -1;
  
-+
++#ifdef __MVS__
++	struct f_cnvrt query;
++	query.cvtcmd = QUERYCVT;
++	query.pccsid = 0;
++	query.fccsid = 0;
++	int fcntl_ret = fcntl(fd, F_CONTROL_CVT, &query);
++#endif
  	result |= odb_stream_blob_to_fd(the_repository->objects, fd, &ce->oid, filter, 1);
 +#ifdef __MVS__
 +	tag_file_as_working_tree_encoding(state->istate, (char*)ce->name, fd, result == 0 ? (filter ? 1 : 0) : -1);
@@ -50,7 +56,7 @@ index 7817aee..b5d1b74 100644
  	*fstat_done = fstat_checkout_output(fd, state, statbuf);
  	result |= close(fd);
  
-@@ -352,7 +372,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+@@ -352,7 +378,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
  			ret = async_convert_to_working_tree_ca(ca, ce->name,
  							       new_blob, size,
  							       &buf, &meta, dco);
@@ -59,7 +65,7 @@ index 7817aee..b5d1b74 100644
  				struct string_list_item *item =
  					string_list_lookup(&dco->paths, ce->name);
  				if (item) {
-@@ -367,7 +387,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+@@ -367,7 +393,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
  							 size, &buf, &meta);
  		}
  
@@ -68,9 +74,18 @@ index 7817aee..b5d1b74 100644
  			free(new_blob);
  			new_blob = strbuf_detach(&buf, &newsize);
  			size = newsize;
-@@ -386,6 +406,9 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+@@ -384,8 +410,17 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+ 			free(new_blob);
+ 			return error_errno("unable to create file %s", path);
  		}
- 
+-
++#ifdef __MVS__
++	struct f_cnvrt query;
++	query.cvtcmd = QUERYCVT;
++	query.pccsid = 0;
++	query.fccsid = 0;
++	int fcntl_ret = fcntl(fd, F_CONTROL_CVT, &query);
++#endif
  		wrote = write_in_full(fd, new_blob, size);
 +#ifdef __MVS__
 +    tag_file_as_working_tree_encoding(state->istate, path, fd, ret);

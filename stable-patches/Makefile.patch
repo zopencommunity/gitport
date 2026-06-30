@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index cedc234..dae1cf5 100644
+index cedc234..e2ab14a 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -20,6 +20,8 @@ include shared.mak
@@ -82,3 +82,12 @@ index cedc234..dae1cf5 100644
  	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
  	'-DBINDIR="$(bindir_relative_SQ)"' \
  	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'
+@@ -3001,7 +3013,7 @@ git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
+ 
+ git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
+ 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+-		$(IMAP_SEND_LDFLAGS) $(LIBS)
++		$(IMAP_SEND_LDFLAGS) $(LIBS) $(EXTLIBS)
+ 
+ git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+ 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \

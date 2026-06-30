@@ -1,8 +1,17 @@
 diff --git a/read-cache.c b/read-cache.c
-index 38a04b8..0eb0109 100644
+index 38a04b8..66eeb77 100644
 --- a/read-cache.c
 +++ b/read-cache.c
-@@ -237,6 +237,9 @@ static int ce_compare_data(struct index_state *istate,
+@@ -13,6 +13,8 @@
+ #include "diff.h"
+ #include "diffcore.h"
+ #include "hex.h"
++#include "convert.h"
++#include "attr.h"
+ #include "tempfile.h"
+ #include "lockfile.h"
+ #include "cache-tree.h"
+@@ -237,6 +239,9 @@ static int ce_compare_data(struct index_state *istate,
  	int fd = git_open_cloexec(ce->name, O_RDONLY);
  
  	if (fd >= 0) {
@@ -12,3 +21,33 @@ index 38a04b8..0eb0109 100644
  		struct object_id oid;
  		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
  			match = !oideq(&oid, &ce->oid);
+@@ -439,6 +444,29 @@ int ie_match_stat(struct index_state *istate,
+ 			changed |= ce_modified_check_fs(istate, ce, st);
+ 	}
+ 
++#ifdef __MVS__
++	/*
++	 * On z/OS, size mismatches (DATA_CHANGED) are common due to EBCDIC/UTF-8
++	 * conversion. If only DATA_CHANGED is set, verify content.
++	 */
++	if ((changed & DATA_CHANGED) && !(changed & (TYPE_CHANGED | MODE_CHANGED))) {
++		struct conv_attrs ca;
++		
++		/* 
++		 * Ensure attribute system is configured for check-in (EBCDIC -> UTF-8).
++		 * This is also set in apply.c but we do it here for extra safety.
++		 */
++		git_attr_set_direction(GIT_ATTR_CHECKIN);
++		
++		/* Prime the attribute cache for this path */
++		convert_attrs(istate, &ca, ce->name);
++		
++		if (!ce_modified_check_fs(istate, ce, st)) {
++			changed &= ~DATA_CHANGED;
++		}
++	}
++#endif
++
+ 	return changed;
+ }
+ 

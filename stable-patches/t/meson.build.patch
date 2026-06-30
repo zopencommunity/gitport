@@ -1,12 +1,13 @@
 diff --git a/t/meson.build b/t/meson.build
-index 7528e5c..967776d 100644
+index 7528e5c..62c9e4b 100644
 --- a/t/meson.build
 +++ b/t/meson.build
-@@ -121,6 +121,7 @@ integration_tests = [
+@@ -121,6 +121,8 @@ integration_tests = [
    't0071-sort.sh',
    't0080-unit-test-output.sh',
    't0081-find-pack.sh',
 +  't0082-zos-encoding.sh',
++  't0083-apply-3way-zos.sh',
    't0090-cache-tree.sh',
    't0091-bugreport.sh',
    't0092-diagnose.sh',

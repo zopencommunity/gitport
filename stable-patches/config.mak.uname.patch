@@ -1,5 +1,5 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index 5feb582..d422080 100644
+index 5feb582..ee69ee6 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
 @@ -655,15 +655,25 @@ ifeq ($(uname_S),NONSTOP_KERNEL)

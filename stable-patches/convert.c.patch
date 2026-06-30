@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index eae36c8..80757f5 100644
+index eae36c8..64a911a 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -6,6 +6,7 @@
@@ -99,7 +99,7 @@ index eae36c8..80757f5 100644
 +			size_t line, col;
 +			unsigned char bad_char;
 +			find_first_encoding_error(src, src_len, default_encoding, enc, &line, &col, &bad_char);
-+			warning(_("transliteration (best-effort) conversion used for '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
++			warning(_("best-effort conversion used for '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
 +				path, enc, default_encoding, line, col, bad_char);
 +		}
 +	}
@@ -170,7 +170,7 @@ index eae36c8..80757f5 100644
 +			size_t line, col;
 +			unsigned char bad_char;
 +			find_first_encoding_error(src, src_len, enc, default_encoding, &line, &col, &bad_char);
-+			warning(_("transliteration (best-effort) conversion used for '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
++			warning(_("best-effort conversion used for '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
 +				path, default_encoding, enc, line, col, bad_char);
 +		}
 +	}

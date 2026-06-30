@@ -1,5 +1,5 @@
 diff --git a/utf8.c b/utf8.c
-index 96460cc..edd5dd1 100644
+index 96460cc..2a15cf7 100644
 --- a/utf8.c
 +++ b/utf8.c
 @@ -1,6 +1,8 @@
@@ -32,7 +32,7 @@ index 96460cc..edd5dd1 100644
  	const char *bom_str = NULL;
  	size_t bom_len = 0;
  
-@@ -837,3 +853,157 @@ void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int wid
+@@ -837,3 +853,154 @@ void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int wid
  	} else if (position == ALIGN_RIGHT)
  		strbuf_addf(buf, "%*s", width + utf8_compensation, s);
  }
@@ -88,7 +88,7 @@ index 96460cc..edd5dd1 100644
 +#endif
 +	}
 +
-+	if (zos_encoding_fallback == ZOS_ENCODING_FALLBACK_TRANSLITERATE) {
++	if (iconv_translit) {
 +		out_encoding_translit = xstrfmt("%s//TRANSLIT", out_encoding);
 +		conv = iconv_open(out_encoding_translit, in_encoding);
 +		free(out_encoding_translit);
@@ -98,7 +98,7 @@ index 96460cc..edd5dd1 100644
 +
 +	if (conv == (iconv_t) -1) {
 +		in_encoding = fallback_encoding(in_encoding);
-+		if (zos_encoding_fallback == ZOS_ENCODING_FALLBACK_TRANSLITERATE) {
++		if (iconv_translit) {
 +			out_encoding_translit = xstrfmt("%s//TRANSLIT", fallback_encoding(out_encoding));
 +			conv = iconv_open(out_encoding_translit, in_encoding);
 +			free(out_encoding_translit);
@@ -123,9 +123,6 @@ index 96460cc..edd5dd1 100644
 +	size_t line = 1, col = 0;
 +	size_t fail_pos = src_len;
 +	iconv_t cd = iconv_open(to, from);
-+
-+	if (bad_char_out)
-+		*bad_char_out = 0;
 +
 +	if (cd != (iconv_t)-1) {
 +		const char *inbuf = src;

@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index cedc234..8a9f123 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3014,7 +3014,7 @@ git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
+ 
+ git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
+ 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+-		$(IMAP_SEND_LDFLAGS) $(LIBS)
++		$(IMAP_SEND_LDFLAGS) $(LIBS) $(EXTLIBS)
+ 
+ git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+ 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \

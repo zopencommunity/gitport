@@ -1,16 +1,27 @@
 diff --git a/attr.c b/attr.c
-index 7536954..b15e1aa 100644
+index 7536954..1d7e5e8 100644
 --- a/attr.c
 +++ b/attr.c
-@@ -873,9 +873,10 @@ static struct attr_stack *read_attr(struct index_state *istate,
- 
+@@ -870,15 +870,18 @@ static struct attr_stack *read_attr(struct index_state *istate,
+ 		CALLOC_ARRAY(res, 1);
+ 	return res;
+ }
+-
  const char *git_attr_system_file(void)
  {
--	static const char *system_wide;
-+	char *system_wide = xstrdup_or_null(getenv("GIT_ATTR_SYSTEM"));
- 	if (!system_wide)
- 		system_wide = system_path(ETC_GITATTRIBUTES);
-+	normalize_path_copy(system_wide, system_wide);
+ 	static const char *system_wide;
+-	if (!system_wide)
+-		system_wide = system_path(ETC_GITATTRIBUTES);
++	static int initialized;
++	
++	if (!initialized) {
++		const char *env = getenv("GIT_ATTR_SYSTEM");
++		system_wide = env ? xstrdup(env) : system_path(ETC_GITATTRIBUTES);
++		initialized = 1;
++	}
  	return system_wide;
  }
- 
+-
+ const char *git_attr_global_file(void)
+ {
+ 	struct repo_config_values *cfg = repo_config_values(the_repository);

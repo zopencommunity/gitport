@@ -1,0 +1,13 @@
+diff --git a/t/test-lib.sh b/t/test-lib.sh
+index 70fd3e9..248504b 100644
+--- a/t/test-lib.sh
++++ b/t/test-lib.sh
+@@ -1593,7 +1593,7 @@ fi
+ 
+ # Use -P to resolve symlinks in our working directory so that the cwd
+ # in subprocesses like git equals our $PWD (for pathname comparisons).
+-cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
++cd "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
+ TRASH_DIRECTORY=$(pwd)
+ HOME="$TRASH_DIRECTORY"
+ 

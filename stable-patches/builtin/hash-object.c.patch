@@ -1,0 +1,19 @@
+diff --git a/builtin/hash-object.c b/builtin/hash-object.c
+index 5d900a6..5a5bfe8 100644
+--- a/builtin/hash-object.c
++++ b/builtin/hash-object.c
+@@ -40,6 +40,14 @@ static void hash_object(const char *path, const char *type, const char *vpath,
+ {
+ 	int fd;
+ 	fd = xopen(path, O_RDONLY);
++#ifdef __MVS__
++	struct stat st;
++	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
++		if (__setfdbinary(fd))
++			die_errno("Cannot set to binary '%s'", path);
++		__disableautocvt(fd);
++	}
++#endif  
+ 	hash_fd(fd, type, vpath, flags);
+ }
+ 
