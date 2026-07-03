@@ -1,5 +1,5 @@
 diff --git a/environment.c b/environment.c
-index fc3ed8b..45fc8c7 100644
+index ba2c601..22395a8 100644
 --- a/environment.c
 +++ b/environment.c
 @@ -27,6 +27,7 @@
@@ -10,9 +10,9 @@ index fc3ed8b..45fc8c7 100644
  #include "fmt-merge-msg.h"
  #include "commit.h"
  #include "strvec.h"
-@@ -57,6 +58,12 @@ char *apply_default_ignorewhitespace;
- int zlib_compression_level = Z_BEST_SPEED;
- int pack_compression_level = Z_DEFAULT_COMPRESSION;
+@@ -52,6 +53,12 @@ char *git_log_output_encoding;
+ char *apply_default_whitespace;
+ char *apply_default_ignorewhitespace;
  int fsync_object_files = -1;
 +#ifdef __MVS__
 +int ignore_file_tags = 0;
@@ -23,7 +23,7 @@ index fc3ed8b..45fc8c7 100644
  int use_fsync = -1;
  enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
  enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-@@ -406,6 +413,32 @@ int git_default_core_config(const char *var, const char *value,
+@@ -398,6 +405,32 @@ int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
