@@ -1,8 +1,8 @@
 diff --git a/config.mak.uname b/config.mak.uname
-index d5112168a4..17716314c0 100644
+index 9ebd240..b8c51ff 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -639,12 +639,19 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
+@@ -678,12 +678,20 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
  	SHELL_PATH = /usr/coreutils/bin/bash
  endif
  ifeq ($(uname_S),OS/390)
@@ -12,6 +12,7 @@ index d5112168a4..17716314c0 100644
 +	SHELL_PATH_FOR_SCRIPTS = /bin/env bash
 +	PYTHON_PATH = python
  	NO_SYS_POLL_H = YesPlease
++	NO_RUST = YesPlease
 +	RUNTIME_PREFIX = YesPlease
  	NO_STRCASESTR = YesPlease
  	NO_REGEX = YesPlease
