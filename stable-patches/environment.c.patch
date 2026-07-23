@@ -1,8 +1,8 @@
 diff --git a/environment.c b/environment.c
-index 8ffbf92..bef0b5d 100644
+index ba2c601..3682377 100644
 --- a/environment.c
 +++ b/environment.c
-@@ -26,6 +26,7 @@
+@@ -27,6 +27,7 @@
  #include "repository.h"
  #include "config.h"
  #include "refs.h"
@@ -10,9 +10,9 @@ index 8ffbf92..bef0b5d 100644
  #include "fmt-merge-msg.h"
  #include "commit.h"
  #include "strvec.h"
-@@ -57,6 +58,10 @@ char *git_attributes_file;
- int zlib_compression_level = Z_BEST_SPEED;
- int pack_compression_level = Z_DEFAULT_COMPRESSION;
+@@ -52,6 +53,10 @@ char *git_log_output_encoding;
+ char *apply_default_whitespace;
+ char *apply_default_ignorewhitespace;
  int fsync_object_files = -1;
 +#ifdef __MVS__
 +int ignore_file_tags = 0;
@@ -21,21 +21,21 @@ index 8ffbf92..bef0b5d 100644
  int use_fsync = -1;
  enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
  enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-@@ -406,6 +411,18 @@ int git_default_core_config(const char *var, const char *value,
+@@ -398,6 +403,18 @@ int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
-+#ifdef __MVS__
-+	if (!strcmp(var, "core.ignorefiletags")) {
++	#ifdef __MVS__
++	       if (!strcmp(var, "core.ignorefiletags")) {
 +		ignore_file_tags = git_config_bool(var, value);
 +		return 0;
-+	}
++	      }
 +
-+	if (!strcmp(var, "core.utf8ccsid")) {
++	       if (!strcmp(var, "core.utf8ccsid")) {
 +		utf8_ccsid = git_config_ulong(var, value, ctx->kvi);
 +		return 0;
-+	}
-+#endif
++	       }
++	#endif
 +
  	if (!strcmp(var, "core.safecrlf")) {
  		int eol_rndtrp_die;
