@@ -19,7 +19,7 @@ index 0000000..9bfe25e
 +	git config core.ignorefiletags true &&
 +	git config core.iconvtranslit false &&
 +	git config core.utf8ccsid 1208 &&
-+	# C5 A7 is UTF-8 for ŧ. It does not exist in IBM-1047.
++	# C5 A7 is UTF-8 for Å§. It does not exist in IBM-1047.
 +	printf "\xc5\xa7" >fail_blob.txt &&
 +	git add fail_blob.txt &&
 +	git commit -m "add utf8 blob" &&

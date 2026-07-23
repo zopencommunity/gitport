@@ -89,7 +89,7 @@ ls -lT # you will notice that all files are now tagged as 819
 When Git on z/OS performs encoding conversion (e.g., from UTF-8 to IBM-1047), it may encounter characters that cannot be exactly represented in the target encoding. You can control how Git handles these cases using the `core.zosEncodingFallback` configuration:
 
 - `git config --global core.zosEncodingFallback fail` (Default): Git will stop with an error if a character cannot be converted.
-- `git config --global core.zosEncodingFallback transliterate`: Git will use iconv's transliteration feature to substitute the character with a similar-looking one (e.g., `Ã©` becomes `e`), and will issue a warning.
+- `git config --global core.zosEncodingFallback transliterate`: Git will use iconv's transliteration feature to substitute the character with a similar-looking one (e.g., `ÃÂ©` becomes `e`), and will issue a warning.
 
 You can also set the default behavior using the `GIT_ENCODING_FALLBACK` environment variable, which takes precedence over the git config setting:
 
