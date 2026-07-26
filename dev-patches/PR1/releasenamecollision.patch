@@ -11,7 +11,7 @@ index e348905a1f..edc05418e2 100644
 + * Once negotiation is done, call release_negotiator(). The negotiator then 
 + * cannot be used (unless reinitialized with fetch_negotiator_init()).
   */
- struct fetch_negotiator {
+ struct fetch_nogotiator {
  	/*
 @@ -47,7 +47,7 @@ struct fetch_negotiator {
  	 */
