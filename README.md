@@ -2,7 +2,7 @@
 
 # Git
 
-z/OS Port of the Git version control system
+z/OS Port of the Git version control system blabla
 
 # Installation and Usage
 
