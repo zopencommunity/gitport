@@ -1,8 +1,8 @@
 diff --git a/object-file.c b/object-file.c
-index 2acc952..d78fb1d 100644
+index e3d92bb..291a7d8 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -858,11 +858,19 @@ static int create_tmpfile(struct repository *repo,
+@@ -614,11 +614,19 @@ static int create_tmpfile(struct repository *repo,
  			  struct strbuf *tmp, const char *filename)
  {
  	int fd, dirlen = directory_size(filename);
@@ -23,7 +23,7 @@ index 2acc952..d78fb1d 100644
  	if (fd < 0 && dirlen && errno == ENOENT) {
  		/*
  		 * Make sure the directory exists; note that the contents
-@@ -880,6 +888,12 @@ static int create_tmpfile(struct repository *repo,
+@@ -636,6 +644,12 @@ static int create_tmpfile(struct repository *repo,
  		/* Try again */
  		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
  		fd = git_mkstemp_mode(tmp->buf, 0444);
@@ -36,7 +36,7 @@ index 2acc952..d78fb1d 100644
  	}
  	return fd;
  }
-@@ -1276,8 +1290,10 @@ static int index_mem(struct index_state *istate,
+@@ -998,8 +1012,16 @@ static int index_mem(struct index_state *istate,
  	 * Convert blobs to git internal format
  	 */
  	if ((type == OBJ_BLOB) && path) {
@@ -44,12 +44,18 @@ index 2acc952..d78fb1d 100644
 -				   get_conv_flags(flags))) {
 +		ret = convert_to_git(istate, path, buf, size, &nbuf,
 +				   get_conv_flags(flags));
++		if (ret < 0)
++		{
++			/* Conversion failed - return error immediately */
++			strbuf_release(&nbuf);
++			return -1;
++		}
 +		if(ret > 0)
 +		{
  			buf = nbuf.buf;
  			size = nbuf.len;
  		}
-@@ -1720,12 +1736,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
+@@ -1407,12 +1429,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;

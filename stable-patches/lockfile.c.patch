@@ -1,5 +1,5 @@
 diff --git a/lockfile.c b/lockfile.c
-index 7add2f1..4ae19e2 100644
+index 7add2f1..95c7497 100644
 --- a/lockfile.c
 +++ b/lockfile.c
 @@ -2,6 +2,8 @@
@@ -27,7 +27,7 @@ index 7add2f1..4ae19e2 100644
  
  	strbuf_addstr(&base_path, path);
  	if (!(flags & LOCK_NO_DEREF))
-@@ -177,8 +181,24 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -177,8 +181,18 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
  	get_pid_path(&pid_path, base_path.buf);
  
  	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
@@ -35,18 +35,12 @@ index 7add2f1..4ae19e2 100644
 +#ifdef __MVS__
 +	if (lk->tempfile && fstat(lk->tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
 +	{
-+		if (flags & LOCK_TAG_TEXT)
-+			__chgfdccsid(lk->tempfile->fd, utf8_ccsid);
-+		else
-+			__setfdbinary(lk->tempfile->fd);
++		__chgfdccsid(lk->tempfile->fd, utf8_ccsid);
 +
  		lk->pid_tempfile = create_lock_pid_file(pid_path.buf, mode);
 +		if (lk->pid_tempfile && fstat(lk->pid_tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
 +		{
-+			if (flags & LOCK_TAG_TEXT)
-+				__chgfdccsid(lk->pid_tempfile->fd, utf8_ccsid);
-+			else
-+				__setfdbinary(lk->pid_tempfile->fd);
++			__chgfdccsid(lk->pid_tempfile->fd, utf8_ccsid);
 +		}
 +	}
 +#endif

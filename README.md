@@ -86,15 +86,17 @@ ls -lT # you will notice that all files are now tagged as 819
 ```
 
 ### Encoding conversion fallback
-When Git on z/OS performs encoding conversion (e.g., from UTF-8 to IBM-1047), it may encounter characters that cannot be exactly represented in the target encoding. You can control how Git handles these cases using the `core.zosEncodingFallback` configuration:
+When Git on z/OS performs encoding conversion (e.g., from UTF-8 to IBM-1047), it may encounter characters that cannot be exactly represented in the target encoding. You can control how Git handles these cases using the `core.iconvtranslit` configuration:
 
-- `git config --global core.zosEncodingFallback fail` (Default): Git will stop with an error if a character cannot be converted.
-- `git config --global core.zosEncodingFallback transliterate`: Git will use iconv's transliteration feature to substitute the character with a similar-looking one (e.g., `ÃÂ©` becomes `e`), and will issue a warning.
+**Using environment variable (takes precedence):**
+- `export GIT_ICONV_TRANSLIT=false` (Default): Git will stop with an error if a character cannot be converted.
+- `export GIT_ICONV_TRANSLIT=true`: Git will use iconv's transliteration feature to substitute the character with a similar-looking one (e.g., `é` becomes `e`), and will issue a warning.
 
-You can also set the default behavior using the `GIT_ENCODING_FALLBACK` environment variable, which takes precedence over the git config setting:
+**Using git config:**
+- `git config --global core.iconvtranslit false` (Default): Strict mode - fail on conversion errors.
+- `git config --global core.iconvtranslit true`: Lenient mode - transliterate unconvertible characters.
 
-- `export GIT_ENCODING_FALLBACK=fail`
-- `export GIT_ENCODING_FALLBACK=transliterate`
+**Note:** The environment variable `GIT_ICONV_TRANSLIT` takes precedence over the `core.iconvtranslit` configuration setting. You can use values like `true`/`false`, `yes`/`no`, or `1`/`0` for both the environment variable and config option.
 
 ### Binary files
 To specify a binary encoding, you can use the binary attribute as follows:

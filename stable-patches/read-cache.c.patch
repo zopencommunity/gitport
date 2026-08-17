@@ -1,5 +1,5 @@
 diff --git a/read-cache.c b/read-cache.c
-index 38a04b8..66eeb77 100644
+index 21ca58b..1d20af4 100644
 --- a/read-cache.c
 +++ b/read-cache.c
 @@ -13,6 +13,8 @@
@@ -11,7 +11,7 @@ index 38a04b8..66eeb77 100644
  #include "tempfile.h"
  #include "lockfile.h"
  #include "cache-tree.h"
-@@ -237,6 +239,9 @@ static int ce_compare_data(struct index_state *istate,
+@@ -238,8 +240,11 @@ static int ce_compare_data(struct index_state *istate,
  	int fd = git_open_cloexec(ce->name, O_RDONLY);
  
  	if (fd >= 0) {
@@ -19,9 +19,12 @@ index 38a04b8..66eeb77 100644
 +    __disableautocvt(fd);
 +#endif
  		struct object_id oid;
- 		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
+-		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
++		if (index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0) >= 0)
  			match = !oideq(&oid, &ce->oid);
-@@ -439,6 +444,29 @@ int ie_match_stat(struct index_state *istate,
+ 		/* index_fd() closed the file descriptor already */
+ 	}
+@@ -440,6 +445,29 @@ int ie_match_stat(struct index_state *istate,
  			changed |= ce_modified_check_fs(istate, ce, st);
  	}
  

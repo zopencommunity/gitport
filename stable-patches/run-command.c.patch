@@ -54,11 +54,14 @@ index c146a56..680ed4c 100644
  		cmd->err = fderr[0];
  	}
  
-@@ -952,6 +963,7 @@ int start_command(struct child_process *cmd)
+@@ -952,6 +963,10 @@ int start_command(struct child_process *cmd)
  #endif
  
  	if (cmd->pid < 0) {
 +fail_pipe:
++		if (str)
++			error("cannot create %s pipe for %s: %s",
++				str, cmd->args.v[0], strerror(failed_errno));
  		trace2_child_exit(cmd, -1);
  
  		if (need_in)
