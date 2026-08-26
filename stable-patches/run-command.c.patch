@@ -1,0 +1,89 @@
+diff --git a/run-command.c b/run-command.c
+index c146a56..680ed4c 100644
+--- a/run-command.c
++++ b/run-command.c
+@@ -18,6 +18,10 @@
+ #include "packfile.h"
+ #include "compat/nonblock.h"
+ 
++#ifdef __MVS__
++#include <zos.h>
++#endif
++
+ void child_process_init(struct child_process *child)
+ {
+ 	struct child_process blank = CHILD_PROCESS_INIT;
+@@ -694,6 +698,10 @@ int start_command(struct child_process *cmd)
+ 			str = "standard input";
+ 			goto fail_pipe;
+ 		}
++#ifdef __MVS__
++		/* __disableautocvt(fdin[0]); */
++		/* __disableautocvt(fdin[1]); */
++#endif
+ 		cmd->in = fdin[1];
+ 	}
+ 
+@@ -710,6 +718,10 @@ int start_command(struct child_process *cmd)
+ 			str = "standard output";
+ 			goto fail_pipe;
+ 		}
++#ifdef __MVS__
++		/* __disableautocvt(fdout[0]); */
++		/* __disableautocvt(fdout[1]); */
++#endif
+ 		cmd->out = fdout[0];
+ 	}
+ 
+@@ -726,13 +738,12 @@ int start_command(struct child_process *cmd)
+ 			else if (cmd->out)
+ 				close(cmd->out);
+ 			str = "standard error";
+-fail_pipe:
+-			error("cannot create %s pipe for %s: %s",
+-				str, cmd->args.v[0], strerror(failed_errno));
+-			child_process_clear(cmd);
+-			errno = failed_errno;
+-			return -1;
++			goto fail_pipe;
+ 		}
++#ifdef __MVS__
++		/* __disableautocvt(fderr[0]); */
++		/* __disableautocvt(fderr[1]); */
++#endif
+ 		cmd->err = fderr[0];
+ 	}
+ 
+@@ -952,6 +963,10 @@ int start_command(struct child_process *cmd)
+ #endif
+ 
+ 	if (cmd->pid < 0) {
++fail_pipe:
++		if (str)
++			error("cannot create %s pipe for %s: %s",
++				str, cmd->args.v[0], strerror(failed_errno));
+ 		trace2_child_exit(cmd, -1);
+ 
+ 		if (need_in)
+@@ -1161,6 +1173,10 @@ int start_async(struct async *async)
+ 				close(async->out);
+ 			return error_errno("cannot create pipe");
+ 		}
++#ifdef __MVS__
++		/* __disableautocvt(fdin[0]); */
++		/* __disableautocvt(fdin[1]); */
++#endif
+ 		async->in = fdin[1];
+ 	}
+ 
+@@ -1173,6 +1189,10 @@ int start_async(struct async *async)
+ 				close(async->in);
+ 			return error_errno("cannot create pipe");
+ 		}
++#ifdef __MVS__
++		/* __disableautocvt(fdout[0]); */
++		/* __disableautocvt(fdout[1]); */
++#endif
+ 		async->out = fdout[0];
+ 	}
+ 

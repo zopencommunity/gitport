@@ -1,5 +1,5 @@
 diff --git a/environment.c b/environment.c
-index ba2c601..3682377 100644
+index ba2c601..d51e16f 100644
 --- a/environment.c
 +++ b/environment.c
 @@ -27,6 +27,7 @@
@@ -10,31 +10,35 @@ index ba2c601..3682377 100644
  #include "fmt-merge-msg.h"
  #include "commit.h"
  #include "strvec.h"
-@@ -52,6 +53,10 @@ char *git_log_output_encoding;
+@@ -52,6 +53,11 @@ char *git_log_output_encoding;
  char *apply_default_whitespace;
  char *apply_default_ignorewhitespace;
  int fsync_object_files = -1;
 +#ifdef __MVS__
 +int ignore_file_tags = 0;
++int iconv_translit = 0;
 +int utf8_ccsid = 1208;
 +#endif
  int use_fsync = -1;
  enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
  enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-@@ -398,6 +403,18 @@ int git_default_core_config(const char *var, const char *value,
+@@ -398,6 +404,21 @@ int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
 +	#ifdef __MVS__
-+	       if (!strcmp(var, "core.ignorefiletags")) {
-+		ignore_file_tags = git_config_bool(var, value);
++	if (!strcmp(var, "core.ignorefiletags")) {
++			ignore_file_tags = git_config_bool(var, value);
++			return 0;
++	}
++	if (!strcmp(var, "core.iconvtranslit")) {
++		iconv_translit = git_config_bool(var, value);
 +		return 0;
-+	      }
-+
-+	       if (!strcmp(var, "core.utf8ccsid")) {
++	}
++	if (!strcmp(var, "core.utf8ccsid")) {
 +		utf8_ccsid = git_config_ulong(var, value, ctx->kvi);
 +		return 0;
-+	       }
++	}
 +	#endif
 +
  	if (!strcmp(var, "core.safecrlf")) {

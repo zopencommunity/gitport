@@ -1,0 +1,15 @@
+diff --git a/builtin/index-pack.c b/builtin/index-pack.c
+index ca7784d..f043465 100644
+--- a/builtin/index-pack.c
++++ b/builtin/index-pack.c
+@@ -368,6 +368,10 @@ static const char *open_pack_file(const char *pack_name)
+ 			pack_name = strbuf_detach(&tmp_file, NULL);
+ 		} else {
+ 			output_fd = xopen(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
++#ifdef __MVS__
++			__setfdbinary(output_fd);
++			__disableautocvt(output_fd);
++#endif
+ 		}
+ 		nothread_data.pack_fd = output_fd;
+ 	} else {

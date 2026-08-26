@@ -6,18 +6,19 @@ export ZOPEN_CATEGORIES="development source_control"
 GIT_VERSION="2.55.0"
 
 export ZOPEN_DEV_URL="https://github.com/git/git.git"
-export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk zusage libpsl libssh2"
+export ZOPEN_DEV_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext coreutils diffutils bash tar check_python gawk zusage libpsl libssh2 libiconv"
 
 export ZOPEN_STABLE_URL="https://github.com/git/git.git"
 export ZOPEN_STABLE_TAG="v${GIT_VERSION}"
-export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk zusage libpsl libssh2"
+export ZOPEN_STABLE_DEPS="curl git make m4 perl autoconf automake help2man texinfo xz zlib openssl expat gettext gzip tar coreutils zoslib diffutils ncurses bash sed libpcre2 tar check_python gawk zusage libpsl libssh2 libiconv"
 
+export ZOPEN_CHECK_TIMEOUT="${ZOPEN_CHECK_NO_TIMEOUT}"
 #
 # Note the 'man' tarball release is numbered independently from the 'git' release.
 #
 export ZOPEN_TARBALL_MAN_URL="https://mirrors.edge.kernel.org/pub/software/scm/git/git-manpages-${GIT_VERSION}.tar.xz"
 
-export ZOPEN_RUNTIME_DEPS="perl bash less ncurses" # If building with shared libs, add openssl, curl
+export ZOPEN_RUNTIME_DEPS="perl bash less ncurses libiconv" # If building with shared libs, add openssl, curl
 
 export ZOPEN_BOOTSTRAP="make"
 export ZOPEN_BOOTSTRAP_OPTS="configure"
@@ -27,14 +28,14 @@ export ZOPEN_MAKE_OPTS=""
 export ZOPEN_INSTALL="zopen_install_all"
 export ZOPEN_INSTALL_OPTS=""
 #export ZOPEN_CHECK_OPTS="-i test -j\$ZOPEN_NUM_JOBS"
-export ZOPEN_CHECK_OPTS="test -j\$ZOPEN_NUM_JOBS"
+export ZOPEN_CHECK_OPTS="-i test -j\$ZOPEN_NUM_JOBS"
 export ZOPEN_COMP=CLANG
 
-export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME}"
+export ZOPEN_EXTRA_CONFIGURE_OPTS="--with-zlib=\${ZLIB_HOME} --with-curl=\${CURL_HOME} --with-openssl=\${OPENSSL_HOME} --with-libpcre2=\${PCRE2_HOME} --with-libiconv-prefix=\${LIBICONV_HOME}"
 
-export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include"
-export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib"
-export ZOPEN_EXTRA_LIBS="${ZOPEN_EXTRA_LIBS} -lz -lcurl -lssl -lcrypto"
+export ZOPEN_EXTRA_CPPFLAGS="-I\${OPENSSL_HOME}/include -I\${GETTEXT_HOME}/include -I\${ZLIB_HOME}/include -I\${NCURSES_HOME}/include -I\${ZOPEN_ROOT}/patches/include -I\${CURL_HOME}/include -I\${EXPAT_HOME}/include -I\${LIBICONV_HOME}/include -I\${ZOSLIB_HOME}/include"
+export ZOPEN_EXTRA_LDFLAGS="-L\${GETTEXT_HOME}/lib -L\${OPENSSL_HOME}/lib -L\${ZLIB_HOME}/lib -L\${NCURSES_HOME}/lib -L\${CURL_HOME}/lib -L\${EXPAT_HOME}/lib -L\${LIBICONV_HOME}/lib -L\${ZOSLIB_HOME}/lib -L\${LIBSSH2_HOME}/lib -L\${LIBPSL_HOME}/lib"
+export ZOPEN_EXTRA_LIBS="${ZOPEN_EXTRA_LIBS} -lz -lcurl -lssl -lcrypto -lzoslib -lssh2 -lpsl"
 export ZOPEN_EXTRA_CFLAGS="-mzos-target=zosv2r5 -march=z13"
 export ZOPEN_SYSTEM_PREREQS="zos25"
 export CURL_LDFLAGS="-lcurl"

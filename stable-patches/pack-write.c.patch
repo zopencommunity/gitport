@@ -1,0 +1,26 @@
+diff --git a/pack-write.c b/pack-write.c
+index 83eaf88..510e2dc 100644
+--- a/pack-write.c
++++ b/pack-write.c
+@@ -90,6 +90,10 @@ const char *write_idx_file(struct repository *repo,
+ 		} else {
+ 			unlink(index_name);
+ 			fd = xopen(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
++#ifdef __MVS__
++			__setfdbinary(fd);
++			__disableautocvt(fd);
++#endif
+ 		}
+ 		f = hashfd(repo->hash_algo, fd, index_name);
+ 	}
+@@ -266,6 +270,10 @@ char *write_rev_file_order(struct repository *repo,
+ 		} else {
+ 			unlink(rev_name);
+ 			fd = xopen(rev_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
++#ifdef __MVS__
++			__setfdbinary(fd);
++			__disableautocvt(fd);
++#endif
+ 			path = xstrdup(rev_name);
+ 		}
+ 		f = hashfd(repo->hash_algo, fd, path);

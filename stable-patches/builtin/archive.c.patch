@@ -1,14 +1,18 @@
 diff --git a/builtin/archive.c b/builtin/archive.c
-index 13ea730..f0da605 100644
+index 13ea730..d45ce03 100644
 --- a/builtin/archive.c
 +++ b/builtin/archive.c
-@@ -12,6 +12,10 @@
+@@ -12,6 +12,14 @@
  static void create_output_file(const char *output_file)
  {
  	int output_fd = xopen(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 +#ifdef __MVS__
-+        if (__setfdbinary(output_fd))
-+		die_errno(_("could not tag archive file '%s'"), output_file);
++	struct stat st;
++	if (fstat(output_fd, &st) >= 0 && S_ISREG(st.st_mode)) {
++		if (__setfdbinary(output_fd))
++			die_errno(_("could not tag archive file '%s'"), output_file);
++		__disableautocvt(output_fd);
++	}
 +#endif
  	if (output_fd != 1) {
  		if (dup2(output_fd, 1) < 0)

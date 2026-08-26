@@ -1,7 +1,7 @@
-diff --git i/date.c w/date.c
+diff --git a/date.c b/date.c
 index 17a9507..be63eb6 100644
---- i/date.c
-+++ w/date.c
+--- a/date.c
++++ b/date.c
 @@ -6,12 +6,18 @@
  
  #define DISABLE_SIGN_COMPARE_WARNINGS

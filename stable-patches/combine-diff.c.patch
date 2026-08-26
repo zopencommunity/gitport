@@ -1,5 +1,5 @@
 diff --git a/combine-diff.c b/combine-diff.c
-index b799862..fc1ce24 100644
+index b799862..0fea1b9 100644
 --- a/combine-diff.c
 +++ b/combine-diff.c
 @@ -1074,6 +1074,10 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
@@ -13,3 +13,12 @@ index b799862..fc1ce24 100644
  			elem->mode = canon_mode(st.st_mode);
  			/* if symlinks don't work, assume symlink if all parents
  			 * are symlinks
+@@ -1098,7 +1102,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
+ 				struct strbuf buf = STRBUF_INIT;
+ 
+ 				if (convert_to_git(rev->diffopt.repo->index,
+-						   elem->path, result, len, &buf, global_conv_flags_eol)) {
++						   elem->path, result, len, &buf, global_conv_flags_eol) > 0) {
+ 					free(result);
+ 					result = strbuf_detach(&buf, &len);
+ 					result_size = len;

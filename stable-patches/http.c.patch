@@ -1,8 +1,8 @@
 diff --git a/http.c b/http.c
-index c8fc15aa11..d72d87f27e 100644
+index 67c9c6f..8eb2283 100644
 --- a/http.c
 +++ b/http.c
-@@ -1073,7 +1073,6 @@ static CURL *get_curl_handle(void)
+@@ -1107,7 +1107,6 @@ static CURL *get_curl_handle(void)
  	if (ssl_cipherlist != NULL && *ssl_cipherlist)
  		curl_easy_setopt(result, CURLOPT_SSL_CIPHER_LIST,
  				ssl_cipherlist);
@@ -10,7 +10,7 @@ index c8fc15aa11..d72d87f27e 100644
  	if (ssl_cert)
  		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
  	if (ssl_cert_type)
-@@ -1336,6 +1335,10 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
+@@ -1409,6 +1408,10 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
  	set_from_env(&ssl_key_type, "GIT_SSL_KEY_TYPE");
  	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
  	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");

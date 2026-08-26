@@ -1,0 +1,47 @@
+diff --git a/utf8.h b/utf8.h
+index cf8ecb0..1485556 100644
+--- a/utf8.h
++++ b/utf8.h
+@@ -32,11 +32,19 @@ char *reencode_string_len(const char *in, size_t insz,
+ 			  const char *out_encoding,
+ 			  const char *in_encoding,
+ 			  size_t *outsz);
++char *reencode_string_len_translit(const char *in, size_t insz,
++			  const char *out_encoding,
++			  const char *in_encoding,
++			  size_t *outsz);
+ #else
+ static inline char *reencode_string_len(const char *a UNUSED, size_t b UNUSED,
+ 					const char *c UNUSED,
+ 					const char *d UNUSED, size_t *e)
+ { if (e) *e = 0; return NULL; }
++static inline char *reencode_string_len_translit(const char *a UNUSED, size_t b UNUSED,
++					const char *c UNUSED,
++					const char *d UNUSED, size_t *e)
++{ if (e) *e = 0; return NULL; }
+ #endif
+ 
+ static inline char *reencode_string(const char *in,
+@@ -48,8 +56,22 @@ static inline char *reencode_string(const char *in,
+ 				   NULL);
+ }
+ 
++static inline char *reencode_string_translit(const char *in,
++				    const char *out_encoding,
++				    const char *in_encoding)
++{
++	return reencode_string_len_translit(in, strlen(in),
++				   out_encoding, in_encoding,
++				   NULL);
++}
++
+ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
+ 
++void find_first_encoding_error(const char *src, size_t src_len,
++			      const char *to, const char *from,
++			      size_t *line_out, size_t *col_out,
++			      unsigned char *bad_char_out);
++
+ /*
+  * Returns true if the path would match ".git" after HFS case-folding.
+  * The path should be NUL-terminated, but we will match variants of both ".git\0"

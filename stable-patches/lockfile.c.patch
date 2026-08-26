@@ -1,19 +1,49 @@
 diff --git a/lockfile.c b/lockfile.c
-index 7add2f1..e5aef33 100644
+index 7add2f1..95c7497 100644
 --- a/lockfile.c
 +++ b/lockfile.c
-@@ -178,7 +178,14 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -2,6 +2,8 @@
+  * Copyright (c) 2005, Junio C Hamano
+  */
+ 
++#define USE_THE_REPOSITORY_VARIABLE
++
+ #include "git-compat-util.h"
+ #include "abspath.h"
+ #include "gettext.h"
+@@ -9,6 +11,7 @@
+ #include "parse.h"
+ #include "strbuf.h"
+ #include "wrapper.h"
++#include "environment.h"
+ 
+ /*
+  * path = absolute or relative path name
+@@ -168,6 +171,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+ 	struct strbuf base_path = STRBUF_INIT;
+ 	struct strbuf lock_path = STRBUF_INIT;
+ 	struct strbuf pid_path = STRBUF_INIT;
++	struct stat st;
+ 
+ 	strbuf_addstr(&base_path, path);
+ 	if (!(flags & LOCK_NO_DEREF))
+@@ -177,8 +181,18 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+ 	get_pid_path(&pid_path, base_path.buf);
  
  	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
- 	if (lk->tempfile)
+-	if (lk->tempfile)
++#ifdef __MVS__
++	if (lk->tempfile && fstat(lk->tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
 +	{
-+		__chgfdccsid(lk->tempfile->fd, 819);
++		__chgfdccsid(lk->tempfile->fd, utf8_ccsid);
++
  		lk->pid_tempfile = create_lock_pid_file(pid_path.buf, mode);
-+		if (lk->pid_tempfile)
++		if (lk->pid_tempfile && fstat(lk->pid_tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
 +		{
-+			__chgfdccsid(lk->pid_tempfile->fd, 819);
++			__chgfdccsid(lk->pid_tempfile->fd, utf8_ccsid);
 +		}
 +	}
++#endif
  
  	strbuf_release(&base_path);
  	strbuf_release(&lock_path);

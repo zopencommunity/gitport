@@ -1,8 +1,8 @@
-diff --git i/t/test-lib.sh w/t/test-lib.sh
-index 92d0db1..2c32678 100644
---- i/t/test-lib.sh
-+++ w/t/test-lib.sh
-@@ -1576,7 +1576,7 @@ fi
+diff --git a/t/test-lib.sh b/t/test-lib.sh
+index 70fd3e9..248504b 100644
+--- a/t/test-lib.sh
++++ b/t/test-lib.sh
+@@ -1593,7 +1593,7 @@ fi
  
  # Use -P to resolve symlinks in our working directory so that the cwd
  # in subprocesses like git equals our $PWD (for pathname comparisons).

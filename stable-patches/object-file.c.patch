@@ -1,30 +1,61 @@
 diff --git a/object-file.c b/object-file.c
-index e7e4c33..b08f7cd 100644
+index e3d92bb..291a7d8 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -831,6 +831,10 @@ static int create_tmpfile(struct repository *repo,
+@@ -614,11 +614,19 @@ static int create_tmpfile(struct repository *repo,
+ 			  struct strbuf *tmp, const char *filename)
+ {
+ 	int fd, dirlen = directory_size(filename);
+-
++#ifdef __MVS__
++	struct stat st;
++#endif
+ 	strbuf_reset(tmp);
  	strbuf_add(tmp, filename, dirlen);
  	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
  	fd = git_mkstemp_mode(tmp->buf, 0444);
 +#ifdef __MVS__
-+	if (fd >= 0)
++	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
 +#endif
  	if (fd < 0 && dirlen && errno == ENOENT) {
  		/*
  		 * Make sure the directory exists; note that the contents
-@@ -848,6 +852,10 @@ static int create_tmpfile(struct repository *repo,
+@@ -636,6 +644,12 @@ static int create_tmpfile(struct repository *repo,
  		/* Try again */
  		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
  		fd = git_mkstemp_mode(tmp->buf, 0444);
 +#ifdef __MVS__
-+		if (fd >= 0)
++		if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +			__setfdbinary(fd);
++			__disableautocvt(fd);
++		}
 +#endif
  	}
  	return fd;
  }
-@@ -1649,12 +1657,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
+@@ -998,8 +1012,16 @@ static int index_mem(struct index_state *istate,
+ 	 * Convert blobs to git internal format
+ 	 */
+ 	if ((type == OBJ_BLOB) && path) {
+-		if (convert_to_git(istate, path, buf, size, &nbuf,
+-				   get_conv_flags(flags))) {
++		ret = convert_to_git(istate, path, buf, size, &nbuf,
++				   get_conv_flags(flags));
++		if (ret < 0)
++		{
++			/* Conversion failed - return error immediately */
++			strbuf_release(&nbuf);
++			return -1;
++		}
++		if(ret > 0)
++		{
+ 			buf = nbuf.buf;
+ 			size = nbuf.len;
+ 		}
+@@ -1407,12 +1429,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;
@@ -34,7 +65,7 @@ index e7e4c33..b08f7cd 100644
  	switch (st->st_mode & S_IFMT) {
  	case S_IFREG:
 +#ifdef __MVS__
-+    validate_codeset(istate, path, &autocvtToASCII);
++	validate_codeset(istate, path, &autocvtToASCII);
 +#endif
  		fd = open(path, O_RDONLY);
  		if (fd < 0)

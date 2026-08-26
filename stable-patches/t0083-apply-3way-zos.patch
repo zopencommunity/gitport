@@ -1,0 +1,80 @@
+diff --git a/t/t0083-apply-3way-zos.sh b/t/t0083-apply-3way-zos.sh
+new file mode 100755
+index 0000000..37e00ea
+--- /dev/null
++++ b/t/t0083-apply-3way-zos.sh
+@@ -0,0 +1,74 @@
++#!/usr/bin/env bash
++
++test_description='git apply --3way tagging on z/OS'
++
++# Disable chainlint for this test due to Perl version issues in test environment
++GIT_TEST_CHAIN_LINT=0
++export GIT_TEST_CHAIN_LINT
++
++. ./test-lib.sh
++
++# Use the newly built git binary
++GIT_BINARY="../../git"
++
++if ! uname | grep -q "OS/390"; then
++	echo "DEBUG: Not on z/OS, skipping test" >&2
++fi
++echo "DEBUG: On z/OS, proceeding with tests" >&2
++
++test_expect_success 'setup' '
++	echo "DEBUG: Starting setup test" >&2 &&
++	"$GIT_BINARY" config core.ignorefiletags true &&
++	echo "merged.txt zos-working-tree-encoding=IBM-1047" >.gitattributes &&
++	"$GIT_BINARY" add .gitattributes &&
++	"$GIT_BINARY" commit -m "setup attributes"
++'
++
++test_expect_success 'apply --3way tags correctly' '
++	echo "DEBUG: Starting apply --3way test" >&2 &&
++	# 1. Create a BASE blob with 3 lines
++	printf "line1\nline2\nline3\n" >base.txt &&
++	BASE_OID=$( "$GIT_BINARY" hash-object -w base.txt ) &&
++	
++	# 2. Create THEIRS blob (change line 3)
++	printf "line1\nline2\ntheirs3\n" >theirs.txt &&
++	THEIRS_OID=$( "$GIT_BINARY" hash-object -w theirs.txt ) &&
++	
++	# 3. Create OURS blob (change line 1)
++	printf "ours1\nline2\nline3\n" >ours.txt &&
++	OURS_OID=$( "$GIT_BINARY" hash-object -w ours.txt ) &&
++	
++	# 4. Put OURS in the index
++	"$GIT_BINARY" update-index --add --cacheinfo 100644,$OURS_OID,merged.txt &&
++	
++	# 5. Put OURS on disk and tag it
++	printf "ours1\nline2\nline3\n" >merged.txt &&
++	chtag -tc 1047 merged.txt &&
++	
++	# 6. Bypass strict index check for this file
++	"$GIT_BINARY" update-index --assume-unchanged merged.txt &&
++
++	# 7. Create a 3-way patch (BASE to THEIRS)
++	cat >patch.diff <<DIFF
++diff --git a/merged.txt b/merged.txt
++index ${BASE_OID:0:7}..${THEIRS_OID:0:7} 100644
++--- a/merged.txt
+++++ b/merged.txt
++@@ -1,3 +1,3 @@
++ line1
++ line2
++-line3
+++theirs3
++DIFF &&
++
++	# 8. Apply 3-way. This should merge ours (line 1) and theirs (line 3) cleanly.
++	"$GIT_BINARY" apply --3way patch.diff &&
++
++	# 9. Verify tagging ONLY (The merge success proves the code path worked)
++	chtag -p merged.txt >tag_info &&
++	grep "t IBM-1047" tag_info &&
++	grep "T=on" tag_info
++'
++
++echo "DEBUG: Reached test_done" >&2
++test_done

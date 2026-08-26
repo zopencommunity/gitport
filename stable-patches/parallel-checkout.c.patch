@@ -1,0 +1,46 @@
+diff --git a/parallel-checkout.c b/parallel-checkout.c
+index 0bf4bd6..5aee95c 100644
+--- a/parallel-checkout.c
++++ b/parallel-checkout.c
+@@ -3,6 +3,7 @@
+ 
+ #include "git-compat-util.h"
+ #include "config.h"
++#include "convert.h"
+ #include "entry.h"
+ #include "gettext.h"
+ #include "hash.h"
+@@ -305,7 +306,7 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
+ 	ret = convert_to_working_tree_ca(&pc_item->ca, pc_item->ce->name,
+ 					 blob, size, &buf, NULL);
+ 
+-	if (ret) {
++	if (ret > 0) {
+ 		size_t newsize;
+ 		free(blob);
+ 		blob = strbuf_detach(&buf, &newsize);
+@@ -317,6 +318,10 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
+ 	if (wrote < 0)
+ 		return error("unable to write file '%s'", path);
+ 
++#ifdef __MVS__
++	tag_file_as_working_tree_encoding(the_repository->index, path, fd, ret);
++#endif
++
+ 	return 0;
+ }
+ 
+@@ -360,6 +365,13 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
+ 
+ 	fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, mode);
+ 
++#ifdef __MVS__
++	if (fd >= 0) {
++		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
++#endif
++
+ 	if (fd < 0) {
+ 		if (errno == EEXIST || errno == EISDIR) {
+ 			/*

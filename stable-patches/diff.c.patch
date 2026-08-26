@@ -1,8 +1,8 @@
 diff --git a/diff.c b/diff.c
-index a68ddd2..689cc66 100644
+index 397e38b..3fbd3e0 100644
 --- a/diff.c
 +++ b/diff.c
-@@ -4194,6 +4194,7 @@ int diff_populate_filespec(struct repository *r,
+@@ -4478,6 +4478,7 @@ int diff_populate_filespec(struct repository *r,
  	int check_binary = options ? options->check_binary : 0;
  	int err = 0;
  	int conv_flags = global_conv_flags_eol;
@@ -10,7 +10,7 @@ index a68ddd2..689cc66 100644
  	/*
  	 * demote FAIL to WARN to allow inspecting the situation
  	 * instead of refusing.
-@@ -4267,9 +4268,18 @@ int diff_populate_filespec(struct repository *r,
+@@ -4551,9 +4552,18 @@ int diff_populate_filespec(struct repository *r,
  			s->is_binary = 1;
  			return 0;
  		}
@@ -29,14 +29,38 @@ index a68ddd2..689cc66 100644
  		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
  		close(fd);
  		s->should_munmap = 1;
-@@ -4374,6 +4384,10 @@ static void prep_temp_blob(struct index_state *istate,
+@@ -4561,7 +4571,7 @@ int diff_populate_filespec(struct repository *r,
+ 		/*
+ 		 * Convert from working tree format to canonical git format
+ 		 */
+-		if (convert_to_git(r->index, s->path, s->data, s->size, &buf, conv_flags)) {
++		if (convert_to_git(r->index, s->path, s->data, s->size, &buf, conv_flags) > 0) {
+ 			size_t size = 0;
+ 			munmap(s->data, s->size);
+ 			s->should_munmap = 0;
+@@ -4653,13 +4663,21 @@ static void prep_temp_blob(struct index_state *istate,
+ 	temp->tempfile = mks_tempfile_dt("git-blob-XXXXXX", base);
+ 	if (!temp->tempfile)
+ 		die_errno("unable to create temp-file");
+-	if (convert_to_working_tree(istate, path,
+-			(const char *)blob, (size_t)size, &buf, &meta)) {
++	int ret = convert_to_working_tree(istate, path,
++			(const char *)blob, (size_t)size, &buf, &meta);
++	if (ret > 0) {
  		blob = buf.buf;
  		size = buf.len;
  	}
+-	if (write_in_full(temp->tempfile->fd, blob, size) < 0 ||
+-	    close_tempfile_gently(temp->tempfile))
 +  
++	if (write_in_full(temp->tempfile->fd, blob, size) < 0)
++		die_errno("unable to write temp-file");
++
 +#ifdef __MVS__
-+  tag_file_as_working_tree_encoding(istate, path, temp->tempfile->fd);
++  tag_file_as_working_tree_encoding(istate, path, temp->tempfile->fd, ret);
 +#endif
- 	if (write_in_full(temp->tempfile->fd, blob, size) < 0 ||
- 	    close_tempfile_gently(temp->tempfile))
++
++    if (close_tempfile_gently(temp->tempfile))
  		die_errno("unable to write temp-file");
+ 	temp->name = get_tempfile_path(temp->tempfile);
+ 	oid_to_hex_r(temp->hex, oid);

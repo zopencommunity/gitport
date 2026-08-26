@@ -1,0 +1,73 @@
+diff --git a/t/t0082-zos-encoding.sh b/t/t0082-zos-encoding.sh
+new file mode 100755
+index 0000000..9bfe25e
+--- /dev/null
++++ b/t/t0082-zos-encoding.sh
+@@ -0,0 +1,67 @@
++#!/usr/bin/env bash
++
++test_description='z/OS encoding failure handling and tagging'
++
++. ./test-lib.sh
++
++# This test only makes sense on z/OS
++if ! uname | grep -q "OS/390"; then
++	test_done
++fi
++
++test_expect_success 'setup repo with character not in IBM-1047' '
++	git config core.ignorefiletags true &&
++	git config core.iconvtranslit false &&
++	git config core.utf8ccsid 1208 &&
++	# C5 A7 is UTF-8 for Å§. It does not exist in IBM-1047.
++	printf "\xc5\xa7" >fail_blob.txt &&
++	git add fail_blob.txt &&
++	git commit -m "add utf8 blob" &&
++
++	# Set the attribute. On checkout, it will try to convert UTF-8 -> IBM-1047 and fail.
++	echo "fail_blob.txt working-tree-encoding=IBM-1047" >.gitattributes &&
++	git add .gitattributes &&
++	git commit -m "add attributes" &&
++	git config core.ignorefiletags false
++'
++
++test_expect_success 'checkout fails encoding but tags as 1208' '
++	rm fail_blob.txt &&
++	# Use checkout-index -f to ensure we really try to write the file
++	git checkout-index -f fail_blob.txt 2>err &&
++	grep "failed to encode" err &&
++	grep "line 1, col 1" err &&
++	grep "char: 0xc5" err &&
++
++	# Verify the tag using chtag -p
++	chtag -p fail_blob.txt >tag_info &&
++	grep "t UTF-8" tag_info &&
++	grep "T=on" tag_info &&
++
++	# Verify content is still raw UTF-8
++	printf "\xc5\xa7" >expected &&
++	test_cmp expected fail_blob.txt
++'
++
++test_expect_success 'git status shows modified after encoding failure' '
++	git status --porcelain -uno >status_out &&
++	echo " M fail_blob.txt" >expected_status &&
++	test_cmp expected_status status_out
++'
++
++test_expect_success 'checkout succeeds with transliteration' '
++	git config core.iconvtranslit true &&
++	rm fail_blob.txt &&
++	git checkout-index -f fail_blob.txt &&
++
++	# Verify the tag is now IBM-1047
++	chtag -p fail_blob.txt >tag_info &&
++	grep "t IBM-1047" tag_info &&
++
++	# Verify content is transliterated to "t" (0xa3 in IBM-1047)
++	printf "\xa3" >expected &&
++	chtag -tc 1047 expected &&
++	test_cmp expected fail_blob.txt
++'
++
++test_done

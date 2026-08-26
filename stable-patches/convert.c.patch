@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index c7d6a85..f3db530 100644
+index 0365068..5343626 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -6,6 +6,7 @@
@@ -21,12 +21,45 @@ index c7d6a85..f3db530 100644
  
  /*
   * convert.c - convert a file when checking it out and checking it in.
-@@ -385,12 +390,16 @@ static int check_roundtrip(const char *enc_name)
+@@ -51,14 +56,14 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
+ 	for (i = 0; i < size; i++) {
+ 		unsigned char c = buf[i];
+ 		if (c == '\r') {
+-			if (i+1 < size && buf[i+1] == '\n') {
++			if (i+1 < size && (buf[i+1] == '\n' || is_ebcdic_newline(buf[i+1]))) {
+ 				stats->crlf++;
+ 				i++;
+ 			} else
+ 				stats->lonecr++;
+ 			continue;
+ 		}
+-		if (c == '\n') {
++		if (c == '\n' || is_ebcdic_newline(c)) {
+ 			stats->lonelf++;
+ 			continue;
+ 		}
+@@ -87,6 +92,15 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
+ 		stats->nonprintable--;
+ }
+ 
++static const char *find_next_newline(const char *src, unsigned long len)
++{
++	for (unsigned long i = 0; i < len; i++) {
++		if (src[i] == '\n' || is_ebcdic_newline(src[i]))
++			return src + i;
++	}
++	return NULL;
++}
++
+ /*
+  * The same heuristics as diff.c::mmfile_is_binary()
+  * We treat files with bare CR as binary
+@@ -385,17 +399,22 @@ static int check_roundtrip(const char *enc_name)
  static const char *default_encoding = "UTF-8";
  
  static int encode_to_git(const char *path, const char *src, size_t src_len,
 -			 struct strbuf *buf, const char *enc, int conv_flags)
-+			 struct strbuf *buf, const char *enc,
++			 struct strbuf *buf, const char *enc, 
 +			 enum convert_crlf_action attr_action, int conv_flags)
  {
  	char *dst;
@@ -36,33 +69,68 @@ index c7d6a85..f3db530 100644
 +	if (attr_action == CRLF_BINARY) {
 +		return 0;
 +	}
++
  	/*
  	 * No encoding is specified or there is nothing to encode.
  	 * Tell the caller that the content was not modified.
-@@ -411,6 +420,12 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+ 	 */
+-	if (!enc || (src && !src_len))
++	if (!enc || same_encoding(enc, default_encoding) || (src && !src_len))
+ 		return 0;
+ 
+ 	/*
+@@ -411,8 +430,26 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  		return 0;
  
  	trace_encoding("source", path, enc, src, src_len);
-+#ifdef __MVS__
-+  // If UTF CCSID == 819 (ISO8859-1), do not convert ISO8859-1 tagged files
-+  if (utf8_ccsid == 819 && strcasecmp("ISO8859-1", enc) == 0)
-+	return 0;
-+#endif
++
++	#ifdef __MVS__
++	/* If UTF CCSID == 819 (ISO8859-1), do not convert ISO8859-1 tagged files */
++	if (utf8_ccsid == 819 && strcasecmp("ISO8859-1", enc) == 0)
++		return 0;
++	#endif
 +
  	dst = reencode_string_len(src, src_len, default_encoding, enc,
  				  &dst_len);
++	if (!dst) {
++		dst = reencode_string_len_translit(src, src_len, default_encoding, enc,
++						  &dst_len);
++		if (dst) {
++			size_t line, col;
++			unsigned char bad_char;
++			find_first_encoding_error(src, src_len, default_encoding, enc, &line, &col, &bad_char);
++			warning(_("transliteration (best-effort) conversion used for '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
++				path, enc, default_encoding, line, col, bad_char);
++		}
++	}
  	if (!dst) {
-@@ -420,6 +435,9 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+ 		/*
+ 		 * We could add the blob "as-is" to Git. However, on checkout
+@@ -420,12 +457,19 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  		 * would fail and we would leave the user with a messed-up
  		 * working tree. Let's try to avoid this by screaming loud.
  		 */
-+	       if (attr_action == CRLF_BINARY) {
+-		const char* msg = _("failed to encode '%s' from %s to %s");
++		if (attr_action == CRLF_BINARY) {
 +			return 0;
 +		}
- 		const char* msg = _("failed to encode '%s' from %s to %s");
++		size_t line, col;
++		unsigned char bad_char;
++		find_first_encoding_error(src, src_len, default_encoding, enc, &line, &col, &bad_char);
++
++		const char* msg = _("failed to encode '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)");
  		if (die_on_error)
- 			die(msg, path, enc, default_encoding);
-@@ -476,10 +494,14 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
+-			die(msg, path, enc, default_encoding);
++			die(msg, path, enc, default_encoding, line, col, bad_char);
+ 		else {
+-			error(msg, path, enc, default_encoding);
+-			return 0;
++			error(msg, path, enc, default_encoding, line, col, bad_char);
++			return -1;
+ 		}
+ 	}
+ 	trace_encoding("destination", path, default_encoding, dst, dst_len);
+@@ -476,24 +520,48 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
  }
  
  static int encode_to_worktree(const char *path, const char *src, size_t src_len,
@@ -72,13 +140,95 @@ index c7d6a85..f3db530 100644
  {
  	char *dst;
  	size_t dst_len;
-+if (attr_action == CRLF_BINARY) {
-+    return 0;
-+}
++	if (attr_action == CRLF_BINARY) {
++		return 0;
++	}
  
  	/*
  	 * No encoding is specified or there is nothing to encode.
-@@ -1316,18 +1338,40 @@ static int git_path_check_ident(struct attr_check_item *check)
+ 	 * Tell the caller that the content was not modified.
+ 	 */
+-	if (!enc || (src && !src_len))
++	if (!enc || same_encoding(enc, default_encoding) || (src && !src_len))
++		return 0;
++
++	#ifdef __MVS__
++	/* If UTF CCSID == 819 (ISO8859-1), do not convert ISO8859-1 tagged files */
++	if (utf8_ccsid == 819 && strcasecmp("ISO8859-1", enc) == 0)
+ 		return 0;
++	#endif
+ 
+ 	dst = reencode_string_len(src, src_len, enc, default_encoding,
+ 				  &dst_len);
+ 	if (!dst) {
+-		error(_("failed to encode '%s' from %s to %s"),
+-		      path, default_encoding, enc);
+-		return 0;
++		dst = reencode_string_len_translit(src, src_len, enc, default_encoding,
++						  &dst_len);
++		if (dst) {
++			size_t line, col;
++			unsigned char bad_char;
++			find_first_encoding_error(src, src_len, enc, default_encoding, &line, &col, &bad_char);
++			warning(_("transliteration (best-effort) conversion used for '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
++				path, default_encoding, enc, line, col, bad_char);
++		}
++	}
++	if (!dst) {
++		size_t line, col;
++		unsigned char bad_char;
++		find_first_encoding_error(src, src_len, enc, default_encoding, &line, &col, &bad_char);
++		error(_("failed to encode '%s' from %s to %s at line %zu, col %zu (char: 0x%02x)"),
++		      path, default_encoding, enc, line, col, bad_char);
++		return -1;
+ 	}
+ 
+ 	strbuf_attach(buf, dst, dst_len, dst_len + 1);
+@@ -581,7 +649,7 @@ static int crlf_to_git(struct index_state *istate,
+ 	} else {
+ 		do {
+ 			unsigned char c = *src++;
+-			if (! (c == '\r' && (1 < len && *src == '\n')))
++			if (! (c == '\r' && (1 < len && (*src == '\n' || is_ebcdic_newline(*src)))))
+ 				*dst++ = c;
+ 		} while (--len);
+ 	}
+@@ -608,14 +676,17 @@ static int crlf_to_worktree(const char *src, size_t len, struct strbuf *buf,
+ 
+ 	strbuf_grow(buf, len + stats.lonelf);
+ 	for (;;) {
+-		const char *nl = memchr(src, '\n', len);
++		const char *nl = find_next_newline(src, len);
+ 		if (!nl)
+ 			break;
+ 		if (nl > src && nl[-1] == '\r') {
+ 			strbuf_add(buf, src, nl + 1 - src);
+ 		} else {
+ 			strbuf_add(buf, src, nl - src);
+-			strbuf_addstr(buf, "\r\n");
++			if (is_ebcdic_newline(*nl))
++				strbuf_addstr(buf, "\r\x15");
++			else
++				strbuf_addstr(buf, "\r\n");
+ 		}
+ 		len -= nl + 1 - src;
+ 		src  = nl + 1;
+@@ -1259,13 +1330,10 @@ static const char *git_path_check_encoding(struct attr_check_item *check)
+ 		die(_("true/false are no valid working-tree-encodings"));
+ 	}
+ 
+-	/* Don't encode to the default encoding */
+-	if (same_encoding(value, default_encoding))
+-		return NULL;
+-
+ 	return value;
+ }
+ 
++
+ static enum convert_crlf_action git_path_check_crlf(struct attr_check_item *check)
+ {
+ 	const char *value = check->value;
+@@ -1318,18 +1386,40 @@ static int git_path_check_ident(struct attr_check_item *check)
  
  static struct attr_check *check;
  
@@ -95,7 +245,7 @@ index c7d6a85..f3db530 100644
 +	/* Map OS/390 to 'zos' for platform-specific encoding attributes */
 +	if (!strcmp(uname_info.sysname, "OS/390"))
 +		return "zos";
-+	
++
 +	xsnprintf(platform_name, sizeof(platform_name), "%s", uname_info.sysname);
 +	return platform_name;
 +}
@@ -119,25 +269,39 @@ index c7d6a85..f3db530 100644
  
  	git_check_attr(istate, path, check);
  	ccheck = check->items;
-@@ -1348,6 +1392,8 @@ void convert_attrs(struct index_state *istate,
+@@ -1350,6 +1440,9 @@ void convert_attrs(struct index_state *istate,
  			ca->crlf_action = CRLF_TEXT_CRLF;
  	}
  	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
 +	if (git_path_check_encoding(ccheck + 6))
-+	    ca->working_tree_encoding = git_path_check_encoding(ccheck + 6);
++		ca->working_tree_encoding = git_path_check_encoding(ccheck + 6);
++
  
  	/* Save attr and make a decision for action */
  	ca->attr_action = ca->crlf_action;
-@@ -1444,7 +1490,7 @@ int convert_to_git(struct index_state *istate,
+@@ -1441,15 +1534,18 @@ int convert_to_git(struct index_state *istate,
+ 	if (!ret && ca.drv && ca.drv->required)
+ 		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
+ 
+-	if (ret && dst) {
++	if (ret > 0 && dst) {
+ 		src = dst->buf;
  		len = dst->len;
  	}
  
 -	ret |= encode_to_git(path, src, len, dst, ca.working_tree_encoding, conv_flags);
-+	ret |= encode_to_git(path, src, len, dst, ca.working_tree_encoding, ca.attr_action, conv_flags);
- 	if (ret && dst) {
+-	if (ret && dst) {
++	int ret_encode = encode_to_git(path, src, len, dst, ca.working_tree_encoding, ca.attr_action, conv_flags);
++	if (ret_encode > 0 && dst) {
++		ret |= ret_encode;
  		src = dst->buf;
  		len = dst->len;
-@@ -1472,7 +1518,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
++	} else if (ret_encode < 0) {
++		return ret_encode;
+ 	}
+ 
+ 	if (!(conv_flags & CONV_EOL_KEEP_CRLF)) {
+@@ -1474,7 +1570,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
  	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
  		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
  
@@ -146,16 +310,48 @@ index c7d6a85..f3db530 100644
  	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
  	ident_to_git(dst->buf, dst->len, dst, ca.ident);
  }
-@@ -1504,7 +1550,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1489,7 +1585,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+ 	int ret = 0, ret_filter = 0;
+ 
+ 	ret |= ident_to_worktree(src, len, dst, ca->ident);
+-	if (ret) {
++	if (ret > 0) {
+ 		src = dst->buf;
+ 		len = dst->len;
+ 	}
+@@ -1500,16 +1596,19 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+ 	 */
+ 	if ((ca->drv && (ca->drv->smudge || ca->drv->process)) || !normalizing) {
+ 		ret |= crlf_to_worktree(src, len, dst, ca->crlf_action);
+-		if (ret) {
++		if (ret > 0) {
+ 			src = dst->buf;
+ 			len = dst->len;
  		}
  	}
  
 -	ret |= encode_to_worktree(path, src, len, dst, ca->working_tree_encoding);
-+	ret |= encode_to_worktree(path, src, len, dst, ca->attr_action, ca->working_tree_encoding);
- 	if (ret) {
+-	if (ret) {
++	int ret_encode = encode_to_worktree(path, src, len, dst, ca->attr_action, ca->working_tree_encoding);
++	if (ret_encode > 0) {
++		ret |= ret_encode;
  		src = dst->buf;
  		len = dst->len;
-@@ -2058,3 +2104,84 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
++	} else if (ret_encode < 0) {
++		ret = ret_encode;
+ 	}
+ 
+ 	ret_filter = apply_filter(
+@@ -1548,7 +1647,7 @@ int renormalize_buffer(struct index_state *istate, const char *path,
+ 	convert_attrs(istate, &ca, path);
+ 	ret = convert_to_working_tree_ca_internal(&ca, path, src, len, dst, 1,
+ 						  NULL, NULL);
+-	if (ret) {
++	if (ret > 0) {
+ 		src = dst->buf;
+ 		len = dst->len;
+ 	}
+@@ -2060,3 +2159,107 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
  
  	return CA_CLASS_STREAMABLE;
  }
@@ -163,20 +359,32 @@ index c7d6a85..f3db530 100644
 +
 +#ifdef __MVS__
 +
-+void tag_file_as_working_tree_encoding(struct index_state *istate, char* path, int fd) {
-+        struct conv_attrs ca;
-+        convert_attrs(istate, &ca, path);
-+  if (ca.attr_action != CRLF_BINARY) {
-+    if (ca.working_tree_encoding)
-+      __chgfdcodeset(fd, ca.working_tree_encoding);
-+    else
-+      __chgfdccsid(fd, utf8_ccsid);
-+  }
-+  else {
-+    __setfdbinary(fd);
-+  }
++void tag_file_as_working_tree_encoding(struct index_state *istate, const char* path, int fd, int was_converted) {
++	struct stat st;
++	if (fstat(fd, &st) < 0 || !S_ISREG(st.st_mode))
++		return;
 +
-+  __disableautocvt(fd);
++	if (was_converted < 0) {
++		__chgfdccsid(fd, utf8_ccsid);
++		__disableautocvt(fd);
++		return;
++	}
++
++	struct conv_attrs ca;
++	convert_attrs(istate, &ca, path);
++	if (ca.attr_action != CRLF_BINARY) {
++		if (ca.working_tree_encoding && !same_encoding(ca.working_tree_encoding, default_encoding)) {
++ 			__chgfdcodeset(fd, ca.working_tree_encoding);
++		}
++		else {
++			__chgfdccsid(fd, utf8_ccsid);
++		}
++	}
++	else {
++		__setfdbinary(fd);
++	}
++
++	__disableautocvt(fd);
 +}
 +
 +void validate_codeset(struct index_state *istate, const char *path, int* autoconvertToASCII) {
@@ -220,6 +428,17 @@ index c7d6a85..f3db530 100644
 +		if ((file_ccsid == 819 || file_ccsid == 1208) && (attr_ccsid == 1208 || attr_ccsid == 819)) {
 +			return;
 +		}
++
++		/*
++		 * If we have an explicit working-tree-encoding, we should try to
++		 * re-encode even if the file tag doesn't match perfectly.
++		 * Our best-effort conversion (with TRANSLIT) will handle it.
++		 */
++		if (ca.working_tree_encoding) {
++			*autoconvertToASCII = 1;
++			return;
++		}
++
 +		// Don't check for binary files, just add them
 +		if (attr_ccsid == FT_BINARY)
 +			return;

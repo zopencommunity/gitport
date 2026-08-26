@@ -1,35 +1,189 @@
 diff --git a/utf8.c b/utf8.c
-index 96460cc..7f7985c 100644
+index 96460cc..2a15cf7 100644
 --- a/utf8.c
 +++ b/utf8.c
-@@ -3,6 +3,9 @@
+@@ -1,6 +1,8 @@
+ #define DISABLE_SIGN_COMPARE_WARNINGS
++#define USE_THE_REPOSITORY_VARIABLE
+ 
  #include "git-compat-util.h"
++#include "environment.h"
  #include "strbuf.h"
  #include "utf8.h"
-+#ifdef __MVS__
-+extern int utf8_ccsid;
-+#endif
  
- /* This code is originally from https://www.cl.cam.ac.uk/~mgk25/ucs/ */
- 
-@@ -605,6 +608,20 @@ char *reencode_string_len(const char *in, size_t insz,
- #endif
- 	}
- 
-+#ifdef __MVS__
-+  if (utf8_ccsid == 819) {
-+    //HACK: For backwards compat UTF CCSID=819, ISO8859-1 really means utf-8 in the z/OS world
-+    if (strcasecmp("ISO8859-1", in_encoding) == 0) {
-+      in_encoding = "UTF-8";
-+      out_encoding = "UTF-8";
-+    }
-+    if (strcasecmp("ISO8859-1", out_encoding) == 0) {
-+      in_encoding = "UTF-8";
-+      out_encoding = "UTF-8";
-+    }
-+  }
-+#endif
+@@ -567,6 +569,20 @@ char *reencode_string_len(const char *in, size_t insz,
+ {
+ 	iconv_t conv;
+ 	char *out;
 +
- 	conv = iconv_open(out_encoding, in_encoding);
- 	if (conv == (iconv_t) -1) {
- 		in_encoding = fallback_encoding(in_encoding);
++#ifdef __MVS__
++	if (utf8_ccsid == 819) {
++		/* HACK: For backwards compat UTF CCSID=819, ISO8859-1 really means utf-8 in the z/OS world */
++		if (in_encoding && !strcasecmp("ISO8859-1", in_encoding)) {
++			in_encoding = "UTF-8";
++			out_encoding = "UTF-8";
++		}
++		if (out_encoding && !strcasecmp("ISO8859-1", out_encoding)) {
++			in_encoding = "UTF-8";
++			out_encoding = "UTF-8";
++		}
++	}
++#endif
+ 	const char *bom_str = NULL;
+ 	size_t bom_len = 0;
+ 
+@@ -837,3 +853,154 @@ void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int wid
+ 	} else if (position == ALIGN_RIGHT)
+ 		strbuf_addf(buf, "%*s", width + utf8_compensation, s);
+ }
++
++char *reencode_string_len_translit(const char *in, size_t insz,
++			  const char *out_encoding, const char *in_encoding,
++			  size_t *outsz)
++{
++	iconv_t conv;
++	char *out;
++
++#ifdef __MVS__
++	if (utf8_ccsid == 819) {
++		/* HACK: For backwards compat UTF CCSID=819, ISO8859-1 really means utf-8 in the z/OS world */
++		if (in_encoding && !strcasecmp("ISO8859-1", in_encoding)) {
++			in_encoding = "UTF-8";
++			out_encoding = "UTF-8";
++		}
++		if (out_encoding && !strcasecmp("ISO8859-1", out_encoding)) {
++			in_encoding = "UTF-8";
++			out_encoding = "UTF-8";
++		}
++	}
++#endif
++	const char *bom_str = NULL;
++	size_t bom_len = 0;
++	char *out_encoding_translit;
++
++	if (!in_encoding)
++		return NULL;
++
++	/* UTF-16LE-BOM is the same as UTF-16 for reading */
++	if (same_utf_encoding("UTF-16LE-BOM", in_encoding))
++		in_encoding = "UTF-16";
++
++	if (same_utf_encoding("UTF-16LE-BOM", out_encoding)) {
++		bom_str = utf16_le_bom;
++		bom_len = sizeof(utf16_le_bom);
++		out_encoding = "UTF-16LE";
++	} else if (same_utf_encoding("UTF-16BE-BOM", out_encoding)) {
++		bom_str = utf16_be_bom;
++		bom_len = sizeof(utf16_be_bom);
++		out_encoding = "UTF-16BE";
++#ifdef ICONV_OMITS_BOM
++	} else if (same_utf_encoding("UTF-16", out_encoding)) {
++		bom_str = utf16_be_bom;
++		bom_len = sizeof(utf16_be_bom);
++		out_encoding = "UTF-16BE";
++	} else if (same_utf_encoding("UTF-32", out_encoding)) {
++		bom_str = utf32_be_bom;
++		bom_len = sizeof(utf32_be_bom);
++		out_encoding = "UTF-32BE";
++#endif
++	}
++
++	if (iconv_translit) {
++		out_encoding_translit = xstrfmt("%s//TRANSLIT", out_encoding);
++		conv = iconv_open(out_encoding_translit, in_encoding);
++		free(out_encoding_translit);
++	} else {
++		conv = iconv_open(out_encoding, in_encoding);
++	}
++
++	if (conv == (iconv_t) -1) {
++		in_encoding = fallback_encoding(in_encoding);
++		if (iconv_translit) {
++			out_encoding_translit = xstrfmt("%s//TRANSLIT", fallback_encoding(out_encoding));
++			conv = iconv_open(out_encoding_translit, in_encoding);
++			free(out_encoding_translit);
++		} else {
++			conv = iconv_open(fallback_encoding(out_encoding), in_encoding);
++		}
++		if (conv == (iconv_t) -1)
++			return NULL;
++	}
++	out = reencode_string_iconv(in, insz, conv, bom_len, outsz);
++	iconv_close(conv);
++	if (out && bom_str && bom_len)
++		memcpy(out, bom_str, bom_len);
++	return out;
++}
++
++void find_first_encoding_error(const char *src, size_t src_len,
++			      const char *to, const char *from,
++			      size_t *line_out, size_t *col_out,
++			      unsigned char *bad_char_out)
++{
++	size_t line = 1, col = 0;
++	size_t fail_pos = src_len;
++	iconv_t cd = iconv_open(to, from);
++
++	if (cd != (iconv_t)-1) {
++		const char *inbuf = src;
++		size_t inbytesleft = src_len;
++		char outbuf[256];
++		char *outptr = outbuf;
++		size_t outbytesleft = sizeof(outbuf);
++
++		while (inbytesleft > 0) {
++			size_t res = iconv(cd, (char **)&inbuf, &inbytesleft, &outptr, &outbytesleft);
++			if (res == (size_t)-1) {
++				if (errno == E2BIG) {
++					outptr = outbuf;
++					outbytesleft = sizeof(outbuf);
++					continue;
++				}
++				fail_pos = inbuf - src;
++				break;
++			}
++			outptr = outbuf;
++			outbytesleft = sizeof(outbuf);
++		}
++		iconv_close(cd);
++	}
++
++	for (size_t i = 0; i < fail_pos; i++) {
++		if (src[i] == '\n') {
++			line++;
++			col = 0;
++		} else {
++			col++;
++		}
++	}
++	if (fail_pos < src_len) {
++		*bad_char_out = (unsigned char)src[fail_pos];
++		col++;
++	}
++	*line_out = line;
++	*col_out = col;
++}
++
++void find_first_non_ascii(const char *src, size_t src_len, 
++			  size_t *line_out, size_t *col_out, 
++			  unsigned char *bad_char_out)
++{
++	size_t line = 1, col = 0;
++	unsigned char bad_char = 0;
++	for (size_t i = 0; i < src_len; i++) {
++		if (src[i] == '\n' || is_ebcdic_newline(src[i])) {
++			line++;
++			col = 0;
++		} else {
++			col++;
++		}
++		/* Try to find the first character that iconv would reject (non-ASCII) */
++		if ((unsigned char)src[i] > 0x7F) {
++			bad_char = (unsigned char)src[i];
++			break;
++		}
++	}
++	*line_out = line;
++	*col_out = col;
++	*bad_char_out = bad_char;
++}

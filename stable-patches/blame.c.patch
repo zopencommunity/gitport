@@ -1,5 +1,5 @@
 diff --git a/blame.c b/blame.c
-index cb0b083..eb7dad0 100644
+index a3c49d1..d4bc3ae 100644
 --- a/blame.c
 +++ b/blame.c
 @@ -274,6 +274,11 @@ static struct commit *fake_working_tree_commit(struct repository *r,

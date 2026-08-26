@@ -1,16 +1,62 @@
-diff --git i/attr.c w/attr.c
-index 0bd2750..9e17884 100644
---- i/attr.c
-+++ w/attr.c
-@@ -873,9 +873,10 @@ static struct attr_stack *read_attr(struct index_state *istate,
- 
+diff --git a/attr.c b/attr.c
+index c61472a..cf6ad4a 100644
+--- a/attr.c
++++ b/attr.c
+@@ -768,7 +768,7 @@ static struct attr_stack *read_attr_from_blob(struct index_state *istate,
+ 					      const char *path, unsigned flags)
+ {
+ 	struct object_id oid;
+-	size_t sz;
++	unsigned long sz;
+ 	enum object_type type;
+ 	void *buf;
+ 	unsigned short mode;
+@@ -870,15 +870,18 @@ static struct attr_stack *read_attr(struct index_state *istate,
+ 		CALLOC_ARRAY(res, 1);
+ 	return res;
+ }
+-
  const char *git_attr_system_file(void)
  {
--	static const char *system_wide;
-+	char *system_wide = xstrdup_or_null(getenv("GIT_ATTR_SYSTEM"));
- 	if (!system_wide)
- 		system_wide = system_path(ETC_GITATTRIBUTES);
-+	normalize_path_copy(system_wide, system_wide);
+ 	static const char *system_wide;
+-	if (!system_wide)
+-		system_wide = system_path(ETC_GITATTRIBUTES);
++	static int initialized;
++	
++	if (!initialized) {
++		const char *env = getenv("GIT_ATTR_SYSTEM");
++		system_wide = env ? xstrdup(env) : system_path(ETC_GITATTRIBUTES);
++		initialized = 1;
++	}
  	return system_wide;
  }
+-
+ const char *git_attr_global_file(void)
+ {
+ 	struct repo_config_values *cfg = repo_config_values(the_repository);
+@@ -895,6 +898,9 @@ int git_attr_system_is_enabled(void)
  
+ static GIT_PATH_FUNC(git_path_info_attributes, INFOATTRIBUTES_FILE)
+ 
++/* Mutex to protect attr_stack access from concurrent threads */
++static pthread_mutex_t attr_stack_mutex = PTHREAD_MUTEX_INITIALIZER;
++
+ static void push_stack(struct attr_stack **attr_stack_p,
+ 		       struct attr_stack *elem, char *origin, size_t originlen)
+ {
+@@ -952,6 +958,7 @@ static void prepare_attr_stack(struct index_state *istate,
+ 			       const char *path, int dirlen,
+ 			       struct attr_stack **stack)
+ {
++	pthread_mutex_lock(&attr_stack_mutex);
+ 	struct attr_stack *info;
+ 	struct strbuf pathbuf = STRBUF_INIT;
+ 
+@@ -1040,6 +1047,7 @@ static void prepare_attr_stack(struct index_state *istate,
+ 	push_stack(stack, info, NULL, 0);
+ 
+ 	strbuf_release(&pathbuf);
++	pthread_mutex_unlock(&attr_stack_mutex);
+ }
+ 
+ static int path_matches(const char *pathname, int pathlen,
