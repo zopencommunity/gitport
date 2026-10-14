@@ -1,5 +1,5 @@
 diff --git a/imap-send.c b/imap-send.c
-index af02c6a..7e1069e 100644
+index cfd6a51..1220378 100644
 --- a/imap-send.c
 +++ b/imap-send.c
 @@ -254,11 +254,13 @@ static int verify_hostname(X509 *cert, const char *hostname)

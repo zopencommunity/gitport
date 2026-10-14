@@ -1,37 +1,15 @@
 diff --git a/blame.c b/blame.c
-index 126e232..51329f3 100644
+index 126e232..481e650 100644
 --- a/blame.c
 +++ b/blame.c
-@@ -274,6 +274,11 @@ static struct commit *fake_working_tree_commit(struct repository *r,
+@@ -274,6 +274,10 @@ static struct commit *fake_working_tree_commit(struct repository *r,
  		if (strbuf_read(&buf, 0, 0) < 0)
  			die_errno("failed to read from stdin");
  	}
 +#ifdef __MVS__
 +	int autocvtToASCII;
 +	validate_codeset(r->index, path, &autocvtToASCII);
-+	if (autocvtToASCII)
 +#endif
  	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
  	origin->file.ptr = buf.buf;
  	origin->file.size = buf.len;
-@@ -2885,6 +2890,20 @@ void setup_scoreboard(struct blame_scoreboard *sb,
- 			die(_("cannot read blob %s for path %s"),
- 			    oid_to_hex(&o->blob_oid),
- 			    sb->path);
-+#ifdef __MVS__
-+		/* On z/OS, convert git object (UTF-8) back to working tree encoding for display */
-+		struct strbuf output = STRBUF_INIT;
-+		struct checkout_metadata meta;
-+		init_checkout_metadata(&meta, NULL, NULL, &o->blob_oid);
-+		if (convert_to_working_tree(sb->repo->index, sb->path,
-+					    sb->final_buf, sb->final_buf_size,
-+					    &output, &meta)) {
-+			free((char *)sb->final_buf);
-+			size_t newsize;
-+			sb->final_buf = strbuf_detach(&output, &newsize);
-+			sb->final_buf_size = newsize;
-+		}
-+#endif
- 	}
- 	sb->num_read_blob++;
- 	prepare_lines(sb);
