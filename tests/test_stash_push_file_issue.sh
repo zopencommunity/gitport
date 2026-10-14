@@ -152,10 +152,15 @@ if [ "$TAG" != "IBM-1047" ]; then
     echo ""
     echo "Note: 'git stash push' (without file) works correctly"
     echo "Note: 'git stash pop' restores tag correctly"
+    EXIT_CODE=1
 else
     echo "✅ NO BUG: git stash push <file> works correctly"
+    EXIT_CODE=0
 fi
 echo ""
 
 echo "Test directory: $TEST_DIR"
 echo "(Directory will be kept for manual inspection)"
+echo ""
+
+exit $EXIT_CODE

@@ -46,6 +46,8 @@ mkdir test_wrong
 cd test_wrong
 
 $GIT_BIN init >/dev/null 2>&1
+$GIT_BIN config user.email "test@example.com"
+$GIT_BIN config user.name "Test User"
 echo "* zos-working-tree-encoding=ibm-1047" > .gitattributes
 $GIT_BIN add .gitattributes >/dev/null 2>&1
 $GIT_BIN commit -m "Add gitattributes" >/dev/null 2>&1
@@ -88,6 +90,8 @@ mkdir test_right
 cd test_right
 
 $GIT_BIN init >/dev/null 2>&1
+$GIT_BIN config user.email "test@example.com"
+$GIT_BIN config user.name "Test User"
 echo "* zos-working-tree-encoding=ibm-1047" > .gitattributes
 $GIT_BIN add .gitattributes >/dev/null 2>&1
 $GIT_BIN commit -m "Add gitattributes" >/dev/null 2>&1

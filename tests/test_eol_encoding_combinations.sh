@@ -46,7 +46,9 @@ tap_result() {
     fi
 }
 
+# Clean up from helper functions
 rm -rf "$TEST_ROOT"
+mkdir -p "$TEST_ROOT"  # Recreate before tests
 
 # Test 1: -text eol=crlf with encoding
 # =====================================

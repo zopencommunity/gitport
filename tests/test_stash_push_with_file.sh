@@ -49,8 +49,9 @@ tap_result() {
     fi
 }
 
-# Clean up
+# Clean up from helper functions
 rm -rf "$TEST_ROOT"
+mkdir -p "$TEST_ROOT"  # Recreate before tests
 
 # Test 1: git stash push <file> with IBM-1047 encoding
 # =====================================================

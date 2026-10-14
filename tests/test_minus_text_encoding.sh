@@ -45,8 +45,9 @@ tap_result() {
     fi
 }
 
-# Clean up
+# Clean up from helper functions
 rm -rf "$TEST_ROOT"
+mkdir -p "$TEST_ROOT"  # Recreate before tests
 
 # Test 1: Baseline with 'text' attribute (should work)
 # =====================================================
