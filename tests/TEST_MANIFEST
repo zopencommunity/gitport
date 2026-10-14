@@ -43,3 +43,4 @@ test_unmappable_unicode.sh
 # Issue 5 - Filter conversion tests
 test_filter_double_conversion_v2.sh
 test_filter_conversion_comprehensive.sh
+test_issue3_text_encoding_roundtrip.sh

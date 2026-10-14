@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index 0365068..d49f4f4 100644
+index 0365068..92f5202 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -6,6 +6,7 @@
@@ -152,7 +152,7 @@ index 0365068..d49f4f4 100644
  {
  	char *dst;
  	size_t dst_len;
-+	if (attr_action == CRLF_BINARY) {
++	if (attr_action == CRLF_BINARY && !enc) {
 +		return 0;
 +	}
  
