@@ -413,6 +413,49 @@ The `working-tree-encoding` or `zos-working-tree-encoding` attribute is designed
   - **Focused Resource Usage:** System resources are concentrated on files that actually benefit from encoding conversion, improving overall efficiency.
 
 
+## Known Limitations on z/OS
+
+### Parallel Checkout
+
+**Status:** Disabled by default for files with `working-tree-encoding` attributes.
+
+**Background:**  
+Git's parallel checkout feature can speed up operations by using multiple workers to check out files concurrently. However, on z/OS, this creates a race condition with file tagging (chtag) when files have `working-tree-encoding` attributes.
+
+**Technical Details:**  
+z/OS requires files to be tagged with their encoding (CCSID) after checkout. This tagging operation happens outside the mutex-protected attribute cache, creating a potential race condition where parallel workers might apply incorrect encoding tags to files.
+
+**Current Behavior:**
+- Files **without** `working-tree-encoding`: Eligible for parallel checkout ✓
+- Files **with** `working-tree-encoding`: Forced to serial checkout (safe) ✓
+- Default setting: `checkout.workers = 1` (parallel disabled)
+
+**Recommendation:**  
+It is **strongly recommended** to keep parallel checkout disabled (default setting) on z/OS until the encoding and file tagging features are enhanced to handle concurrent operations safely.
+
+**Configuration:**
+```bash
+# Check current setting (should be 1 or unset)
+git config checkout.workers
+
+# Explicitly disable parallel checkout (recommended)
+git config --global checkout.workers 1
+
+# DO NOT enable parallel checkout on z/OS:
+# git config checkout.workers 4  # Not recommended!
+```
+
+**Impact:**  
+This limitation affects repositories with many files that use `working-tree-encoding`. For most use cases, the serial checkout performance is acceptable. If you have performance concerns, consider:
+- Using sparse checkouts to reduce the number of files checked out
+- Minimizing the use of `working-tree-encoding` where not strictly necessary
+- Using shallow clones in CI/CD environments
+
+**Future Enhancement:**  
+Enhancements to make file tagging thread-safe are being considered for future releases.
+
+---
+
 ## Troubleshooting
 TBD
 
