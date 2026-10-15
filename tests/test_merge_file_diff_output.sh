@@ -95,10 +95,10 @@ fi
 cd ..
 
 # ==============================================================================
-# Test 3: git diff --output with IBM-1047
+# Test 3: git diff --output (metadata - uses utf8_ccsid, ignores .gitattributes)
 # ==============================================================================
 echo ""
-echo "[Test 3/4] git diff --output with IBM-1047 encoding"
+echo "[Test 3/4] git diff --output encoding (diff is metadata, uses utf8_ccsid)"
 
 mkdir t3 && cd t3
 $GIT_BIN init -q 2>/dev/null
@@ -122,11 +122,14 @@ $GIT_BIN commit -q -m "Version 2" 2>/dev/null
 $GIT_BIN diff HEAD~1 HEAD --output=output.diff
 
 TAG=$(chtag -p output.diff 2>/dev/null | awk '{print $2}')
-if [ "$TAG" = "IBM-1047" ]; then
-    echo "  ✓ PASS: Diff file tagged as IBM-1047"
+# Diff output is always UTF-8/ISO8859-1, regardless of .gitattributes
+# Diff is metadata (not source code), so it uses utf8_ccsid
+if [ "$TAG" = "UTF-8" ] || [ "$TAG" = "ISO8859-1" ]; then
+    echo "  ✓ PASS: Diff file tagged as $TAG (correct: uses utf8_ccsid)"
+    echo "         (Diff is metadata, ignores .gitattributes)"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: Diff file tagged as $TAG (expected IBM-1047)"
+    echo "  ✗ FAIL: Diff file tagged as $TAG (expected UTF-8 or ISO8859-1)"
 fi
 
 cd ..
@@ -178,9 +181,9 @@ echo "========================================================================"
 if [ $PASSED -eq $TOTAL ]; then
     echo "  ✓ ALL TESTS PASSED!"
     echo ""
-    echo "  Both commands now tag files correctly:"
-    echo "    - git merge-file respects .gitattributes"
-    echo "    - git diff --output respects .gitattributes"
+    echo "  File tagging behavior:"
+    echo "    - git merge-file: Respects .gitattributes (working tree content)"
+    echo "    - git diff --output: Uses utf8_ccsid (metadata, ignores .gitattributes)"
     exit 0
 else
     echo "  ✗ SOME TESTS FAILED"

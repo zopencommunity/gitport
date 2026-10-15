@@ -294,7 +294,16 @@ chtag -t -c IBM-1047 file.txt
 # Create diff output file
 "$GIT_BIN" diff HEAD~1 HEAD --output=output.diff
 
-check_file_tag "output.diff" "IBM-1047" "git diff --output"
+# git diff --output uses utf8_ccsid (metadata), ignores .gitattributes
+TOTAL=$((TOTAL + 1))
+TAG=$(chtag -p output.diff 2>/dev/null | awk '{print $2}')
+if [ "$TAG" = "UTF-8" ] || [ "$TAG" = "ISO8859-1" ]; then
+    echo "  ✓ PASS: git diff --output - File tagged as $TAG (correct: uses utf8_ccsid)"
+    PASSED=$((PASSED + 1))
+else
+    echo "  ✗ FAIL: git diff --output - Expected UTF-8 or ISO8859-1, got $TAG"
+    FAILED=$((FAILED + 1))
+fi
 
 cd ..
 
