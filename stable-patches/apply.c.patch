@@ -1,28 +1,27 @@
 diff --git a/apply.c b/apply.c
-index 5e54453f79..5d5a40ece4 100644
+index 5e54453..3ea13e9 100644
 --- a/apply.c
 +++ b/apply.c
-@@ -33,6 +33,8 @@
+@@ -33,6 +33,9 @@
  #include "read-cache.h"
  #include "repository.h"
  #include "rerere.h"
 +#include "attr.h"
 +#include "convert.h"
++#include "utf8.h"
  #include "apply.h"
  #include "entry.h"
  #include "setup.h"
-@@ -2398,8 +2400,8 @@ static void show_stats(struct apply_state *state, struct patch *patch)
+@@ -2398,7 +2401,7 @@ static void show_stats(struct apply_state *state, struct patch *patch)
  		add, pluses, del, minuses);
  }
  
 -static int read_old_data(struct stat *st, struct patch *patch,
--			 const char *path, struct strbuf *buf)
 +static int read_old_data(struct index_state *istate, struct stat *st, struct patch *patch,
-+			 const const char *path, struct strbuf *buf)
+ 			 const char *path, struct strbuf *buf)
  {
  	int conv_flags = patch->crlf_in_old ?
- 		CONV_EOL_KEEP_CRLF : CONV_EOL_RENORMALIZE;
-@@ -2411,15 +2413,7 @@ static int read_old_data(struct stat *st, struct patch *patch,
+@@ -2411,15 +2414,7 @@ static int read_old_data(struct stat *st, struct patch *patch,
  	case S_IFREG:
  		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
  			return error(_("unable to open or read %s"), path);
@@ -39,7 +38,7 @@ index 5e54453f79..5d5a40ece4 100644
  		return 0;
  	default:
  		return -1;
-@@ -3522,6 +3516,23 @@ static int verify_index_match(struct apply_state *state,
+@@ -3522,6 +3517,70 @@ static int verify_index_match(struct apply_state *state,
  			      const struct cache_entry *ce,
  			      struct stat *st)
  {
@@ -53,17 +52,64 @@ index 5e54453f79..5d5a40ece4 100644
 +		struct conv_attrs ca;
 +		convert_attrs(state->repo->index, &ca, ce->name);
 +
-+		if (ca.working_tree_encoding &&
-+		    !strcmp(ca.working_tree_encoding, "IBM-1047")) {
-+			/* Let 3-way merge handle the verification after conversion */
-+			return 0;
++		if (ca.working_tree_encoding) {
++			int needs_conversion = 1;
++			/* Check if conversion is actually needed */
++			 if (same_encoding(ca.working_tree_encoding, "UTF-8")) {
++			    needs_conversion = 0;
++			 }
++			 /* Special case: ISO8859-1 when utf8_ccsid == 819 */
++			 else if (utf8_ccsid == 819 &&
++			         same_encoding(ca.working_tree_encoding, "ISO8859-1")) {
++			    needs_conversion = 0;
++			 }
++			 if (needs_conversion) {
++			    struct strbuf wt_buf = STRBUF_INIT;
++		            struct strbuf converted_buf = STRBUF_INIT;
++		            struct strbuf index_buf = STRBUF_INIT;
++		            int result = 0;
++
++                          /* Read working tree file */
++		             if (strbuf_read_file(&wt_buf, ce->name, st->st_size) < 0) {
++		                error(_("unable to read %s"), ce->name);
++		                result = -1;
++	                        goto cleanup;
++	                     }
++
++			     /* Convert working tree content */
++			     if (convert_to_git(state->repo->index, ce->name,
++			                        wt_buf.buf, wt_buf.len, &converted_buf,
++		                                CONV_EOL_RENORMALIZE)) {
++		                /* Conversion happened, swap buffers */
++		                strbuf_swap(&wt_buf, &converted_buf);
++		                strbuf_release(&converted_buf);
++		             }
++
++			     /* Read index content */
++			     if (read_blob_object(&index_buf, &ce->oid, ce->ce_mode) < 0) {
++			         result = -1;
++			         goto cleanup;
++			     }
++			     /* Compare content */
++			     if (wt_buf.len != index_buf.len ||
++			         memcmp(wt_buf.buf, index_buf.buf, wt_buf.len) != 0) {
++			         result = -1;
++			     }
++
++cleanup:
++	                     strbuf_release(&wt_buf);
++	                     strbuf_release(&converted_buf);
++	                     strbuf_release(&index_buf);
++	                     return result;
++
 +		}
++          }
 +	}
 +#endif
  	if (S_ISGITLINK(ce->ce_mode)) {
  		if (!S_ISDIR(st->st_mode))
  			return -1;
-@@ -3553,7 +3564,7 @@ static int load_patch_target(struct apply_state *state,
+@@ -3553,7 +3612,7 @@ static int load_patch_target(struct apply_state *state,
  		} else if (has_symlink_leading_path(name, strlen(name))) {
  			return error(_("reading from '%s' beyond a symbolic link"), name);
  		} else {
@@ -72,7 +118,7 @@ index 5e54453f79..5d5a40ece4 100644
  				return error(_("failed to read %s"), name);
  		}
  	}
-@@ -4497,7 +4508,7 @@ static int add_index_file(struct apply_state *state,
+@@ -4497,7 +4556,7 @@ static int add_index_file(struct apply_state *state,
   *   0 if everything went well
   *   1 if a recoverable error happened
   */
@@ -81,7 +127,7 @@ index 5e54453f79..5d5a40ece4 100644
  			   unsigned int mode, const char *buf,
  			   unsigned long size)
  {
-@@ -4521,12 +4532,23 @@ static int try_create_file(struct apply_state *state, const char *path,
+@@ -4521,12 +4580,23 @@ static int try_create_file(struct apply_state *state, const char *path,
  	if (fd < 0)
  		return 1;
  
@@ -106,7 +152,7 @@ index 5e54453f79..5d5a40ece4 100644
  	if (res)
  		error_errno(_("failed to write to '%s'"), path);
  	strbuf_release(&nbuf);
-@@ -4585,7 +4607,7 @@ static int create_one_file(struct apply_state *state,
+@@ -4585,7 +4655,7 @@ static int create_one_file(struct apply_state *state,
  	if (path_is_beyond_symlink(state, path))
  		return error(_("affected file '%s' is beyond a symbolic link"), path);
  
@@ -115,7 +161,7 @@ index 5e54453f79..5d5a40ece4 100644
  	if (res < 0)
  		return -1;
  	if (!res)
-@@ -4594,7 +4616,7 @@ static int create_one_file(struct apply_state *state,
+@@ -4594,7 +4664,7 @@ static int create_one_file(struct apply_state *state,
  	if (errno == ENOENT) {
  		if (safe_create_leading_directories_no_share(path))
  			return 0;
@@ -124,7 +170,7 @@ index 5e54453f79..5d5a40ece4 100644
  		if (res < 0)
  			return -1;
  		if (!res)
-@@ -4615,7 +4637,7 @@ static int create_one_file(struct apply_state *state,
+@@ -4615,7 +4685,7 @@ static int create_one_file(struct apply_state *state,
  
  		for (;;) {
  			newpath = mkpathdup("%s~%u", path, nr);
@@ -133,7 +179,7 @@ index 5e54453f79..5d5a40ece4 100644
  			if (res < 0)
  				goto out;
  			if (!res) {
-@@ -5099,6 +5121,22 @@ int apply_all_patches(struct apply_state *state,
+@@ -5099,6 +5169,22 @@ int apply_all_patches(struct apply_state *state,
  	int errs = 0;
  	int read_stdin = 1;
  

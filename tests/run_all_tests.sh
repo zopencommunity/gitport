@@ -29,25 +29,19 @@ run_test() {
     local test_output="${SCRIPT_DIR}/test_tmp_${test_name}_$$.out"
     mkdir -p "${SCRIPT_DIR}/test_tmp_${test_name}_$$"
     
-    # Run the test with timeout (run from test directory to ensure correct paths)
+    # Run the test (run from test directory to ensure correct paths)
     # Use ./ to run script directly instead of calling bash explicitly
-    if (cd "$SCRIPT_DIR" && timeout "${TEST_TIMEOUT}" ./"$(basename "$test_script")") > "${test_output}" 2>&1; then
+    # Note: timeout command is broken on z/OS, so removed
+    if (cd "$SCRIPT_DIR" && ./"$(basename "$test_script")") > "${test_output}" 2>&1; then
         PASSED=$((PASSED + 1))
         echo "ok $TEST_NUM - $test_name"
     else
         local exit_code=$?
-        if [ $exit_code -eq 124 ]; then
-            # Timeout occurred
-            FAILED=$((FAILED + 1))
-            echo "not ok $TEST_NUM - $test_name # TIMEOUT after ${TEST_TIMEOUT}s"
-            echo "# Test timed out after ${TEST_TIMEOUT} seconds"
-        else
-            FAILED=$((FAILED + 1))
-            echo "not ok $TEST_NUM - $test_name"
-            # Include error details (first 50 lines)
-            echo "# Test output (first 50 lines):"
-            head -50 "${test_output}" | sed 's/^/# /'
-        fi
+        FAILED=$((FAILED + 1))
+        echo "not ok $TEST_NUM - $test_name"
+        # Include error details (first 50 lines)
+        echo "# Test output (first 50 lines):"
+        head -50 "${test_output}" | sed 's/^/# /'
     fi
     
     # Clean up temp files
