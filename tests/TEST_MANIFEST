@@ -26,7 +26,7 @@ test_file_tagging_survey.sh
 test_format_patch_proper_tagging.sh
 test_low_level_commands.sh
 test_merge_file_diff_output.sh
-test_minus_text_diff_issue.sh
+# test_minus_text_diff_issue.sh - manual diagnostic with hard-coded path, not for CI
 test_minus_text_encoding.sh
 test_not_symbol_037_1047.sh
 test_parallel_checkout_encoding.sh
@@ -36,7 +36,7 @@ test_rerere_cherry_pick.sh
 test_rerere_cherry_pick_issue.sh
 test_rerere_encoding.sh
 test_sequential_data_minus_text.sh
-test_stash_push_file_issue.sh
+# test_stash_push_file_issue.sh - manual test, use test_stash_push_with_file.sh instead
 test_stash_push_with_file.sh
 test_unmappable_unicode.sh
 

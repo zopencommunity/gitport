@@ -1,6 +1,8 @@
 #!/bin/bash
+set -e
 
-GIT=/home/haritha/code/bazel-7.2.0/git_255_iconv_translit_3waymerge/gitport/git/git
+# Resolve Git binary portably
+GIT="${GIT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../git" && pwd)/git}"
 
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
 echo "║  Test: Demonstrating -text Makes git diff Garbled (But File Tags Work)       ║"

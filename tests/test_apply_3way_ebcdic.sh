@@ -98,10 +98,13 @@ head -20 patch.diff
 
 echo "DEBUG: Before apply --3way"
 echo "  Working tree content (hex):" $(od -A n -t x1 -N 20 file.txt | head -1)
-echo "  Index content (hex):" $("$GIT_BIN" cat-file -p :file.txt 2>&1 | grep -v "^DEBUG" | od -A n -t x1 -N 20 | head -1)
+echo "  Index content (hex):" $("$GIT_BIN" cat-file -p :file.txt 2>&1 | od -A n -t x1 -N 20 | head -1)
 
-APPLY_OUTPUT=$("$GIT_BIN" apply --3way patch.diff 2>&1 | grep -v "^DEBUG")
+set +e
+"$GIT_BIN" apply --3way patch.diff >apply.out 2>apply.err
 APPLY_STATUS=$?
+set -e
+APPLY_OUTPUT=$(cat apply.out apply.err 2>/dev/null)
 
 echo "DEBUG: After apply --3way (status=$APPLY_STATUS)"
 echo "  Output: $APPLY_OUTPUT"

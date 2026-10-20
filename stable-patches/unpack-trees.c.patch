@@ -1,5 +1,5 @@
 diff --git a/unpack-trees.c b/unpack-trees.c
-index b42020f16b..1a1d18fd00 100644
+index b42020f..c049ef8 100644
 --- a/unpack-trees.c
 +++ b/unpack-trees.c
 @@ -481,9 +481,65 @@ static int check_updates(struct unpack_trees_options *o,
@@ -24,7 +24,7 @@ index b42020f16b..1a1d18fd00 100644
 +		struct cache_entry *ce = index->cache[i];
 +		const char *basename;
 +
-+		if (!must_checkout(ce))
++		if (!must_checkout(ce) && !(ce->ce_flags & CE_WT_REMOVE))
 +			continue;
 +
 +		basename = strrchr(ce->name, '/');

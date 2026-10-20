@@ -49,13 +49,9 @@ tap_result() {
     fi
 }
 
-# Clean up
-rm -rf "$TEST_ROOT"
-
 # Test 1: cherry-pick with conflict, manual resolution
 # ====================================================
-cd "$TEST_ROOT"
-mkdir test1 && cd test1
+mkdir -p "$TEST_ROOT/test1" && cd "$TEST_ROOT/test1"
 
 $GIT_BIN init -q 2>/dev/null
 $GIT_BIN config user.name "Test"
@@ -142,11 +138,9 @@ else
     tap_result "not ok" "cherry-pick conflict resolution preserves IBM-1047 tag" "no conflict occurred"
 fi
 
-cd "$TEST_ROOT"
-
 # Test 2: cherry-pick with rerere auto-resolve
 # =============================================
-mkdir test2 && cd test2
+mkdir -p "$TEST_ROOT/test2" && cd "$TEST_ROOT/test2"
 
 $GIT_BIN init -q 2>/dev/null
 $GIT_BIN config user.name "Test"

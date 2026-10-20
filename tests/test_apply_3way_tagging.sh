@@ -49,13 +49,9 @@ tap_result() {
     fi
 }
 
-# Clean up
-rm -rf "$TEST_ROOT"
-
 # Test 1: git apply --3way with IBM-1047 - check tag
 # ===================================================
-cd "$TEST_ROOT"
-mkdir test1 && cd test1
+mkdir -p "$TEST_ROOT/test1" && cd "$TEST_ROOT/test1"
 
 $GIT_BIN init -q 2>/dev/null
 $GIT_BIN config user.name "Test"
@@ -143,11 +139,9 @@ else
     fi
 fi
 
-cd "$TEST_ROOT"
-
 # Test 2: git apply --3way with working-tree-encoding attribute
 # ==============================================================
-mkdir test2 && cd test2
+mkdir -p "$TEST_ROOT/test2" && cd "$TEST_ROOT/test2"
 
 $GIT_BIN init -q 2>/dev/null
 $GIT_BIN config user.name "Test"
@@ -195,11 +189,9 @@ else
     tap_result "not ok" "git apply --3way with working-tree-encoding preserves tag" "got: $TAG2, expected: IBM-1047"
 fi
 
-cd "$TEST_ROOT"
-
 # Test 3: Verify content is correct even if tag is wrong
 # =======================================================
-mkdir test3 && cd test3
+mkdir -p "$TEST_ROOT/test3" && cd "$TEST_ROOT/test3"
 
 $GIT_BIN init -q 2>/dev/null
 $GIT_BIN config user.name "Test"

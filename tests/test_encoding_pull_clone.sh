@@ -154,9 +154,16 @@ if [ $APPLY_STATUS -eq 0 ] && grep -q "Modified content" applytest.txt; then
     echo "ok 9 - test git apply --3way with working-tree-encoding (conflict resolved)"
 elif grep -q "does not match index" apply.err; then
     echo "ok 9 - test git apply --3way with working-tree-encoding (P1 fix detected mismatch)"
+elif grep -q "Applied patch.*with conflicts" apply.err || grep -q "Applied patch.*with conflicts" apply.out; then
+    # Patch applied with conflicts - this is valid (APPLY_STATUS may be non-zero due to other files in patch)
+    echo "ok 9 - test git apply --3way with working-tree-encoding (conflicts marked)"
 else
-    # Any other outcome is also acceptable for this test
-    echo "ok 9 - test git apply --3way with working-tree-encoding (completed)"
+    # Unexpected outcome - test should fail
+    echo "not ok 9 - test git apply --3way with working-tree-encoding (unexpected outcome)"
+    echo "# Expected: either successful conflict resolution or 'does not match index'"
+    echo "# Got: APPLY_STATUS=$APPLY_STATUS"
+    [ -f apply.err ] && echo "# Error output:" && cat apply.err
+    exit 1
 fi
 
 echo "# All encoding tests passed"
