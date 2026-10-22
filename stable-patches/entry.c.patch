@@ -1,5 +1,5 @@
 diff --git a/entry.c b/entry.c
-index 7817aee..69568f1 100644
+index 6b79884..6cb7530 100644
 --- a/entry.c
 +++ b/entry.c
 @@ -85,8 +85,16 @@ static void remove_subtree(struct strbuf *path)
@@ -21,7 +21,7 @@ index 7817aee..69568f1 100644
  }
  
  void *read_blob_entry(const struct cache_entry *ce, size_t *size)
-@@ -111,7 +119,14 @@ static int open_output_fd(char *path, const struct cache_entry *ce, int to_tempf
+@@ -109,7 +117,14 @@ static int open_output_fd(char *path, const struct cache_entry *ce, int to_tempf
  	if (to_tempfile) {
  		xsnprintf(path, TEMPORARY_FILENAME_LENGTH, "%s",
  			  symlink ? ".merge_link_XXXXXX" : ".merge_file_XXXXXX");
@@ -37,7 +37,7 @@ index 7817aee..69568f1 100644
  	} else {
  		return create_file(path, !symlink ? ce->ce_mode : 0666);
  	}
-@@ -139,7 +154,18 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
+@@ -137,7 +152,18 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
  	if (fd < 0)
  		return -1;
  
@@ -56,7 +56,7 @@ index 7817aee..69568f1 100644
  	*fstat_done = fstat_checkout_output(fd, state, statbuf);
  	result |= close(fd);
  
-@@ -352,7 +378,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+@@ -350,7 +376,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
  			ret = async_convert_to_working_tree_ca(ca, ce->name,
  							       new_blob, size,
  							       &buf, &meta, dco);
@@ -65,7 +65,16 @@ index 7817aee..69568f1 100644
  				struct string_list_item *item =
  					string_list_lookup(&dco->paths, ce->name);
  				if (item) {
-@@ -367,7 +393,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+@@ -359,21 +385,27 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
+ 					free(new_blob);
+ 					goto delayed;
+ 				}
++			} else if (ret < 0) {
++				free(new_blob);
++				return error(_("failed to convert '%s' to working tree encoding"), ce->name);
+ 			}
+ 		} else {
+ 			ret = convert_to_working_tree_ca(ca, ce->name, new_blob,
  							 size, &buf, &meta);
  		}
  
@@ -74,7 +83,21 @@ index 7817aee..69568f1 100644
  			free(new_blob);
  			new_blob = strbuf_detach(&buf, &newsize);
  			size = newsize;
-@@ -384,8 +410,17 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
++		} else if (ret < 0) {
++			free(new_blob);
++			return error(_("failed to convert '%s' to working tree encoding"), ce->name);
+ 		}
+ 		/*
+-		 * No "else" here as errors from convert are OK at this
+-		 * point. If the error would have been fatal (e.g.
+-		 * filter is required), then we would have died already.
++		 * No "else" here (for ret == 0) as no conversion is OK.
++		 * If a filter error would have been fatal (e.g. required filter),
++		 * we would have died already.
+ 		 */
+ 
+ 	write_file_entry:
+@@ -382,8 +414,17 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
  			free(new_blob);
  			return error_errno("unable to create file %s", path);
  		}
