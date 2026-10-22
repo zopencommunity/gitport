@@ -1,5 +1,5 @@
 diff --git a/object-file.c b/object-file.c
-index e3d92bb..291a7d8 100644
+index e3d92bb..37ab2ea 100644
 --- a/object-file.c
 +++ b/object-file.c
 @@ -614,11 +614,19 @@ static int create_tmpfile(struct repository *repo,
@@ -42,15 +42,15 @@ index e3d92bb..291a7d8 100644
  	if ((type == OBJ_BLOB) && path) {
 -		if (convert_to_git(istate, path, buf, size, &nbuf,
 -				   get_conv_flags(flags))) {
-+		ret = convert_to_git(istate, path, buf, size, &nbuf,
++		int conversion_result = convert_to_git(istate, path, buf, size, &nbuf,
 +				   get_conv_flags(flags));
-+		if (ret < 0)
++		if (conversion_result < 0)
 +		{
 +			/* Conversion failed - return error immediately */
 +			strbuf_release(&nbuf);
 +			return -1;
 +		}
-+		if(ret > 0)
++		if(conversion_result > 0)
 +		{
  			buf = nbuf.buf;
  			size = nbuf.len;

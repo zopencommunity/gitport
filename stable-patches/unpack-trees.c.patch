@@ -1,86 +1,28 @@
 diff --git a/unpack-trees.c b/unpack-trees.c
-index b42020f..c049ef8 100644
+index b42020f..05c72c3 100644
 --- a/unpack-trees.c
 +++ b/unpack-trees.c
-@@ -481,9 +481,65 @@ static int check_updates(struct unpack_trees_options *o,
+@@ -481,9 +481,23 @@ static int check_updates(struct unpack_trees_options *o,
  
  	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
  
 +#ifdef __MVS__
-+	int gitattributes_updated = 0;
++	/*
++	 * Disable parallel checkout on z/OS.
++	 * The encoding and tagging logic requires .gitattributes to be
++	 * processed before other files, which is incompatible with
++	 * parallel checkout's design.
++	 */
++	if (pc_workers > 1) {
++		warning(_("parallel checkout is not supported on z/OS, using single worker"));
++		pc_workers = 1;
++	}
 +#endif
 +
  	enable_delayed_checkout(&state);
  	if (pc_workers > 1)
  		init_parallel_checkout();
 +
-+#ifdef __MVS__
-+	/*
-+	 * z/OS fix: First pass - check out all .gitattributes files FIRST.
-+	 * This ensures the working tree has updated .gitattributes files
-+	 * before we check out and tag other files.
-+	 */
-+	for (i = 0; i < index->cache_nr; i++) {
-+		struct cache_entry *ce = index->cache[i];
-+		const char *basename;
-+
-+		if (!must_checkout(ce) && !(ce->ce_flags & CE_WT_REMOVE))
-+			continue;
-+
-+		basename = strrchr(ce->name, '/');
-+		basename = basename ? basename + 1 : ce->name;
-+		
-+		if (!strcmp(basename, GITATTRIBUTES_FILE)) {
-+			size_t last_pc_queue_size = pc_queue_size();
-+
-+			if (ce->ce_flags & CE_WT_REMOVE)
-+				BUG("both update and delete flags are set on %s",
-+				    ce->name);
-+			ce->ce_flags &= ~CE_UPDATE;
-+			errs |= checkout_entry(ce, &state, NULL, NULL);
-+			gitattributes_updated = 1;
-+
-+			if (last_pc_queue_size == pc_queue_size())
-+				display_progress(progress, ++cnt);
-+		}
-+	}
-+
-+	/*
-+	 * Flush parallel checkout queue to ensure .gitattributes files
-+	 * are actually written to disk before we invalidate the cache.
-+	 */
-+	if (gitattributes_updated && pc_workers > 1) {
-+		errs |= run_parallel_checkout(&state, pc_workers, pc_threshold,
-+					      progress, &cnt);
-+	}
-+
-+	/*
-+	 * Invalidate attribute cache NOW, after .gitattributes are checked out
-+	 * but BEFORE other files are checked out. This ensures other files get
-+	 * tagged with the NEW encoding from updated .gitattributes.
-+	 */
-+	if (gitattributes_updated) {
-+		git_attr_set_direction(GIT_ATTR_INDEX);
-+		git_attr_set_direction(GIT_ATTR_CHECKOUT);
-+	}
-+#endif
-+
  	for (i = 0; i < index->cache_nr; i++) {
  		struct cache_entry *ce = index->cache[i];
  
-@@ -494,6 +550,15 @@ static int check_updates(struct unpack_trees_options *o,
- 				BUG("both update and delete flags are set on %s",
- 				    ce->name);
- 			ce->ce_flags &= ~CE_UPDATE;
-+
-+#ifdef __MVS__
-+			/* Skip .gitattributes - already checked out in first pass */
-+			const char *basename = strrchr(ce->name, '/');
-+			basename = basename ? basename + 1 : ce->name;
-+			if (!strcmp(basename, GITATTRIBUTES_FILE))
-+				continue;
-+#endif
-+
- 			errs |= checkout_entry(ce, &state, NULL, NULL);
- 
- 			if (last_pc_queue_size == pc_queue_size())

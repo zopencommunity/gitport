@@ -1,8 +1,8 @@
 diff --git a/diff.c b/diff.c
-index 2a9d0d8..b95a01c 100644
+index 2a9d0d8..faad14c 100644
 --- a/diff.c
 +++ b/diff.c
-@@ -4578,9 +4578,34 @@ int diff_populate_filespec(struct repository *r,
+@@ -4578,20 +4578,49 @@ int diff_populate_filespec(struct repository *r,
  		fd = open(s->path, O_RDONLY);
  		if (fd < 0)
  			goto err_empty;
@@ -37,7 +37,23 @@ index 2a9d0d8..b95a01c 100644
  
  		/*
  		 * Convert from working tree format to canonical git format
-@@ -5829,6 +5854,20 @@ static enum parse_opt_result diff_opt_output(struct parse_opt_ctx_t *ctx,
+ 		 */
+-		if (convert_to_git(r->index, s->path, s->data, s->size, &buf, conv_flags)) {
++		int conversion_result = convert_to_git(r->index, s->path, s->data, s->size, &buf, conv_flags);
++		if (conversion_result > 0) {
+ 			size_t size = 0;
+ 			munmap(s->data, s->size);
+ 			s->should_munmap = 0;
+ 			s->data = strbuf_detach(&buf, &size);
+ 			s->size = size;
+ 			s->should_free = 1;
++		} else if (conversion_result < 0) {
++			warning(_("failed to convert '%s' to git format, using original data"), s->path);
++			/* Keep original data in s->data for diff */
+ 		}
+ 	}
+ 	else {
+@@ -5829,6 +5858,20 @@ static enum parse_opt_result diff_opt_output(struct parse_opt_ctx_t *ctx,
  	path = prefix_filename(ctx->prefix, arg);
  	options->file = xfopen(path, "w");
  	options->close_file = 1;

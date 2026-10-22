@@ -1,15 +1,18 @@
 diff --git a/blame.c b/blame.c
-index 126e232..481e650 100644
+index 126e232..cc043d4 100644
 --- a/blame.c
 +++ b/blame.c
-@@ -274,6 +274,10 @@ static struct commit *fake_working_tree_commit(struct repository *r,
+@@ -274,7 +274,12 @@ static struct commit *fake_working_tree_commit(struct repository *r,
  		if (strbuf_read(&buf, 0, 0) < 0)
  			die_errno("failed to read from stdin");
  	}
+-	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
 +#ifdef __MVS__
 +	int autocvtToASCII;
 +	validate_codeset(r->index, path, &autocvtToASCII);
 +#endif
- 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
++	if (convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0) < 0)
++		warning(_("failed to convert '%s' to git format, using original data"), path);
  	origin->file.ptr = buf.buf;
  	origin->file.size = buf.len;
+ 	odb_pretend_object(the_repository->objects, buf.buf, buf.len,

@@ -1,5 +1,5 @@
 diff --git a/read-cache.c b/read-cache.c
-index 21ca58b..1d20af4 100644
+index 21ca58b..abeccb3 100644
 --- a/read-cache.c
 +++ b/read-cache.c
 @@ -13,6 +13,8 @@
@@ -24,7 +24,7 @@ index 21ca58b..1d20af4 100644
  			match = !oideq(&oid, &ce->oid);
  		/* index_fd() closed the file descriptor already */
  	}
-@@ -440,6 +445,29 @@ int ie_match_stat(struct index_state *istate,
+@@ -440,6 +445,27 @@ int ie_match_stat(struct index_state *istate,
  			changed |= ce_modified_check_fs(istate, ce, st);
  	}
  
@@ -36,13 +36,11 @@ index 21ca58b..1d20af4 100644
 +	if ((changed & DATA_CHANGED) && !(changed & (TYPE_CHANGED | MODE_CHANGED))) {
 +		struct conv_attrs ca;
 +		
-+		/* 
-+		 * Ensure attribute system is configured for check-in (EBCDIC -> UTF-8).
-+		 * This is also set in apply.c but we do it here for extra safety.
++		/*
++		 * Use the current attribute direction (set by caller).
++		 * During checkout: caller sets GIT_ATTR_CHECKOUT
++		 * During status/diff/add: default is GIT_ATTR_CHECKIN
 +		 */
-+		git_attr_set_direction(GIT_ATTR_CHECKIN);
-+		
-+		/* Prime the attribute cache for this path */
 +		convert_attrs(istate, &ca, ce->name);
 +		
 +		if (!ce_modified_check_fs(istate, ce, st)) {
@@ -54,3 +52,18 @@ index 21ca58b..1d20af4 100644
  	return changed;
  }
  
+@@ -3466,6 +3492,14 @@ void *read_blob_data_from_index(struct index_state *istate,
+ 	enum object_type type;
+ 	void *data;
+ 
++	/*
++	 * Handle NULL istate gracefully. While most callers should provide
++	 * a valid index state, some code paths (e.g., git apply without --index)
++	 * may pass NULL to indicate the index should not be consulted.
++	 */
++	if (!istate)
++		return NULL;
++
+ 	len = strlen(path);
+ 	pos = index_name_pos(istate, path, len);
+ 	if (pos < 0) {
