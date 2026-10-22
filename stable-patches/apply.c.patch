@@ -148,7 +148,7 @@ index 5e54453..4d98aa2 100644
 +			 * passing NULL on non-z/OS platforms will not crash even with autocrlf.
 +			 */
 +#ifdef __MVS__
-+			if (read_old_data(state->repo->index, st, patch, name, buf))
++			if (read_old_data(state->repo ? state->repo->index : NULL, st, patch, name, buf))
 +#else
 +			if (read_old_data(NULL, st, patch, name, buf))
 +#endif
