@@ -28,6 +28,7 @@ test_low_level_commands.sh
 test_merge_file_diff_output.sh
 # test_minus_text_diff_issue.sh - manual diagnostic with hard-coded path, not for CI
 test_minus_text_encoding.sh
+test_minus_text_with_encoding.sh
 test_not_symbol_037_1047.sh
 test_parallel_checkout_encoding.sh
 test_pull_encoding_tag_fix.sh
@@ -44,3 +45,8 @@ test_unmappable_unicode.sh
 test_filter_double_conversion_v2.sh
 test_filter_conversion_comprehensive.sh
 test_issue3_text_encoding_roundtrip.sh
+
+# Encoding failure and error handling tests
+test_checkout_encoding_failure.sh
+test_filter_fd_encoding.sh
+test_lockfile_autoconv.sh

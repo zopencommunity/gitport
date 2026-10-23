@@ -1,5 +1,5 @@
 diff --git a/lockfile.c b/lockfile.c
-index 7add2f136a..9863d0537e 100644
+index 7add2f1..bb804ae 100644
 --- a/lockfile.c
 +++ b/lockfile.c
 @@ -2,6 +2,8 @@
@@ -27,7 +27,7 @@ index 7add2f136a..9863d0537e 100644
  
  	strbuf_addstr(&base_path, path);
  	if (!(flags & LOCK_NO_DEREF))
-@@ -177,8 +181,20 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -177,8 +181,22 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
  	get_pid_path(&pid_path, base_path.buf);
  
  	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
@@ -35,6 +35,7 @@ index 7add2f136a..9863d0537e 100644
 +	if (lk->tempfile && fstat(lk->tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
 +	{
 +		__chgfdccsid(lk->tempfile->fd, utf8_ccsid);
++		__disableautocvt(lk->tempfile->fd);
 +	}
 +#endif
  	if (lk->tempfile)
@@ -43,6 +44,7 @@ index 7add2f136a..9863d0537e 100644
 +	if (lk->pid_tempfile && fstat(lk->pid_tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
 +	{
 +		__chgfdccsid(lk->pid_tempfile->fd, utf8_ccsid);
++		__disableautocvt(lk->pid_tempfile->fd);
 +	}
 +#endif
  

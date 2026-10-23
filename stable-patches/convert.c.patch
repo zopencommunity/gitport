@@ -1,5 +1,5 @@
 diff --git a/convert.c b/convert.c
-index 0365068..2b8e135 100644
+index 0365068..7b070a7 100644
 --- a/convert.c
 +++ b/convert.c
 @@ -6,6 +6,7 @@
@@ -388,16 +388,19 @@ index 0365068..2b8e135 100644
  	}
  
  	if (!(conv_flags & CONV_EOL_KEEP_CRLF)) {
-@@ -1474,7 +1647,7 @@ void convert_to_git_filter_fd(struct index_state *istate,
+@@ -1474,7 +1647,10 @@ void convert_to_git_filter_fd(struct index_state *istate,
  	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
  		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
  
 -	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
-+	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, ca.attr_action, conv_flags);
++	int encode_ret = encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, ca.attr_action, conv_flags);
++	if (encode_ret < 0)
++		die(_("%%s: failed to encode from %%s to UTF-8"), path, ca.working_tree_encoding ? ca.working_tree_encoding : "(default)");
++
  	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
  	ident_to_git(dst->buf, dst->len, dst, ca.ident);
  }
-@@ -1489,7 +1662,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1489,7 +1665,7 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
  	int ret = 0, ret_filter = 0;
  
  	ret |= ident_to_worktree(src, len, dst, ca->ident);
@@ -406,7 +409,7 @@ index 0365068..2b8e135 100644
  		src = dst->buf;
  		len = dst->len;
  	}
-@@ -1500,16 +1673,19 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
+@@ -1500,16 +1676,19 @@ static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
  	 */
  	if ((ca->drv && (ca->drv->smudge || ca->drv->process)) || !normalizing) {
  		ret |= crlf_to_worktree(src, len, dst, ca->crlf_action);
@@ -429,7 +432,7 @@ index 0365068..2b8e135 100644
  	}
  
  	ret_filter = apply_filter(
-@@ -1548,7 +1724,7 @@ int renormalize_buffer(struct index_state *istate, const char *path,
+@@ -1548,7 +1727,7 @@ int renormalize_buffer(struct index_state *istate, const char *path,
  	convert_attrs(istate, &ca, path);
  	ret = convert_to_working_tree_ca_internal(&ca, path, src, len, dst, 1,
  						  NULL, NULL);
@@ -438,7 +441,7 @@ index 0365068..2b8e135 100644
  		src = dst->buf;
  		len = dst->len;
  	}
-@@ -2060,3 +2236,181 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
+@@ -2060,3 +2239,181 @@ enum conv_attrs_classification classify_conv_attrs(const struct conv_attrs *ca)
  
  	return CA_CLASS_STREAMABLE;
  }
