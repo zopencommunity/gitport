@@ -1,8 +1,8 @@
-diff --git i/builtin/help.c w/builtin/help.c
-index c257079..9ae3815 100644
---- i/builtin/help.c
-+++ w/builtin/help.c
-@@ -313,6 +313,14 @@ static void exec_man_man(const char *path, const char *page)
+diff --git a/builtin/help.c b/builtin/help.c
+index c0aece4..fd18dad 100644
+--- a/builtin/help.c
++++ b/builtin/help.c
+@@ -338,6 +338,14 @@ static void exec_man_man(const char *path, const char *page)
  	warning_errno(_("failed to exec '%s'"), path);
  }
  
@@ -17,7 +17,7 @@ index c257079..9ae3815 100644
  static void exec_man_cmd(const char *cmd, const char *page)
  {
  	struct strbuf shell_cmd = STRBUF_INIT;
-@@ -335,6 +343,7 @@ static int supported_man_viewer(const char *name, size_t len)
+@@ -360,6 +368,7 @@ static int supported_man_viewer(const char *name, size_t len)
  {
  	return (!strncasecmp("man", name, len) ||
  		!strncasecmp("woman", name, len) ||
@@ -25,14 +25,14 @@ index c257079..9ae3815 100644
  		!strncasecmp("konqueror", name, len));
  }
  
-@@ -478,6 +487,13 @@ static void exec_viewer(const char *name, const char *page)
+@@ -503,6 +512,13 @@ static void exec_viewer(const char *name, const char *page)
  {
  	const char *info = get_man_viewer_info(name);
  
 +#ifdef __MVS__
 +	if (!strcasecmp(name, "man"))
 +		exec_man_zotman(info, page);
-+	if (!strcasecmp(name, "zotman"))
++	else if (!strcasecmp(name, "zotman"))
 +		exec_man_zotman(info, page);
 +	else
 +#endif

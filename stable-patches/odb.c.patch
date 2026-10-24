@@ -1,27 +1,41 @@
 diff --git a/odb.c b/odb.c
-index ac70b6a..f43adf3 100644
+index 9b28fe2..404d706 100644
 --- a/odb.c
 +++ b/odb.c
-@@ -76,6 +76,10 @@ int odb_mkstemp(struct object_database *odb,
+@@ -69,6 +69,9 @@ int odb_mkstemp(struct object_database *odb,
+ 		struct strbuf *temp_filename, const char *pattern)
+ {
+ 	int fd;
++#ifdef __MVS__
++	struct stat st;
++#endif
+ 	/*
+ 	 * we let the umask do its job, don't try to be more
+ 	 * restrictive except to remove write permission.
+@@ -76,6 +79,12 @@ int odb_mkstemp(struct object_database *odb,
  	int mode = 0444;
  	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
  	fd = git_mkstemp_mode(temp_filename->buf, mode);
 +#ifdef __MVS__
-+	if (fd >= 0)
++	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
 +#endif
  	if (0 <= fd)
  		return fd;
  
-@@ -83,7 +87,12 @@ int odb_mkstemp(struct object_database *odb,
+@@ -83,7 +92,14 @@ int odb_mkstemp(struct object_database *odb,
  	/* some mkstemp implementations erase temp_filename on failure */
  	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
  	safe_create_leading_directories(odb->repo, temp_filename->buf);
 -	return xmkstemp_mode(temp_filename->buf, mode);
 +	fd = xmkstemp_mode(temp_filename->buf, mode);
 +#ifdef __MVS__
-+	if (fd >= 0)
++	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
 +#endif
 +	return fd;
  }

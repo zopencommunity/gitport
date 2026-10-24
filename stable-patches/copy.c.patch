@@ -1,13 +1,15 @@
 diff --git a/copy.c b/copy.c
-index b668209..e0067b4 100644
+index b668209..846a9c1 100644
 --- a/copy.c
 +++ b/copy.c
-@@ -19,6 +19,9 @@ int copy_fd(int ifd, int ofd)
+@@ -19,6 +19,11 @@ int copy_fd(int ifd, int ofd)
  		if (write_in_full(ofd, buffer, len) < 0)
  			return COPY_WRITE_ERROR;
  	}
 +#ifdef __MVS__
-+  __copyfdccsid(ifd, ofd);
++    struct stat st;
++    if (fstat(ofd, &st) >= 0 && S_ISREG(st.st_mode))
++	    __copyfdccsid(ifd, ofd);
 +#endif
  	return 0;
  }

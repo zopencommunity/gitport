@@ -1,8 +1,17 @@
 diff --git a/read-cache.c b/read-cache.c
-index 0c07c3a..2c942a3 100644
+index 21ca58b..ab19487 100644
 --- a/read-cache.c
 +++ b/read-cache.c
-@@ -234,6 +234,9 @@ static int ce_compare_data(struct index_state *istate,
+@@ -13,6 +13,8 @@
+ #include "diff.h"
+ #include "diffcore.h"
+ #include "hex.h"
++#include "convert.h"
++#include "attr.h"
+ #include "tempfile.h"
+ #include "lockfile.h"
+ #include "cache-tree.h"
+@@ -238,8 +240,11 @@ static int ce_compare_data(struct index_state *istate,
  	int fd = git_open_cloexec(ce->name, O_RDONLY);
  
  	if (fd >= 0) {
@@ -10,5 +19,43 @@ index 0c07c3a..2c942a3 100644
 +    __disableautocvt(fd);
 +#endif
  		struct object_id oid;
- 		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
+-		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
++		if (index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0) >= 0)
  			match = !oideq(&oid, &ce->oid);
+ 		/* index_fd() closed the file descriptor already */
+ 	}
+@@ -440,6 +445,19 @@ int ie_match_stat(struct index_state *istate,
+ 			changed |= ce_modified_check_fs(istate, ce, st);
+ 	}
+ 
++#ifdef __MVS__
++	/*
++	 * On z/OS, size mismatches (DATA_CHANGED) are common due to EBCDIC/UTF-8
++	 * conversion. If only DATA_CHANGED is set, verify content by reading and
++	 * hashing the file (which performs encoding conversion via index_fd).
++	 */
++	if ((changed & DATA_CHANGED) && !(changed & (TYPE_CHANGED | MODE_CHANGED))) {
++		if (!ce_modified_check_fs(istate, ce, st)) {
++			changed &= ~DATA_CHANGED;
++		}
++	}
++#endif
++
+ 	return changed;
+ }
+ 
+@@ -3466,6 +3484,14 @@ void *read_blob_data_from_index(struct index_state *istate,
+ 	enum object_type type;
+ 	void *data;
+ 
++	/*
++	 * Handle NULL istate gracefully. While most callers should provide
++	 * a valid index state, some code paths (e.g., git apply without --index)
++	 * may pass NULL to indicate the index should not be consulted.
++	 */
++	if (!istate)
++		return NULL;
++
+ 	len = strlen(path);
+ 	pos = index_name_pos(istate, path, len);
+ 	if (pos < 0) {

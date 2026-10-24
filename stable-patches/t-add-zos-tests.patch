@@ -1,0 +1,447 @@
+diff --git a/t/run-zos-tests.sh b/t/run-zos-tests.sh
+new file mode 100755
+index 0000000..e0ec421
+--- /dev/null
++++ b/t/run-zos-tests.sh
+@@ -0,0 +1,10 @@
++#!/bin/sh
++# Wrapper to run z/OS tests with cleaner output
++
++for test in t0082-zos-encoding.sh t0084-rerere-zos.sh t9001-zos-encoding-pull.sh; do
++    if [ -x "$test" ]; then
++        echo "Running $test..."
++        ./"$test" "$@" 2>&1 | grep -v "FSUM7351"
++        echo ""
++    fi
++done
+diff --git a/t/t0082-zos-encoding.sh b/t/t0082-zos-encoding.sh
+new file mode 100755
+index 0000000..f910b0b
+--- /dev/null
++++ b/t/t0082-zos-encoding.sh
+@@ -0,0 +1,67 @@
++#!/usr/bin/env bash
++
++test_description='z/OS encoding failure handling and tagging'
++
++. ./test-lib.sh
++
++# This test only makes sense on z/OS
++if ! uname | grep -q "OS/390"; then
++	test_done
++fi
++
++test_expect_success 'setup repo with character not in IBM-1047' '
++	git config core.ignorefiletags true &&
++	git config core.iconvtranslit false &&
++	git config core.utf8ccsid 1208 &&
++	# C5 A7 is UTF-8 for Å§. It does not exist in IBM-1047.
++	printf "\xc5\xa7" >fail_blob.txt &&
++	git add fail_blob.txt &&
++	git commit -m "add utf8 blob" &&
++
++	# Set the attribute. On checkout, it will try to convert UTF-8 -> IBM-1047 and fail.
++	echo "fail_blob.txt working-tree-encoding=IBM-1047" >.gitattributes &&
++	git add .gitattributes &&
++	git commit -m "add attributes" &&
++	git config core.ignorefiletags false
++'
++
++test_expect_success 'checkout fails encoding but tags as 1208' '
++	rm fail_blob.txt &&
++	# Use checkout-index -f to ensure we really try to write the file
++	git checkout-index -f fail_blob.txt 2>err &&
++	grep "failed to encode" err &&
++	grep "line 1, col 1" err &&
++	grep "char: 0xc5" err &&
++
++	# Verify the tag using chtag -p
++	chtag -p fail_blob.txt >tag_info &&
++	grep "t UTF-8" tag_info &&
++	grep "T=on" tag_info &&
++
++	# Verify content is still raw UTF-8
++	printf "\xc5\xa7" >expected &&
++	test_cmp expected fail_blob.txt
++'
++
++test_expect_success 'git status shows modified after encoding failure' '
++	git status --porcelain -uno >status_out &&
++	echo " M fail_blob.txt" >expected_status &&
++	test_cmp expected_status status_out
++'
++
++test_expect_success 'checkout succeeds with transliteration' '
++	git config core.iconvtranslit true &&
++	rm fail_blob.txt &&
++	git checkout-index -f fail_blob.txt &&
++
++	# Verify the tag is now IBM-1047
++	chtag -p fail_blob.txt >tag_info &&
++	grep "t IBM-1047" tag_info &&
++
++	# Verify content is transliterated to "t" (0xa3 in IBM-1047)
++	printf "\xa3" >expected &&
++	chtag -tc 1047 expected &&
++	test_cmp expected fail_blob.txt
++'
++
++test_done
+diff --git a/t/t0084-rerere-zos.sh b/t/t0084-rerere-zos.sh
+new file mode 100755
+index 0000000..f625674
+--- /dev/null
++++ b/t/t0084-rerere-zos.sh
+@@ -0,0 +1,235 @@
++#!/bin/sh
++#
++# Copyright (c) 2024 IBM
++#
++
++test_description='rerere with z/OS file tagging'
++
++TEST_PASSES_SANITIZE_LEAK=true
++. ./test-lib.sh
++
++# Check if running on z/OS
++if ! uname | grep -q "OS/390"; then
++	skip_all='This test is z/OS specific'
++	test_done
++fi
++
++test_expect_success 'setup' '
++	git config rerere.enabled true &&
++	git config core.ignorefiletags false &&
++	
++	# Create .gitattributes with IBM-1047 encoding
++	echo "*.txt zos-working-tree-encoding=IBM-1047" >.gitattributes &&
++	git add .gitattributes &&
++	git commit -m "Add attributes"
++'
++
++test_expect_success 'rerere respects encoding on merge conflict resolution' '
++	# Create base file
++	cat >file.txt <<-\EOF &&
++	Line 1
++	Line 2
++	Line 3
++	EOF
++	git add file.txt &&
++	git commit -m "Base commit" &&
++	
++	# Create branch with modification
++	git checkout -b feature &&
++	cat >file.txt <<-\EOF &&
++	Line 1
++	Line 2 - feature change
++	Line 3
++	EOF
++	git add file.txt &&
++	git commit -m "Feature change" &&
++	
++	# Return to main and make conflicting change
++	git checkout main &&
++	cat >file.txt <<-\EOF &&
++	Line 1
++	Line 2 - main change
++	Line 3
++	EOF
++	git add file.txt &&
++	git commit -m "Main change" &&
++	
++	# Merge feature branch (will conflict)
++	test_must_fail git merge feature &&
++	
++	# Resolve conflict
++	cat >file.txt <<-\EOF &&
++	Line 1
++	Line 2 - resolved
++	Line 3
++	EOF
++	git add file.txt &&
++	git commit -m "Resolved merge" &&
++	
++	# Check that file has correct tag
++	chtag -p file.txt | grep -q "IBM-1047"
++'
++
++test_expect_success 'rerere auto-resolves with correct encoding tag' '
++	# Reset to before merge
++	git reset --hard HEAD~2 &&
++	
++	# Create same conflict on a new branch
++	git checkout -b feature2 feature~1 &&
++	cat >file.txt <<-\EOF &&
++	Line 1
++	Line 2 - feature2 change (same as feature)
++	Line 3
++	EOF
++	git add file.txt &&
++	git commit -m "Feature2 change" &&
++	
++	# Return to main and recreate same conflict
++	git checkout main~1 &&
++	cat >file.txt <<-\EOF &&
++	Line 1
++	Line 2 - main change (same conflict)
++	Line 3
++	EOF
++	git add file.txt &&
++	git commit -m "Main change again" &&
++	
++	# Merge - rerere should auto-resolve
++	git merge feature2 &&
++	
++	# Verify file has correct encoding tag
++	chtag -p file.txt | grep -q "IBM-1047" &&
++	
++	# Verify content was resolved
++	grep -q "Line 2 - resolved" file.txt
++'
++
++test_expect_success 'cherry-pick with rerere respects encoding' '
++	# Start fresh
++	git checkout --orphan test2 &&
++	git rm -rf . &&
++	
++	echo "*.txt zos-working-tree-encoding=IBM-1047" >.gitattributes &&
++	git add .gitattributes &&
++	git commit -m "Attributes" &&
++	
++	# Create base
++	cat >test.txt <<-\EOF &&
++	Line A
++	Line B
++	Line C
++	EOF
++	git add test.txt &&
++	git commit -m "Base" &&
++	
++	# Create commit to cherry-pick
++	git checkout -b pick-me &&
++	cat >test.txt <<-\EOF &&
++	Line A
++	Line B - modified
++	Line C
++	EOF
++	git add test.txt &&
++	git commit -m "Pick me" &&
++	PICK_COMMIT=$(git rev-parse HEAD) &&
++	
++	# Go back and make conflicting change
++	git checkout test2 &&
++	cat >test.txt <<-\EOF &&
++	Line A
++	Line B - different
++	Line C
++	EOF
++	git add test.txt &&
++	git commit -m "Conflict" &&
++	
++	# Cherry-pick (will conflict)
++	test_must_fail git cherry-pick $PICK_COMMIT &&
++	
++	# Resolve
++	cat >test.txt <<-\EOF &&
++	Line A
++	Line B - cherry resolved
++	Line C
++	EOF
++	git add test.txt &&
++	git cherry-pick --continue &&
++	
++	# Check tag
++	chtag -p test.txt | grep -q "IBM-1047" &&
++	
++	# Reset and recreate conflict
++	git reset --hard HEAD~2 &&
++	cat >test.txt <<-\EOF &&
++	Line A
++	Line B - different
++	Line C
++	EOF
++	git add test.txt &&
++	git commit -m "Conflict again" &&
++	
++	# Cherry-pick again - rerere should auto-resolve
++	git cherry-pick $PICK_COMMIT &&
++	
++	# Verify tag after rerere auto-resolve
++	chtag -p test.txt | grep -q "IBM-1047"
++'
++
++test_expect_success 'rerere with UTF-8 files' '
++	git checkout --orphan test3 &&
++	git rm -rf . &&
++	
++	echo "*.txt zos-working-tree-encoding=UTF-8" >.gitattributes &&
++	git add .gitattributes &&
++	git commit -m "UTF-8 attributes" &&
++	
++	# Create conflict and resolve
++	cat >utf8.txt <<-\EOF &&
++	UTF8 Line 1
++	UTF8 Line 2
++	UTF8 Line 3
++	EOF
++	git add utf8.txt &&
++	git commit -m "UTF8 base" &&
++	
++	git checkout -b utf8-feature &&
++	cat >utf8.txt <<-\EOF &&
++	UTF8 Line 1
++	UTF8 Line 2 - feature
++	UTF8 Line 3
++	EOF
++	git add utf8.txt &&
++	git commit -m "UTF8 feature" &&
++	
++	git checkout test3 &&
++	cat >utf8.txt <<-\EOF &&
++	UTF8 Line 1
++	UTF8 Line 2 - main
++	UTF8 Line 3
++	EOF
++	git add utf8.txt &&
++	git commit -m "UTF8 main" &&
++	
++	test_must_fail git merge utf8-feature &&
++	
++	cat >utf8.txt <<-\EOF &&
++	UTF8 Line 1
++	UTF8 Line 2 - resolved
++	UTF8 Line 3
++	EOF
++	git add utf8.txt &&
++	git commit -m "UTF8 resolved" &&
++	
++	# Check UTF-8 tag (could be 1208 or 819 depending on GIT_UTF8_CCSID)
++	chtag -p utf8.txt | grep -qE "UTF-8|ISO8859-1"
++'
++
++test_expect_success 'rerere with binary files (should not tag)' '
++	git checkout --orphan test4 &&
++	git rm -rf . &&
++	
++	echo "*.bin binary" >.gitattributes &&
++	git add .gitattributes &&
++	git commit -m "Binary attributes" &&
++	
++	# No binary merge test as it is complex, just verify binary tag handling
+diff --git a/t/t9001-zos-encoding-pull.sh b/t/t9001-zos-encoding-pull.sh
+new file mode 100755
+index 0000000..a02f9d1
+--- /dev/null
++++ b/t/t9001-zos-encoding-pull.sh
+@@ -0,0 +1,111 @@
++#!/bin/sh
++#
++# Copyright (c) 2024 IBM
++#
++
++test_description='Test z/OS encoding handling for git pull vs git clone'
++
++. ./test-lib.sh
++
++# Check if running on z/OS
++if ! uname | grep -q "OS/390"; then
++	skip_all='skipping z/OS-specific encoding tests'
++	test_done
++fi
++
++# Test that git pull properly re-tags files when encoding changes in .gitattributes
++test_expect_success 'setup repository with ISO8859-1 encoding' '
++	cat >.gitattributes <<-\EOF &&
++	* zos-working-tree-encoding=iso8859-1
++	.gitattributes zos-working-tree-encoding=iso8859-1
++	EOF
++	echo "Test content line 1" >testfile.txt &&
++	chtag -tc ISO8859-1 testfile.txt &&
++	git add .gitattributes testfile.txt &&
++	git commit -m "Initial commit with ISO8859-1"
++'
++
++test_expect_success 'clone repository and verify ISO8859-1 tagging' '
++	git clone . ../test-clone &&
++	(
++		cd ../test-clone &&
++		ls -T testfile.txt | grep "t ISO8859-1" &&
++		test -r testfile.txt
++	)
++'
++
++test_expect_success 'change encoding to IBM-1047 in .gitattributes' '
++	cat >.gitattributes <<-\EOF &&
++	* zos-working-tree-encoding=ibm-1047
++	.gitattributes zos-working-tree-encoding=iso8859-1
++	EOF
++	echo "Modified content with IBM-1047" >testfile.txt &&
++	chtag -tc IBM-1047 testfile.txt &&
++	git add .gitattributes testfile.txt &&
++	git commit -m "Change to IBM-1047 encoding"
++'
++
++test_expect_success 'git pull updates file tags to IBM-1047' '
++	(
++		cd ../test-clone &&
++		git pull &&
++		ls -T testfile.txt | grep "t IBM-1047" &&
++		test -r testfile.txt
++	)
++'
++
++test_expect_success 'fresh clone also gets IBM-1047 tagging' '
++	git clone . ../test-clone2 &&
++	(
++		cd ../test-clone2 &&
++		ls -T testfile.txt | grep "t IBM-1047" &&
++		test -r testfile.txt
++	)
++'
++
++test_expect_success 'both pull and clone produce same file tags' '
++	TAG1=$(cd ../test-clone && ls -T testfile.txt | awk "{print \$1}") &&
++	TAG2=$(cd ../test-clone2 && ls -T testfile.txt | awk "{print \$1}") &&
++	test "$TAG1" = "$TAG2" &&
++	test "$TAG1" = "t"
++'
++
++test_expect_success 'test git diff with working-tree-encoding' '
++	echo "New line" >>testfile.txt &&
++	git diff testfile.txt >diff.out &&
++	grep "+New line" diff.out &&
++	! grep -E "[\x80-\xff]" diff.out
++'
++
++test_expect_success 'test git stash with working-tree-encoding' '
++	echo "Stash test line" >>testfile.txt &&
++	TAG_BEFORE=$(ls -T testfile.txt | awk "{print \$1}") &&
++	git stash push testfile.txt &&
++	TAG_AFTER=$(ls -T testfile.txt | awk "{print \$1}") &&
++	test "$TAG_BEFORE" = "$TAG_AFTER" &&
++	test "$TAG_AFTER" = "t" &&
++	git stash pop &&
++	grep "Stash test line" testfile.txt
++'
++
++test_expect_success 'test git apply --3way with working-tree-encoding' '
++	echo "Original content" >applytest.txt &&
++	chtag -tc IBM-1047 applytest.txt &&
++	git add applytest.txt &&
++	git commit -m "Add applytest" &&
++	echo "Modified content" >applytest.txt &&
++	git add applytest.txt &&
++	git commit -m "Modify applytest" &&
++	git format-patch -1 HEAD -o /tmp &&
++	git reset --hard HEAD~1 &&
++	echo "Different content" >applytest.txt &&
++	git add applytest.txt &&
++	git commit -m "Different modification" &&
++	git apply --3way /tmp/0001-Modify-applytest.patch &&
++	TAG=$(ls -T applytest.txt | awk "{print \$1}") &&
++	test "$TAG" = "t" &&
++	grep "<<<<<<< ours" applytest.txt &&
++	grep "Modified content" applytest.txt
++'
++
++test_done

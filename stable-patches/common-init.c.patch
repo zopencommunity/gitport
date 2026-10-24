@@ -1,0 +1,42 @@
+diff --git a/common-init.c b/common-init.c
+index 5cc73f0..e85dde3 100644
+--- a/common-init.c
++++ b/common-init.c
+@@ -9,6 +9,10 @@
+ #include "setup.h"
+ #include "strbuf.h"
+ #include "trace2.h"
++#ifdef __MVS__
++#include "parse.h"
++#include "environment.h"
++#endif
+ 
+ /*
+  * Many parts of Git have subprograms communicate via pipe, expect the
+@@ -37,6 +41,26 @@ void init_git(const char **argv)
+ 
+ 	trace2_initialize_clock();
+ 
++#ifdef __MVS__
++	const char* git_utf8_ccsid_str = getenv("GIT_UTF8_CCSID");
++
++	if (git_utf8_ccsid_str != NULL) {
++		char* endptr;
++		errno = 0;
++		long conv = strtol(git_utf8_ccsid_str, &endptr, 10);
++
++		if (conv > 0 && endptr != git_utf8_ccsid_str) {
++			utf8_ccsid = (int)conv;
++		}
++	}
++
++	/* Initialize iconv_translit from environment variable */
++	const char* git_iconv_translit_str = getenv("GIT_ICONV_TRANSLIT");
++	if (git_iconv_translit_str != NULL) {
++		iconv_translit = git_env_bool("GIT_ICONV_TRANSLIT", 0);
++	}
++#endif
++
+ 	/*
+ 	 * Always open file descriptors 0/1/2 to avoid clobbering files
+ 	 * in die().  It also avoids messing up when the pipes are dup'ed

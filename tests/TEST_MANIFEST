@@ -1,0 +1,52 @@
+# Git Test Manifest
+# Tests that should run in CI/automated builds
+# One test per line, no path prefix
+#
+# Exclude:
+# - Helper scripts (fix_all_test_scripts.sh, diagnose_*.sh)
+# - Manual interactive tests (QUICK_TEST_*.sh, quick_test_*.sh)
+# - Network-dependent tests (test_complete_workflow.sh, test_ssh_known_hosts_*.sh, test_nov2025_*.sh)
+# - Diagnostic/debug scripts
+
+# Core functionality tests
+test_3way_merge_encodings.sh
+test_all_file_writing_commands.sh
+test_all_tagging_commands.sh
+test_apply_3way_ebcdic.sh
+test_apply_3way_tagging.sh
+test_apply_3way_tagging_issue.sh
+test_apply_tagging.sh
+test_attribute_precedence_hierarchy.sh
+test_binary_all_commands.sh
+test_binary_wildcard_precedence.sh
+test_default_no_attributes.sh
+test_encoding_pull_clone.sh
+test_eol_encoding_combinations.sh
+test_file_tagging_survey.sh
+test_format_patch_proper_tagging.sh
+test_low_level_commands.sh
+test_merge_file_diff_output.sh
+# test_minus_text_diff_issue.sh - manual diagnostic with hard-coded path, not for CI
+test_minus_text_encoding.sh
+test_minus_text_with_encoding.sh
+test_not_symbol_037_1047.sh
+test_parallel_checkout_encoding.sh
+test_pull_encoding_tag_fix.sh
+test_rebase_tagging.sh
+test_rerere_cherry_pick.sh
+test_rerere_cherry_pick_issue.sh
+test_rerere_encoding.sh
+test_sequential_data_minus_text.sh
+# test_stash_push_file_issue.sh - manual test, use test_stash_push_with_file.sh instead
+test_stash_push_with_file.sh
+test_unmappable_unicode.sh
+
+# Issue 5 - Filter conversion tests
+test_filter_double_conversion_v2.sh
+test_filter_conversion_comprehensive.sh
+test_issue3_text_encoding_roundtrip.sh
+
+# Encoding failure and error handling tests
+test_checkout_encoding_failure.sh
+test_filter_fd_encoding.sh
+test_lockfile_autoconv.sh

@@ -1,13 +1,14 @@
 diff --git a/environment.h b/environment.h
-index 6f18286..8503f5f 100644
+index 6f18286..c4da5d9 100644
 --- a/environment.h
 +++ b/environment.h
-@@ -171,6 +171,10 @@ extern char *apply_default_whitespace;
+@@ -171,6 +171,11 @@ extern char *apply_default_whitespace;
  extern char *apply_default_ignorewhitespace;
  extern unsigned long pack_size_limit_cfg;
  
 +#ifdef __MVS__
 +extern int utf8_ccsid;
++extern int iconv_translit;
 +#endif
 +
  extern int protect_hfs;

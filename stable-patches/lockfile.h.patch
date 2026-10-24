@@ -1,0 +1,16 @@
+diff --git a/lockfile.h b/lockfile.h
+index e7233f2..efa9a0a 100644
+--- a/lockfile.h
++++ b/lockfile.h
+@@ -165,6 +165,11 @@ extern int lockfile_pid_enabled;
+  */
+ #define LOCK_REPORT_ON_ERROR 4
+ 
++/*
++ * Tag the lockfile as text (UTF-8) on z/OS. If not set, the default is binary.
++ */
++#define LOCK_TAG_TEXT 8
++
+ /*
+  * Usually symbolic links in the destination path are resolved. This
+  * means that (1) the lockfile is created by adding ".lock" to the

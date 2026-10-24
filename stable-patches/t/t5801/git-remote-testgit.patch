@@ -1,0 +1,10 @@
+diff --git a/t/t5801/git-remote-testgit b/t/t5801/git-remote-testgit
+index f8b4764..5eb2c0a 100755
+--- a/t/t5801/git-remote-testgit
++++ b/t/t5801/git-remote-testgit
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/usr/bin/env bash
+ # Copyright (c) 2012 Felipe Contreras
+ 
+ # The first argument can be a url when the fetch/push command was a url

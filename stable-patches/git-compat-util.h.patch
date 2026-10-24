@@ -1,13 +1,17 @@
 diff --git a/git-compat-util.h b/git-compat-util.h
-index bebcf9f..eca558e 100644
+index ae1bdc9..3b749ca 100644
 --- a/git-compat-util.h
 +++ b/git-compat-util.h
-@@ -371,6 +371,10 @@ static inline int git_has_dir_sep(const char *path)
+@@ -363,6 +363,14 @@ static inline int git_has_dir_sep(const char *path)
  #endif
  #endif
  
 +#ifdef __MVS__
 +#include <zos.h>
++/* Identify EBCDIC NL (0x15) which is distinct from ASCII LF (0x0A) */
++#define is_ebcdic_newline(ch) ((unsigned char)(ch) == 0x15)
++#else
++#define is_ebcdic_newline(ch) 0
 +#endif
 +
  #if defined(__HP_cc) && (__HP_cc >= 61000)
