@@ -1,47 +1,26 @@
 diff --git a/object-file.c b/object-file.c
-index e7e4c33..b08f7cd 100644
+index a4cbf8b..ead17f9 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -831,6 +831,10 @@ static int create_tmpfile(struct repository *repo,
- 	strbuf_add(tmp, filename, dirlen);
- 	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
- 	fd = git_mkstemp_mode(tmp->buf, 0444);
-+#ifdef __MVS__
-+	if (fd >= 0)
-+		__setfdbinary(fd);
-+#endif
- 	if (fd < 0 && dirlen && errno == ENOENT) {
- 		/*
- 		 * Make sure the directory exists; note that the contents
-@@ -848,6 +852,10 @@ static int create_tmpfile(struct repository *repo,
- 		/* Try again */
- 		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
- 		fd = git_mkstemp_mode(tmp->buf, 0444);
-+#ifdef __MVS__
-+		if (fd >= 0)
-+			__setfdbinary(fd);
-+#endif
- 	}
- 	return fd;
- }
-@@ -1649,12 +1657,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
+@@ -991,12 +991,22 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;
-+	struct conv_attrs ca;
++#ifdef __MVS__
 +	int autocvtToASCII;
++#endif
  
  	switch (st->st_mode & S_IFMT) {
  	case S_IFREG:
 +#ifdef __MVS__
-+    validate_codeset(istate, path, &autocvtToASCII);
++		validate_codeset(istate, path, &autocvtToASCII);
 +#endif
  		fd = open(path, O_RDONLY);
  		if (fd < 0)
  			return error_errno("open(\"%s\")", path);
 +#ifdef __MVS__
-+    if (!autocvtToASCII)
-+      __disableautocvt(fd);
++		if (!autocvtToASCII)
++			__disableautocvt(fd);
 +#endif
  		if (index_fd(istate, oid, fd, st, OBJ_BLOB, path, flags) < 0)
  			return error(_("%s: failed to insert into database"),
