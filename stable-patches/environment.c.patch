@@ -1,5 +1,5 @@
 diff --git a/environment.c b/environment.c
-index 76ee65e..a427557 100644
+index 76ee65e..6c5f346 100644
 --- a/environment.c
 +++ b/environment.c
 @@ -27,6 +27,7 @@
@@ -10,24 +10,32 @@ index 76ee65e..a427557 100644
  #include "fmt-merge-msg.h"
  #include "commit.h"
  #include "strvec.h"
-@@ -46,6 +47,10 @@ int assume_unchanged;
+@@ -46,6 +47,11 @@ int assume_unchanged;
  char *git_commit_encoding;
  char *git_log_output_encoding;
  int fsync_object_files = -1;
 +#ifdef __MVS__
 +int ignore_file_tags = 0;
++int iconv_translit = 0;
 +int utf8_ccsid = 1208;
 +#endif
  int use_fsync = -1;
  enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
  enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-@@ -427,6 +432,18 @@ int git_default_core_config(const char *var, const char *value,
+@@ -427,6 +433,25 @@ int git_default_core_config(const char *var, const char *value,
  		return 0;
  	}
  
 +#ifdef __MVS__
 +	if (!strcmp(var, "core.ignorefiletags")) {
 +		ignore_file_tags = git_config_bool(var, value);
++		return 0;
++	}
++
++	if (!strcmp(var, "core.iconvtranslit")) {
++		/* Environment variable takes precedence over config */
++		if (!getenv("GIT_ICONV_TRANSLIT"))
++			iconv_translit = git_config_bool(var, value);
 +		return 0;
 +	}
 +

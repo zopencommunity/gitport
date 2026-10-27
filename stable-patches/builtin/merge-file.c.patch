@@ -1,0 +1,51 @@
+--- a/builtin/merge-file.c
++++ b/builtin/merge-file.c
+@@ -14,6 +14,7 @@
+ #include "xdiff/xdiff.h"
+ #include "xdiff-interface.h"
+ #include "parse-options.h"
++#include "convert.h"
+ 
+ static const char *const merge_file_usage[] = {
+ 	N_("git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>"),
+@@ -170,13 +171,34 @@ int cmd_merge_file(int argc,
+ 			char *fpath = prefix_filename(prefix, argv[0]);
+ 			FILE *f = to_stdout ? stdout : fopen(fpath, "wb");
+ 
+ 			if (!f)
+ 				ret = error_errno("Could not open %s for writing",
+ 						  filename);
+-			else if (result.size &&
+-				 fwrite(result.ptr, result.size, 1, f) != 1)
+-				ret = error_errno("Could not write to %s", filename);
+-			else if (fclose(f))
+-				ret = error_errno("Could not close %s", filename);
++			else {
++#ifdef __MVS__
++				if (f != stdout) {
++					int fd = fileno(f);
++					if (fd >= 0) {
++						__setfdbinary(fd);
++						__disableautocvt(fd);
++					}
++				}
++#endif
++				if (result.size &&
++				    fwrite(result.ptr, result.size, 1, f) != 1)
++					ret = error_errno("Could not write to %s", filename);
++
++#ifdef __MVS__
++				if (f != stdout) {
++					int fd = fileno(f);
++					if (fd >= 0) {
++						struct index_state *istate = the_repository->index;
++						tag_file_as_working_tree_encoding(istate, argv[0], fd, 1);
++					}
++				}
++#endif
++				if (fclose(f))
++					ret = error_errno("Could not close %s", filename);
++			}
+ 			free(fpath);
+ 		}
+ 		free(result.ptr);

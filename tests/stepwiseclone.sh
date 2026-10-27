@@ -4,7 +4,7 @@ mydir=$(cd $(dirname $0) && echo $PWD)
 #
 # The following is a bit hokey... might not always work
 #
-gitdir="${mydir}/../git-*"
+gitdir="${mydir}/../git"
 if ! [ -d ${gitdir} ] ; then
   echo "Unable to find git dev driver" >&2
   exit 99

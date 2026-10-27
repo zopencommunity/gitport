@@ -1,0 +1,28 @@
+diff --git a/unpack-trees.c b/unpack-trees.c
+index b42020f..05c72c3 100644
+--- a/unpack-trees.c
++++ b/unpack-trees.c
+@@ -481,9 +481,23 @@ static int check_updates(struct unpack_trees_options *o,
+ 
+ 	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
+ 
++#ifdef __MVS__
++	/*
++	 * Disable parallel checkout on z/OS.
++	 * The encoding and tagging logic requires .gitattributes to be
++	 * processed before other files, which is incompatible with
++	 * parallel checkout's design.
++	 */
++	if (pc_workers > 1) {
++		warning(_("parallel checkout is not supported on z/OS, using single worker"));
++		pc_workers = 1;
++	}
++#endif
++
+ 	enable_delayed_checkout(&state);
+ 	if (pc_workers > 1)
+ 		init_parallel_checkout();
++
+ 	for (i = 0; i < index->cache_nr; i++) {
+ 		struct cache_entry *ce = index->cache[i];
+ 

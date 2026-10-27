@@ -1,0 +1,36 @@
+diff --git a/rerere.c b/rerere.c
+index 8232542585..e8ca73dd49 100644
+--- a/rerere.c
++++ b/rerere.c
+@@ -21,6 +21,7 @@
+ #include "object-file.h"
+ #include "odb.h"
+ #include "strmap.h"
++#include "convert.h"
+ 
+ #define RESOLVED 0
+ #define PUNTED 1
+@@ -692,8 +693,23 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+ 	f = fopen(path, "w");
+ 	if (!f)
+ 		return error_errno(_("could not open '%s'"), path);
++
++#ifdef __MVS__
++	int fd = fileno(f);
++	if (fd >= 0) {
++		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
++#endif
++
+ 	if (fwrite(result.ptr, result.size, 1, f) != 1)
+ 		error_errno(_("could not write '%s'"), path);
++
++#ifdef __MVS__
++	if (fd >= 0)
++		tag_file_as_working_tree_encoding(istate, path, fd, 1);
++#endif
++
+ 	if (fclose(f))
+ 		return error_errno(_("writing '%s' failed"), path);
+ 

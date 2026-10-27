@@ -1,23 +1,26 @@
-diff --git i/date.c w/date.c
-index 17a9507..be63eb6 100644
---- i/date.c
-+++ w/date.c
-@@ -6,12 +6,18 @@
+diff --git a/date.c b/date.c
+index 014065b..182bcad 100644
+--- a/date.c
++++ b/date.c
+@@ -6,11 +6,21 @@
  
  #define DISABLE_SIGN_COMPARE_WARNINGS
  
++#ifdef __MVS__
 +//FIXME: localtime_r has an LE bug where it does not respect the TZ environment variable
 +#define localtime_r localtime_r_replaced
++#endif
  #include "git-compat-util.h"
  #include "date.h"
  #include "gettext.h"
  #include "pager.h"
  #include "strbuf.h"
++#ifdef __MVS__
 +#undef localtime_r
- 
 +//FIXME: localtime_r has an LE bug where it does not respect the TZ environment variable
 +// Use the EBCDIC symbol instead
-+struct tm *localtime_r(const time_t *timep, struct tm *result) asm("@@LCLT@R"); 
++struct tm *localtime_r(const time_t *timep, struct tm *result) asm("@@LCLT@R");
++#endif
+ 
  /*
   * This is like mktime, but without normalization of tm_wday and tm_yday.
-  */

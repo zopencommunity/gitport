@@ -1,8 +1,18 @@
 diff --git a/lockfile.c b/lockfile.c
-index 100f603..6af591e 100644
+index 100f603..09753db 100644
 --- a/lockfile.c
 +++ b/lockfile.c
-@@ -180,8 +180,12 @@ static int lock_file(struct repository *r, struct lock_file *lk,
+@@ -171,6 +171,9 @@ static int lock_file(struct repository *r, struct lock_file *lk,
+ 	struct strbuf base_path = STRBUF_INIT;
+ 	struct strbuf lock_path = STRBUF_INIT;
+ 	struct strbuf pid_path = STRBUF_INIT;
++#ifdef __MVS__
++	struct stat st;
++#endif
+ 
+ 	strbuf_addstr(&base_path, path);
+ 	if (!(flags & LOCK_NO_DEREF))
+@@ -180,8 +183,12 @@ static int lock_file(struct repository *r, struct lock_file *lk,
  	get_pid_path(&pid_path, base_path.buf);
  
  	lk->tempfile = repo_create_tempfile_mode(r, lock_path.buf, mode);

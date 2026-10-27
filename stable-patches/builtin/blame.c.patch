@@ -1,0 +1,29 @@
+diff --git a/builtin/blame.c b/builtin/blame.c
+index ffbd3ce..8847c9e 100644
+--- a/builtin/blame.c
++++ b/builtin/blame.c
+@@ -28,6 +28,7 @@
+ #include "progress.h"
+ #include "object-name.h"
+ #include "odb.h"
++#include "convert.h"
+ #include "pager.h"
+ #include "blame.h"
+ #include "refs.h"
+@@ -386,11 +387,11 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
+ 			emit_porcelain_per_line_details(ent);
+ 		}
+ 		putchar('\t');
+-		do {
+-			ch = *cp++;
+-			putchar(ch);
+-		} while (ch != '\n' &&
+-			 cp < sb->final_buf + sb->final_buf_size);
++	do {
++		ch = *cp++;
++		putchar(ch);
++	} while (ch != '\n' &&
++		 cp < sb->final_buf + sb->final_buf_size);
+ 	}
+ 
+ 	if (sb->final_buf_size && cp[-1] != '\n')

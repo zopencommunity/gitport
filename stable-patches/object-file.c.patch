@@ -1,8 +1,25 @@
 diff --git a/object-file.c b/object-file.c
-index a4cbf8b..ead17f9 100644
+index a4cbf8b..432fe55 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -991,12 +991,22 @@ int index_path(struct index_state *istate, struct object_id *oid,
+@@ -578,8 +578,14 @@ static int index_mem(struct index_state *istate,
+ 	 * Convert blobs to git internal format
+ 	 */
+ 	if ((type == OBJ_BLOB) && path) {
+-		if (convert_to_git(istate, path, buf, size, &nbuf,
+-				   get_conv_flags(flags))) {
++		int conversion_result = convert_to_git(istate, path, buf, size,
++							   &nbuf, get_conv_flags(flags));
++		if (conversion_result < 0) {
++			/* Conversion failed - return error immediately */
++			strbuf_release(&nbuf);
++			return -1;
++		}
++		if (conversion_result > 0) {
+ 			buf = nbuf.buf;
+ 			size = nbuf.len;
+ 		}
+@@ -991,12 +997,22 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;

@@ -1,13 +1,14 @@
 diff --git a/environment.h b/environment.h
-index e7ec5b0..479aeb0 100644
+index e7ec5b0..9977341 100644
 --- a/environment.h
 +++ b/environment.h
-@@ -235,6 +235,10 @@ extern int minimum_abbrev, default_abbrev;
+@@ -235,6 +235,11 @@ extern int minimum_abbrev, default_abbrev;
  extern int assume_unchanged;
  extern unsigned long pack_size_limit_cfg;
  
 +#ifdef __MVS__
 +extern int utf8_ccsid;
++extern int iconv_translit;
 +#endif
 +
  extern int grafts_keep_true_parents;

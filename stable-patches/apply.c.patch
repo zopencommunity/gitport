@@ -1,0 +1,241 @@
+diff --git a/apply.c b/apply.c
+index 5e54453..5737e39 100644
+--- a/apply.c
++++ b/apply.c
+@@ -33,6 +33,9 @@
+ #include "read-cache.h"
+ #include "repository.h"
+ #include "rerere.h"
++#include "attr.h"
++#include "convert.h"
++#include "utf8.h"
+ #include "apply.h"
+ #include "entry.h"
+ #include "setup.h"
+@@ -2398,7 +2401,7 @@ static void show_stats(struct apply_state *state, struct patch *patch)
+ 		add, pluses, del, minuses);
+ }
+ 
+-static int read_old_data(struct stat *st, struct patch *patch,
++static int read_old_data(struct index_state *istate, struct stat *st, struct patch *patch,
+ 			 const char *path, struct strbuf *buf)
+ {
+ 	int conv_flags = patch->crlf_in_old ?
+@@ -2411,15 +2414,8 @@ static int read_old_data(struct stat *st, struct patch *patch,
+ 	case S_IFREG:
+ 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
+ 			return error(_("unable to open or read %s"), path);
+-		/*
+-		 * "git apply" without "--index/--cached" should never look
+-		 * at the index; the target file may not have been added to
+-		 * the index yet, and we may not even be in any Git repository.
+-		 * Pass NULL to convert_to_git() to stress this; the function
+-		 * should never look at the index when explicit crlf option
+-		 * is given.
+-		 */
+-		convert_to_git(NULL, path, buf->buf, buf->len, buf, conv_flags);
++		if (convert_to_git(istate, path, buf->buf, buf->len, buf, conv_flags) < 0)
++			warning(_("failed to convert '%s' to git format, using original data"), path);
+ 		return 0;
+ 	default:
+ 		return -1;
+@@ -3522,6 +3518,92 @@ static int verify_index_match(struct apply_state *state,
+ 			      const struct cache_entry *ce,
+ 			      struct stat *st)
+ {
++#ifdef __MVS__
++	/*
++	 * On z/OS, for EBCDIC-encoded files during 3-way merge, skip stat matching.
++	 * The working tree file is in EBCDIC with different size than the UTF-8 index.
++	 * The 3-way merge will read, convert, and properly compare the content.
++	 */
++	if (state->threeway) {
++		struct conv_attrs ca;
++		convert_attrs(state->repo->index, &ca, ce->name);
++
++		if (ca.working_tree_encoding) {
++			int needs_conversion = 1;
++			/* Check if conversion is actually needed */
++			 if (same_encoding(ca.working_tree_encoding, "UTF-8")) {
++			    needs_conversion = 0;
++			 }
++			 /* Special case: ISO8859-1 when utf8_ccsid == 819 */
++			 else if (utf8_ccsid == 819 &&
++			         same_encoding(ca.working_tree_encoding, "ISO8859-1")) {
++			    needs_conversion = 0;
++			 }
++			 if (needs_conversion) {
++			    struct strbuf wt_buf = STRBUF_INIT;
++		            struct strbuf converted_buf = STRBUF_INIT;
++		            struct strbuf index_buf = STRBUF_INIT;
++		            int result = 0;
++#ifdef __MVS__
++			    /* On z/OS, disable auto-conversion to read raw EBCDIC bytes */
++			    int fd = open(ce->name, O_RDONLY);
++			    if (fd < 0) {
++				 error(_("unable to open %s"), ce->name);
++				 result = -1;
++				 goto cleanup;
++			    }
++			    __disableautocvt(fd);
++			    if (strbuf_read(&wt_buf, fd, st->st_size) < 0) {
++				 error(_("unable to read %s"), ce->name);
++				 close(fd);
++				 result = -1;
++				 goto cleanup;
++			    }
++			    close(fd);
++#else
++                          /* Read working tree file */
++		             if (strbuf_read_file(&wt_buf, ce->name, st->st_size) < 0) {
++		                error(_("unable to read %s"), ce->name);
++		                result = -1;
++	                        goto cleanup;
++	                     }
++#endif
++			     /* Convert working tree content */
++		                int conversion = convert_to_git(state->repo->index, ce->name,
++						wt_buf.buf, wt_buf.len, &converted_buf,
++						0);
++				if (conversion < 0) {
++				    result = -1;
++			            goto cleanup;
++				}
++				if (conversion > 0) {
++				/* Conversion happened, swap buffers */
++		                strbuf_swap(&wt_buf, &converted_buf);
++		                strbuf_release(&converted_buf);
++		             }
++
++			     /* Read index content */
++			     if (read_blob_object(&index_buf, &ce->oid, ce->ce_mode) < 0) {
++			         result = -1;
++			         goto cleanup;
++			     }
++
++			     /* Compare content */
++			     if (wt_buf.len != index_buf.len ||
++			         memcmp(wt_buf.buf, index_buf.buf, wt_buf.len) != 0) {
++			         result = -1;
++			     }
++
++cleanup:
++	                     strbuf_release(&wt_buf);
++	                     strbuf_release(&converted_buf);
++	                     strbuf_release(&index_buf);
++	                     return result;
++
++		}
++          }
++	}
++#endif
+ 	if (S_ISGITLINK(ce->ce_mode)) {
+ 		if (!S_ISDIR(st->st_mode))
+ 			return -1;
+@@ -3553,7 +3635,21 @@ static int load_patch_target(struct apply_state *state,
+ 		} else if (has_symlink_leading_path(name, strlen(name))) {
+ 			return error(_("reading from '%s' beyond a symbolic link"), name);
+ 		} else {
+-			if (read_old_data(st, patch, name, buf))
++			/*
++			 * Upstream design: Pass NULL to stress that "git apply" without
++			 * --index/--cached should not look at the index.
++			 *
++			 * z/OS exception: We need istate to look up working-tree-encoding
++			 * attributes from .gitattributes for proper encoding conversion.
++			 *
++			 * Note: read_blob_data_from_index() now handles NULL safely, so
++			 * passing NULL on non-z/OS platforms will not crash even with autocrlf.
++			 */
++#ifdef __MVS__
++			if (read_old_data(state->repo ? state->repo->index : NULL, st, patch, name, buf))
++#else
++			if (read_old_data(NULL, st, patch, name, buf))
++#endif
+ 				return error(_("failed to read %s"), name);
+ 		}
+ 	}
+@@ -4497,7 +4593,7 @@ static int add_index_file(struct apply_state *state,
+  *   0 if everything went well
+  *   1 if a recoverable error happened
+  */
+-static int try_create_file(struct apply_state *state, const char *path,
++static int try_create_file(struct apply_state *state, const char *path, const char *conf_path,
+ 			   unsigned int mode, const char *buf,
+ 			   unsigned long size)
+ {
+@@ -4521,12 +4617,23 @@ static int try_create_file(struct apply_state *state, const char *path,
+ 	if (fd < 0)
+ 		return 1;
+ 
+-	if (convert_to_working_tree(state->repo->index, path, buf, size, &nbuf, NULL)) {
++#ifdef __MVS__
++	__setfdbinary(fd);
++	__disableautocvt(fd);
++#endif
++
++	int ret = convert_to_working_tree(state->repo->index, conf_path, buf, size, &nbuf, NULL);
++	if (ret > 0) {
+ 		size = nbuf.len;
+ 		buf  = nbuf.buf;
+ 	}
+ 
+ 	res = write_in_full(fd, buf, size) < 0;
++
++#ifdef __MVS__
++	tag_file_as_working_tree_encoding(state->repo->index, conf_path, fd, ret);
++#endif
++
+ 	if (res)
+ 		error_errno(_("failed to write to '%s'"), path);
+ 	strbuf_release(&nbuf);
+@@ -4585,7 +4692,7 @@ static int create_one_file(struct apply_state *state,
+ 	if (path_is_beyond_symlink(state, path))
+ 		return error(_("affected file '%s' is beyond a symbolic link"), path);
+ 
+-	res = try_create_file(state, path, mode, buf, size);
++	res = try_create_file(state, path, path, mode, buf, size);
+ 	if (res < 0)
+ 		return -1;
+ 	if (!res)
+@@ -4594,7 +4701,7 @@ static int create_one_file(struct apply_state *state,
+ 	if (errno == ENOENT) {
+ 		if (safe_create_leading_directories_no_share(path))
+ 			return 0;
+-		res = try_create_file(state, path, mode, buf, size);
++		res = try_create_file(state, path, path, mode, buf, size);
+ 		if (res < 0)
+ 			return -1;
+ 		if (!res)
+@@ -4615,7 +4722,7 @@ static int create_one_file(struct apply_state *state,
+ 
+ 		for (;;) {
+ 			newpath = mkpathdup("%s~%u", path, nr);
+-			res = try_create_file(state, newpath, mode, buf, size);
++			res = try_create_file(state, newpath, path, mode, buf, size);
+ 			if (res < 0)
+ 				goto out;
+ 			if (!res) {
+@@ -5099,6 +5206,22 @@ int apply_all_patches(struct apply_state *state,
+ 	int errs = 0;
+ 	int read_stdin = 1;
+ 
++#ifdef __MVS__
++	/*
++	 * On z/OS, we must ensure the attribute system is configured for
++	 * checkout operations so that EBCDIC/UTF-8 conversion rules and
++	 * file tagging work correctly when applying patches.
++	 *
++	 * Only set CHECKOUT direction if we're in a repository with a working tree.
++	 * Outside a repository (or in a bare repository), git apply should still work
++	 * on plain files without crashing. In those cases, attributes are read from
++	 * the filesystem directly and we don't need to set a global direction.
++	 */
++	if (state->repo && !is_bare_repository()) {
++		git_attr_set_direction(GIT_ATTR_CHECKOUT);
++	}
++#endif
++
+ 	for (i = 0; i < argc; i++) {
+ 		const char *arg = argv[i];
+ 		char *to_free = NULL;

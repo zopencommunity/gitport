@@ -1,0 +1,66 @@
+diff --git a/parallel-checkout.c b/parallel-checkout.c
+index 0bf4bd6..ffb2c1b 100644
+--- a/parallel-checkout.c
++++ b/parallel-checkout.c
+@@ -3,6 +3,7 @@
+ 
+ #include "git-compat-util.h"
+ #include "config.h"
++#include "convert.h"
+ #include "entry.h"
+ #include "gettext.h"
+ #include "hash.h"
+@@ -89,6 +90,18 @@ static int is_eligible_for_parallel_checkout(const struct cache_entry *ce,
+ 	enum conv_attrs_classification c;
+ 	size_t packed_item_size;
+ 
++#ifdef __MVS__
++	/*
++	 * On z/OS, disable parallel checkout for files with working-tree-encoding
++	 * to avoid race conditions with attribute cache and file tagging.
++	 * The attribute cache is not thread-safe, and parallel workers may get
++	 * stale .gitattributes data, causing incorrect file tags.
++	 * See: test_parallel_checkout_encoding.sh for test case.
++	 */
++	if (ca->working_tree_encoding)
++		return 0;
++#endif
++
+ 	/*
+ 	 * Symlinks cannot be checked out in parallel as, in case of path
+ 	 * collision, they could racily replace leading directories of other
+@@ -305,7 +318,7 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
+ 	ret = convert_to_working_tree_ca(&pc_item->ca, pc_item->ce->name,
+ 					 blob, size, &buf, NULL);
+ 
+-	if (ret) {
++	if (ret > 0) {
+ 		size_t newsize;
+ 		free(blob);
+ 		blob = strbuf_detach(&buf, &newsize);
+@@ -317,6 +330,11 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
+ 	if (wrote < 0)
+ 		return error("unable to write file '%s'", path);
+ 
++#ifdef __MVS__
++	/* Use pre-computed attributes from pc_item to avoid race condition */
++	tag_file_with_conv_attrs(&pc_item->ca, the_repository->index, pc_item->ce->name, fd, ret);
++#endif
++
+ 	return 0;
+ }
+ 
+@@ -360,6 +378,13 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
+ 
+ 	fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, mode);
+ 
++#ifdef __MVS__
++	if (fd >= 0) {
++		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
++#endif
++
+ 	if (fd < 0) {
+ 		if (errno == EEXIST || errno == EISDIR) {
+ 			/*

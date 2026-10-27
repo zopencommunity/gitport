@@ -7,3 +7,16 @@ v2.39.2
 git-compat-util
 git-manpages
 git-manpages.tar.xz
+
+# Build artifacts and logs
+log.STABLE/
+log.STABLE_*/
+*.log
+*.o
+.zoslib_hooks/*.o
+.zoslib_hooks/*.c
+
+# Temporary files
+*.swp
+*.swo
+*~

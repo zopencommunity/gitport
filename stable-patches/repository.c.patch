@@ -1,16 +1,19 @@
 diff --git a/repository.c b/repository.c
-index b857e1c..d190c74 100644
+index b857e1c..1b22d68 100644
 --- a/repository.c
 +++ b/repository.c
-@@ -475,5 +475,10 @@ int repo_hold_locked_index(struct repository *repo,
+@@ -475,5 +475,13 @@ int repo_hold_locked_index(struct repository *repo,
  {
  	if (!repo->index_file)
  		BUG("the repo hasn't been setup");
 -	return repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
 +	int fd = repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
 +#ifdef __MVS__
-+	if (fd >= 0)
++	struct stat st;
++	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +		__setfdbinary(fd);
++		__disableautocvt(fd);
++	}
 +#endif
 +	return fd;
  }
