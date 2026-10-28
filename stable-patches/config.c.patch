@@ -1,22 +1,23 @@
 diff --git a/config.c b/config.c
-index 156f2a2..3cbca3a 100644
+index d9019e7..e3988e5 100644
 --- a/config.c
 +++ b/config.c
-@@ -2986,7 +2986,7 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
+@@ -3064,7 +3064,8 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
  	 * The lock serves a purpose in addition to locking: the new
  	 * contents of .git/config will be written into it.
  	 */
--	fd = hold_lock_file_for_update(&lock, config_filename, 0);
-+	fd = hold_lock_file_for_update(&lock, config_filename, LOCK_TAG_TEXT);
+-	fd = repo_hold_lock_file_for_update_timeout(r, &lock, config_filename, 0,
++	fd = repo_hold_lock_file_for_update_timeout(r, &lock, config_filename,
++					    LOCK_TAG_TEXT,
+ 						    config_lock_timeout_ms(r));
  	if (fd < 0) {
  		error_errno(_("could not lock config file %s"), config_filename);
- 		ret = CONFIG_NO_LOCK;
-@@ -3331,7 +3331,7 @@ static int repo_config_copy_or_rename_section_in_file(
- 	if (!config_filename)
+@@ -3411,7 +3412,7 @@ static int repo_config_copy_or_rename_section_in_file(
  		config_filename = filename_buf = repo_git_path(r, "config");
  
--	out_fd = hold_lock_file_for_update(&lock, config_filename, 0);
-+	out_fd = hold_lock_file_for_update(&lock, config_filename, LOCK_TAG_TEXT);
+ 	out_fd = repo_hold_lock_file_for_update_timeout(r, &lock,
+-							config_filename, 0,
++							config_filename, LOCK_TAG_TEXT,
+ 							config_lock_timeout_ms(r));
  	if (out_fd < 0) {
  		ret = error(_("could not lock config file %s"), config_filename);
- 		goto out;

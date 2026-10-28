@@ -1,34 +1,13 @@
 diff --git a/repository.c b/repository.c
-index 9e5537f..841d000 100644
+index b857e1c..1b22d68 100644
 --- a/repository.c
 +++ b/repository.c
-@@ -352,7 +352,7 @@ int repo_submodule_init(struct repository *subrepo,
- 		if (!sub) {
- 			ret = -1;
- 			goto out;
--		}
-+	}
- 
- 		strbuf_reset(&gitdir);
- 		submodule_name_to_gitdir(&gitdir, superproject, sub->name);
-@@ -360,7 +360,7 @@ int repo_submodule_init(struct repository *subrepo,
- 		if (repo_init(subrepo, gitdir.buf, NULL)) {
- 			ret = -1;
- 			goto out;
--		}
-+	}
- 	}
- 
- 	subrepo->submodule_prefix = xstrfmt("%s%s/",
-@@ -479,7 +479,16 @@ int repo_hold_locked_index(struct repository *repo,
- 			   struct lock_file *lf,
- 			   int flags)
+@@ -475,5 +475,13 @@ int repo_hold_locked_index(struct repository *repo,
  {
-+	int fd;
  	if (!repo->index_file)
  		BUG("the repo hasn't been setup");
--	return hold_lock_file_for_update(lf, repo->index_file, flags);
-+	fd = hold_lock_file_for_update(lf, repo->index_file, flags);
+-	return repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
++	int fd = repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
 +#ifdef __MVS__
 +	struct stat st;
 +	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {

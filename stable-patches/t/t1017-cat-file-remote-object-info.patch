@@ -1,0 +1,13 @@
+diff --git a/t/t1017-cat-file-remote-object-info.sh b/t/t1017-cat-file-remote-object-info.sh
+index e2919aa..3d58ce2 100755
+--- a/t/t1017-cat-file-remote-object-info.sh
++++ b/t/t1017-cat-file-remote-object-info.sh
+@@ -69,7 +69,7 @@ daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
+ 
+ test_expect_success 'create repo to be served by git-daemon' '
+ 	git init "$daemon_parent" &&
+-	echo_without_newline "$hello_content" > $daemon_parent/hello &&
++	echo_without_newline "$hello_content" > "$daemon_parent/hello" &&
+ 	git -C "$daemon_parent" update-index --add hello &&
+ 	git -C "$daemon_parent" config transfer.advertiseobjectinfo true &&
+ 	git clone "$GIT_DAEMON_URL/parent" -n "$daemon_parent/daemon_client_empty"
