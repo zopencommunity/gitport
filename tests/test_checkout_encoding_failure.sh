@@ -84,6 +84,14 @@ fail_test() {
     log_error "$1"
 }
 
+# The harness/CI environment may set _TAG_REDIR_ERR such that redirected
+# files get tagged with a codepage (e.g. IBM-1047) that does not match the
+# ASCII bytes git writes to stderr. Tag-honoring grep would then convert the
+# bytes and fail to match. Strip the tag so checks operate on raw bytes.
+detag() {
+    chtag -r "$1" 2>/dev/null || true
+}
+
 # Common repo setup
 setup_repo() {
     cd "$TEST_DIR"
@@ -120,11 +128,13 @@ test_unconvertible_character() {
     # Try to checkout - should FAIL with error message
     if git checkout HEAD -- test.txt 2>error.log; then
         fail_test "Checkout should have failed but succeeded"
+        detag error.log
         cat error.log
         return 1
     fi
 
     # Check that error message is present
+    detag error.log
     if grep -q "failed to convert\|failed to encode" error.log; then
         pass_test "Checkout failed with expected error message"
     else
@@ -163,6 +173,7 @@ test_convertible_character() {
     # Try to checkout - should SUCCEED
     if ! git checkout HEAD -- test.txt 2>error.log; then
         fail_test "Checkout should have succeeded but failed"
+        detag error.log
         cat error.log
         return 1
     fi
@@ -200,11 +211,13 @@ test_full_checkout_abort() {
     # Try full checkout - should fail
     if git checkout HEAD -- . 2>error.log; then
         fail_test "Full checkout should have failed"
+        detag error.log
         cat error.log
         return 1
     fi
 
     # Check error message
+    detag error.log
     if grep -q "failed to convert\|failed to encode" error.log; then
         pass_test "Full checkout failed with expected error"
     else
@@ -248,11 +261,13 @@ test_clone_encoding_failure() {
     # Try to clone - checkout phase should fail
     if git clone -q source dest 2>clone_error.log; then
         fail_test "Clone should have failed during checkout"
+        detag clone_error.log
         cat clone_error.log
         return 1
     fi
 
     # Check for error message
+    detag clone_error.log
     if grep -q "failed to convert\|failed to encode\|unable to checkout" clone_error.log; then
         pass_test "Clone failed with encoding conversion error"
     else
@@ -296,6 +311,7 @@ test_branch_switch_encoding_failure() {
     # file is written to the working tree.
     git checkout bad-branch 2>switch_error.log || true
 
+    detag switch_error.log
     if grep -q "failed to convert\|failed to encode" switch_error.log; then
         pass_test "Branch switch reported encoding error"
     else
@@ -360,6 +376,7 @@ test_no_corruption_on_failure() {
 
     # Try to checkout bad branch - the conversion for file.txt fails
     git checkout bad-branch 2>error.log || true
+    detag error.log
 
     # Verify no wrongly-encoded content was written: the file must either
     # be absent (checkout of that path aborted) or match the index.
@@ -412,10 +429,12 @@ test_async_conversion_failure() {
     # Try checkout - should fail
     if git checkout HEAD -- . 2>async_error.log; then
         fail_test "Async checkout should have failed"
+        detag async_error.log
         cat async_error.log
         return 1
     fi
 
+    detag async_error.log
     if grep -q "failed to convert\|failed to encode" async_error.log; then
         pass_test "Async checkout failed with encoding error"
     else
