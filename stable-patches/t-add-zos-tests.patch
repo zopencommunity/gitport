@@ -16,10 +16,10 @@ index 0000000..e0ec421
 +done
 diff --git a/t/t0082-zos-encoding.sh b/t/t0082-zos-encoding.sh
 new file mode 100755
-index 0000000..f910b0b
+index 0000000..7a538c9
 --- /dev/null
 +++ b/t/t0082-zos-encoding.sh
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,64 @@
 +#!/usr/bin/env bash
 +
 +test_description='z/OS encoding failure handling and tagging'
@@ -47,38 +47,35 @@ index 0000000..f910b0b
 +	git config core.ignorefiletags false
 +'
 +
-+test_expect_success 'checkout fails encoding but tags as 1208' '
++test_expect_success 'checkout aborts on encoding failure' '
 +	rm fail_blob.txt &&
-+	# Use checkout-index -f to ensure we really try to write the file
-+	git checkout-index -f fail_blob.txt 2>err &&
-+	grep "failed to encode" err &&
-+	grep "line 1, col 1" err &&
-+	grep "char: 0xc5" err &&
++	# Use checkout-index -f to ensure we really try to write the file.
++	# The conversion fails (char not in IBM-1047, transliteration off),
++	# so checkout must abort with an error and not write the file.
++	test_must_fail git checkout-index -f fail_blob.txt 2>err &&
++	test_grep "failed to encode" err &&
++	test_grep "line 1, col 1" err &&
++	test_grep "char: 0xc5" err &&
++	test_grep "failed to convert" err &&
 +
-+	# Verify the tag using chtag -p
-+	chtag -p fail_blob.txt >tag_info &&
-+	grep "t UTF-8" tag_info &&
-+	grep "T=on" tag_info &&
-+
-+	# Verify content is still raw UTF-8
-+	printf "\xc5\xa7" >expected &&
-+	test_cmp expected fail_blob.txt
++	# Verify the file was not created (checkout aborted)
++	test_path_is_missing fail_blob.txt
 +'
 +
-+test_expect_success 'git status shows modified after encoding failure' '
++test_expect_success 'git status shows deleted after encoding failure' '
 +	git status --porcelain -uno >status_out &&
-+	echo " M fail_blob.txt" >expected_status &&
++	echo " D fail_blob.txt" >expected_status &&
 +	test_cmp expected_status status_out
 +'
 +
 +test_expect_success 'checkout succeeds with transliteration' '
 +	git config core.iconvtranslit true &&
-+	rm fail_blob.txt &&
++	rm -f fail_blob.txt &&
 +	git checkout-index -f fail_blob.txt &&
 +
 +	# Verify the tag is now IBM-1047
 +	chtag -p fail_blob.txt >tag_info &&
-+	grep "t IBM-1047" tag_info &&
++	test_grep "t IBM-1047" tag_info &&
 +
 +	# Verify content is transliterated to "t" (0xa3 in IBM-1047)
 +	printf "\xa3" >expected &&
@@ -89,7 +86,7 @@ index 0000000..f910b0b
 +test_done
 diff --git a/t/t0084-rerere-zos.sh b/t/t0084-rerere-zos.sh
 new file mode 100755
-index 0000000..f625674
+index 0000000..9cae6e9
 --- /dev/null
 +++ b/t/t0084-rerere-zos.sh
 @@ -0,0 +1,235 @@
@@ -196,7 +193,7 @@ index 0000000..f625674
 +	chtag -p file.txt | grep -q "IBM-1047" &&
 +	
 +	# Verify content was resolved
-+	grep -q "Line 2 - resolved" file.txt
++	test_grep "Line 2 - resolved" file.txt
 +'
 +
 +test_expect_success 'cherry-pick with rerere respects encoding' '
@@ -330,7 +327,7 @@ index 0000000..f625674
 +	# No binary merge test as it is complex, just verify binary tag handling
 diff --git a/t/t9001-zos-encoding-pull.sh b/t/t9001-zos-encoding-pull.sh
 new file mode 100755
-index 0000000..a02f9d1
+index 0000000..30e85da
 --- /dev/null
 +++ b/t/t9001-zos-encoding-pull.sh
 @@ -0,0 +1,111 @@
@@ -409,8 +406,8 @@ index 0000000..a02f9d1
 +test_expect_success 'test git diff with working-tree-encoding' '
 +	echo "New line" >>testfile.txt &&
 +	git diff testfile.txt >diff.out &&
-+	grep "+New line" diff.out &&
-+	! grep -E "[\x80-\xff]" diff.out
++	test_grep "+New line" diff.out &&
++	test_grep ! -E "[\x80-\xff]" diff.out
 +'
 +
 +test_expect_success 'test git stash with working-tree-encoding' '
@@ -421,7 +418,7 @@ index 0000000..a02f9d1
 +	test "$TAG_BEFORE" = "$TAG_AFTER" &&
 +	test "$TAG_AFTER" = "t" &&
 +	git stash pop &&
-+	grep "Stash test line" testfile.txt
++	test_grep "Stash test line" testfile.txt
 +'
 +
 +test_expect_success 'test git apply --3way with working-tree-encoding' '
@@ -440,8 +437,8 @@ index 0000000..a02f9d1
 +	git apply --3way /tmp/0001-Modify-applytest.patch &&
 +	TAG=$(ls -T applytest.txt | awk "{print \$1}") &&
 +	test "$TAG" = "t" &&
-+	grep "<<<<<<< ours" applytest.txt &&
-+	grep "Modified content" applytest.txt
++	test_grep "<<<<<<< ours" applytest.txt &&
++	test_grep "Modified content" applytest.txt
 +'
 +
 +test_done
