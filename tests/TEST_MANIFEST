@@ -50,3 +50,6 @@ test_issue3_text_encoding_roundtrip.sh
 test_checkout_encoding_failure.sh
 test_filter_fd_encoding.sh
 test_lockfile_autoconv.sh
+
+# Custom character mapping via clean/smudge filters
+test_custom_char_mapping_filter.sh
