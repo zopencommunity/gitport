@@ -1,39 +1,34 @@
 diff --git a/lockfile.c b/lockfile.c
-index 7add2f1..bb804ae 100644
+index 100f603..a3755a2 100644
 --- a/lockfile.c
 +++ b/lockfile.c
-@@ -2,6 +2,8 @@
-  * Copyright (c) 2005, Junio C Hamano
-  */
- 
-+#define USE_THE_REPOSITORY_VARIABLE
-+
- #include "git-compat-util.h"
- #include "abspath.h"
- #include "gettext.h"
-@@ -9,6 +11,7 @@
- #include "parse.h"
+@@ -12,6 +12,10 @@
+ #include "repository.h"
  #include "strbuf.h"
  #include "wrapper.h"
++#ifdef __MVS__
 +#include "environment.h"
++#include <sys/stat.h>
++#endif
  
  /*
   * path = absolute or relative path name
-@@ -168,6 +171,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -171,6 +175,9 @@ static int lock_file(struct repository *r, struct lock_file *lk,
  	struct strbuf base_path = STRBUF_INIT;
  	struct strbuf lock_path = STRBUF_INIT;
  	struct strbuf pid_path = STRBUF_INIT;
++#ifdef __MVS__
 +	struct stat st;
++#endif
  
  	strbuf_addstr(&base_path, path);
  	if (!(flags & LOCK_NO_DEREF))
-@@ -177,8 +181,22 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
+@@ -180,8 +187,20 @@ static int lock_file(struct repository *r, struct lock_file *lk,
  	get_pid_path(&pid_path, base_path.buf);
  
- 	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
+ 	lk->tempfile = repo_create_tempfile_mode(r, lock_path.buf, mode);
 +#ifdef __MVS__
-+	if (lk->tempfile && fstat(lk->tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
-+	{
++	if (lk->tempfile && fstat(lk->tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +		__chgfdccsid(lk->tempfile->fd, utf8_ccsid);
 +		__disableautocvt(lk->tempfile->fd);
 +	}
@@ -41,8 +36,7 @@ index 7add2f1..bb804ae 100644
  	if (lk->tempfile)
  		lk->pid_tempfile = create_lock_pid_file(pid_path.buf, mode);
 +#ifdef __MVS__
-+	if (lk->pid_tempfile && fstat(lk->pid_tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode))
-+	{
++	if (lk->pid_tempfile && fstat(lk->pid_tempfile->fd, &st) >= 0 && S_ISREG(st.st_mode)) {
 +		__chgfdccsid(lk->pid_tempfile->fd, utf8_ccsid);
 +		__disableautocvt(lk->pid_tempfile->fd);
 +	}

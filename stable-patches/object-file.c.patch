@@ -1,78 +1,43 @@
 diff --git a/object-file.c b/object-file.c
-index e3d92bb..37ab2ea 100644
+index a4cbf8b..432fe55 100644
 --- a/object-file.c
 +++ b/object-file.c
-@@ -614,11 +614,19 @@ static int create_tmpfile(struct repository *repo,
- 			  struct strbuf *tmp, const char *filename)
- {
- 	int fd, dirlen = directory_size(filename);
--
-+#ifdef __MVS__
-+	struct stat st;
-+#endif
- 	strbuf_reset(tmp);
- 	strbuf_add(tmp, filename, dirlen);
- 	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
- 	fd = git_mkstemp_mode(tmp->buf, 0444);
-+#ifdef __MVS__
-+	if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
-+		__setfdbinary(fd);
-+		__disableautocvt(fd);
-+	}
-+#endif
- 	if (fd < 0 && dirlen && errno == ENOENT) {
- 		/*
- 		 * Make sure the directory exists; note that the contents
-@@ -636,6 +644,12 @@ static int create_tmpfile(struct repository *repo,
- 		/* Try again */
- 		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
- 		fd = git_mkstemp_mode(tmp->buf, 0444);
-+#ifdef __MVS__
-+		if (fd >= 0 && fstat(fd, &st) >= 0 && S_ISREG(st.st_mode)) {
-+			__setfdbinary(fd);
-+			__disableautocvt(fd);
-+		}
-+#endif
- 	}
- 	return fd;
- }
-@@ -998,8 +1012,16 @@ static int index_mem(struct index_state *istate,
+@@ -578,8 +578,14 @@ static int index_mem(struct index_state *istate,
  	 * Convert blobs to git internal format
  	 */
  	if ((type == OBJ_BLOB) && path) {
 -		if (convert_to_git(istate, path, buf, size, &nbuf,
 -				   get_conv_flags(flags))) {
-+		int conversion_result = convert_to_git(istate, path, buf, size, &nbuf,
-+				   get_conv_flags(flags));
-+		if (conversion_result < 0)
-+		{
++		int conversion_result = convert_to_git(istate, path, buf, size,
++							   &nbuf, get_conv_flags(flags));
++		if (conversion_result < 0) {
 +			/* Conversion failed - return error immediately */
 +			strbuf_release(&nbuf);
 +			return -1;
 +		}
-+		if(conversion_result > 0)
-+		{
++		if (conversion_result > 0) {
  			buf = nbuf.buf;
  			size = nbuf.len;
  		}
-@@ -1407,12 +1429,21 @@ int index_path(struct index_state *istate, struct object_id *oid,
+@@ -991,12 +997,22 @@ int index_path(struct index_state *istate, struct object_id *oid,
  	int fd;
  	struct strbuf sb = STRBUF_INIT;
  	int rc = 0;
-+	struct conv_attrs ca;
++#ifdef __MVS__
 +	int autocvtToASCII;
++#endif
  
  	switch (st->st_mode & S_IFMT) {
  	case S_IFREG:
 +#ifdef __MVS__
-+	validate_codeset(istate, path, &autocvtToASCII);
++		validate_codeset(istate, path, &autocvtToASCII);
 +#endif
  		fd = open(path, O_RDONLY);
  		if (fd < 0)
  			return error_errno("open(\"%s\")", path);
 +#ifdef __MVS__
-+    if (!autocvtToASCII)
-+      __disableautocvt(fd);
++		if (!autocvtToASCII)
++			__disableautocvt(fd);
 +#endif
  		if (index_fd(istate, oid, fd, st, OBJ_BLOB, path, flags) < 0)
  			return error(_("%s: failed to insert into database"),
