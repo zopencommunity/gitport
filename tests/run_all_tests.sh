@@ -3,6 +3,27 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$SCRIPT_DIR/TEST_MANIFEST"
+
+# Prefer the freshly built git from the source tree over any installed git.
+# During a zopen build the check phase runs before install, so PATH may
+# resolve to a previously installed git - the tests must exercise the
+# binary that was just built. The build tree also carries the git-*
+# helpers (GIT_EXEC_PATH) and the templates.
+SRC_GIT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)/git"
+if [ -x "$SRC_GIT_ROOT/git" ]; then
+    PATH="$SRC_GIT_ROOT:$PATH"
+    export PATH
+    GIT_EXEC_PATH="$SRC_GIT_ROOT"
+    export GIT_EXEC_PATH
+    if [ -d "$SRC_GIT_ROOT/templates/blt" ]; then
+        GIT_TEMPLATE_DIR="$SRC_GIT_ROOT/templates/blt"
+        export GIT_TEMPLATE_DIR
+    fi
+    echo "# Testing source-tree git: $SRC_GIT_ROOT/git ($($SRC_GIT_ROOT/git --version 2>/dev/null))" >&2
+else
+    echo "# No source-tree git found at $SRC_GIT_ROOT/git; testing git from PATH: $(command -v git)" >&2
+fi
+
 TEST_NUM=0
 PASSED=0
 FAILED=0
