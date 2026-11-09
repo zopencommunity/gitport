@@ -39,6 +39,7 @@ test_rerere_encoding.sh
 test_sequential_data_minus_text.sh
 # test_stash_push_file_issue.sh - manual test, use test_stash_push_with_file.sh instead
 test_stash_push_with_file.sh
+test_stash_push_file_corruption.sh
 test_unmappable_unicode.sh
 
 # Issue 5 - Filter conversion tests
