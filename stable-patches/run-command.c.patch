@@ -1,0 +1,40 @@
+diff --git a/run-command.c b/run-command.c
+index ce84db8..db690a4 100644
+--- a/run-command.c
++++ b/run-command.c
+@@ -277,7 +277,26 @@ int sane_execvp(const char *file, char * const argv[])
+ char *git_shell_path(void)
+ {
+ #ifndef GIT_WINDOWS_NATIVE
++#ifdef __MVS__
++	/*
++	 * z/OS: SHELL_PATH is baked in at build time and may point at a
++	 * bash that only exists on the build machine (the release CI bakes
++	 * $(BASH_HOME)/bin/bash, an absolute path of its own workspace).
++	 * Resolve bash from PATH at runtime so shell aliases and hooks
++	 * work regardless of where zopen is installed; fall back to the
++	 * build-time path only if it actually exists, then to /bin/sh.
++	 */
++	{
++		char *path = locate_in_PATH("bash");
++		if (path)
++			return path;
++		if (!access(SHELL_PATH, X_OK))
++			return xstrdup(SHELL_PATH);
++		return xstrdup("/bin/sh");
++	}
++#else
+ 	return xstrdup(SHELL_PATH);
++#endif
+ #else
+ 	char *p = locate_in_PATH("sh");
+ 	convert_slashes(p);
+@@ -679,7 +698,7 @@ int start_command(struct child_process *cmd)
+ 	int need_in, need_out, need_err;
+ 	int fdin[2], fdout[2], fderr[2];
+ 	int failed_errno;
+-	const char *str;
++	const char *str = NULL;
+ 
+ 	/*
+ 	 * In case of errors we must keep the promise to close FDs
