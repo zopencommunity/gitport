@@ -15,6 +15,7 @@ test_all_tagging_commands.sh
 test_apply_3way_ebcdic.sh
 test_apply_3way_tagging.sh
 test_apply_3way_tagging_issue.sh
+test_apply_ebcdic_plain.sh
 test_apply_tagging.sh
 test_attribute_precedence_hierarchy.sh
 test_binary_all_commands.sh

@@ -1,5 +1,5 @@
 diff --git a/apply.c b/apply.c
-index f00b7ba..f9dbfc3 100644
+index f00b7ba..159e08f 100644
 --- a/apply.c
 +++ b/apply.c
 @@ -33,6 +33,9 @@
@@ -21,8 +21,33 @@ index f00b7ba..f9dbfc3 100644
  			 const char *path, struct strbuf *buf)
  {
  	int conv_flags = patch->crlf_in_old ?
-@@ -2423,15 +2426,8 @@ static int read_old_data(struct stat *st, struct patch *patch,
+@@ -2421,17 +2424,34 @@ static int read_old_data(struct stat *st, struct patch *patch,
+ 			return error(_("unable to read symlink %s"), path);
+ 		return 0;
  	case S_IFREG:
++#ifdef __MVS__
++		{
++			/*
++			 * z/OS: read the raw bytes. The file may be tagged with a
++			 * non-ASCII codepage (e.g. IBM-1047); a tag-honoring read
++			 * would auto-convert it to the process codepage, and the
++			 * convert_to_git() below would then convert it a second time,
++		 * corrupting the preimage. Disable auto-conversion and let
++			 * convert_to_git() do the single, attribute-driven conversion
++			 * (same as the git add path).
++			 */
++			int fd = open(path, O_RDONLY);
++
++			if (fd < 0)
++				return error(_("unable to open or read %s"), path);
++			__disableautocvt(fd);
++			if (strbuf_read(buf, fd, st->st_size) < 0) {
++				close(fd);
++				return error(_("unable to open or read %s"), path);
++			}
++			close(fd);
++		}
++#else
  		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
  			return error(_("unable to open or read %s"), path);
 -		/*
@@ -34,12 +59,13 @@ index f00b7ba..f9dbfc3 100644
 -		 * is given.
 -		 */
 -		convert_to_git(NULL, path, buf->buf, buf->len, buf, conv_flags);
++#endif
 +		if (convert_to_git(istate, path, buf->buf, buf->len, buf, conv_flags) < 0)
 +			warning(_("failed to convert '%s' to git format, using original data"), path);
  		return 0;
  	default:
  		return -1;
-@@ -3534,6 +3530,92 @@ static int verify_index_match(struct apply_state *state,
+@@ -3534,6 +3554,92 @@ static int verify_index_match(struct apply_state *state,
  			      const struct cache_entry *ce,
  			      struct stat *st)
  {
@@ -132,7 +158,7 @@ index f00b7ba..f9dbfc3 100644
  	if (S_ISGITLINK(ce->ce_mode)) {
  		if (!S_ISDIR(st->st_mode))
  			return -1;
-@@ -3565,7 +3647,21 @@ static int load_patch_target(struct apply_state *state,
+@@ -3565,7 +3671,21 @@ static int load_patch_target(struct apply_state *state,
  		} else if (has_symlink_leading_path(name, strlen(name))) {
  			return error(_("reading from '%s' beyond a symbolic link"), name);
  		} else {
@@ -155,7 +181,7 @@ index f00b7ba..f9dbfc3 100644
  				return error(_("failed to read %s"), name);
  		}
  	}
-@@ -4510,7 +4606,7 @@ static int add_index_file(struct apply_state *state,
+@@ -4510,7 +4630,7 @@ static int add_index_file(struct apply_state *state,
   *   0 if everything went well
   *   1 if a recoverable error happened
   */
@@ -164,7 +190,7 @@ index f00b7ba..f9dbfc3 100644
  			   unsigned int mode, const char *buf,
  			   unsigned long size)
  {
-@@ -4534,12 +4630,23 @@ static int try_create_file(struct apply_state *state, const char *path,
+@@ -4534,12 +4654,23 @@ static int try_create_file(struct apply_state *state, const char *path,
  	if (fd < 0)
  		return 1;
  
@@ -189,7 +215,7 @@ index f00b7ba..f9dbfc3 100644
  	if (res)
  		error_errno(_("failed to write to '%s'"), path);
  	strbuf_release(&nbuf);
-@@ -4598,7 +4705,7 @@ static int create_one_file(struct apply_state *state,
+@@ -4598,7 +4729,7 @@ static int create_one_file(struct apply_state *state,
  	if (path_is_beyond_symlink(state, path))
  		return error(_("affected file '%s' is beyond a symbolic link"), path);
  
@@ -198,7 +224,7 @@ index f00b7ba..f9dbfc3 100644
  	if (res < 0)
  		return -1;
  	if (!res)
-@@ -4607,7 +4714,7 @@ static int create_one_file(struct apply_state *state,
+@@ -4607,7 +4738,7 @@ static int create_one_file(struct apply_state *state,
  	if (errno == ENOENT) {
  		if (safe_create_leading_directories_no_share(path))
  			return 0;
@@ -207,7 +233,7 @@ index f00b7ba..f9dbfc3 100644
  		if (res < 0)
  			return -1;
  		if (!res)
-@@ -4628,7 +4735,7 @@ static int create_one_file(struct apply_state *state,
+@@ -4628,7 +4759,7 @@ static int create_one_file(struct apply_state *state,
  
  		for (;;) {
  			newpath = mkpathdup("%s~%u", path, nr);
@@ -216,7 +242,7 @@ index f00b7ba..f9dbfc3 100644
  			if (res < 0)
  				goto out;
  			if (!res) {
-@@ -5113,6 +5220,22 @@ int apply_all_patches(struct apply_state *state,
+@@ -5113,6 +5244,22 @@ int apply_all_patches(struct apply_state *state,
  	int errs = 0;
  	int read_stdin = 1;
  
