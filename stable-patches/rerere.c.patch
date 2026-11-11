@@ -1,8 +1,16 @@
 diff --git a/rerere.c b/rerere.c
-index 8232542585..e8ca73dd49 100644
+index 1c3745d..43a1204 100644
 --- a/rerere.c
 +++ b/rerere.c
-@@ -21,6 +21,7 @@
+@@ -12,6 +12,7 @@
+ #include "string-list.h"
+ #include "read-cache-ll.h"
+ #include "rerere.h"
++#include "convert.h"
+ #include "xdiff-interface.h"
+ #include "dir.h"
+ #include "resolve-undo.h"
+@@ -21,6 +22,7 @@
  #include "object-file.h"
  #include "odb.h"
  #include "strmap.h"
@@ -10,7 +18,96 @@ index 8232542585..e8ca73dd49 100644
  
  #define RESOLVED 0
  #define PUNTED 1
-@@ -692,8 +693,23 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+@@ -595,6 +597,65 @@ int rerere_remaining(struct repository *r, struct string_list *merge_rr)
+  * if that recorded conflict resolves cleanly what we
+  * got in the "cur".
+  */
++#ifdef __MVS__
++/*
++ * z/OS: rerere's cache files (preimage/thisimage/postimage) hold the
++ * canonical (git-internal UTF-8) form. handle_file() produces
++ * canonical preimage/thisimage via text-mode I/O, but a plain
++ * copy_file() of the working-tree file would store raw EBCDIC bytes
++ * in postimage. Read the working-tree file raw (auto-conversion
++ * disabled) and run it through convert_to_git() so postimage matches
++ * the other cache files.
++ */
++static int copy_workfile_to_cache_as_git(struct index_state *istate,
++					 const char *dst, const char *path)
++{
++	struct strbuf wt = STRBUF_INIT, conv = STRBUF_INIT;
++	const char *out;
++	size_t outlen;
++	int fd, ret = 0, cr;
++
++	fd = open(path, O_RDONLY);
++	if (fd < 0)
++		return -1;
++	__disableautocvt(fd);
++	if (strbuf_read(&wt, fd, 0) < 0)
++		ret = -1;
++	close(fd);
++	if (ret)
++		goto out;
++
++	cr = convert_to_git(istate, path, wt.buf, wt.len, &conv, 0);
++	if (cr < 0) {
++		ret = -1;
++		goto out;
++	}
++	if (cr > 0) {
++		out = conv.buf;
++		outlen = conv.len;
++	} else {
++		/* no conversion needed: the raw bytes are already canonical */
++		out = wt.buf;
++		outlen = wt.len;
++	}
++
++	fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0666);
++	if (fd < 0) {
++		ret = -1;
++		goto out;
++	}
++	__disableautocvt(fd);
++	if (write_in_full(fd, out, outlen) < 0)
++		ret = -1;
++	close(fd);
++
++out:
++	strbuf_release(&wt);
++	strbuf_release(&conv);
++	return ret;
++}
++#endif
++
+ static int try_merge(struct index_state *istate,
+ 		     const struct rerere_id *id, const char *path,
+ 		     mmfile_t *cur, mmbuffer_t *result)
+@@ -663,11 +724,46 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+ 			      rerere_path(&buf, id, "postimage"));
+ 
+ 	/* Update "path" with the resolution */
++#ifdef __MVS__
++	{
++		/*
++		 * z/OS: 'result' is in canonical (git-internal) form, like
++		 * the cache files it was merged from. Convert it to the
++		 * working-tree encoding before writing it out, so the file
++		 * content matches the tag applied below.
++		 */
++		struct strbuf wtresult = STRBUF_INIT;
++		int cr = convert_to_working_tree(istate, path,
++						result.ptr, result.size,
++						&wtresult, NULL);
++		if (cr > 0) {
++			free(result.ptr);
++			result.ptr = strbuf_detach(&wtresult, &result.size);
++		} else {
++			strbuf_release(&wtresult);
++		}
++	}
++#endif
  	f = fopen(path, "w");
  	if (!f)
  		return error_errno(_("could not open '%s'"), path);
@@ -34,3 +131,18 @@ index 8232542585..e8ca73dd49 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
+@@ -730,7 +826,14 @@ static void do_rerere_one_path(struct index_state *istate,
+ 	/* Has the user resolved it already? */
+ 	if (variant >= 0) {
+ 		if (!handle_file(istate, path, NULL, NULL)) {
++#ifdef __MVS__
++			if (copy_workfile_to_cache_as_git(istate, rerere_path(&buf, id, "postimage"), path) < 0) {
++				warning(_("could not convert '%s' for rerere; recording raw copy"), path);
++				copy_file(the_repository, rerere_path(&buf, id, "postimage"), path, 0666);
++			}
++#else
+ 			copy_file(the_repository, rerere_path(&buf, id, "postimage"), path, 0666);
++#endif
+ 			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
+ 			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
+ 			free_rerere_id(rr_item);

@@ -37,6 +37,8 @@ test_rebase_tagging.sh
 test_rerere_cherry_pick.sh
 test_rerere_cherry_pick_issue.sh
 test_rerere_encoding.sh
+test_rerere_ebcdic_replay.sh
+test_merge_apply_ebcdic_ascii.sh
 test_sequential_data_minus_text.sh
 # test_stash_push_file_issue.sh - manual test, use test_stash_push_with_file.sh instead
 test_stash_push_with_file.sh
