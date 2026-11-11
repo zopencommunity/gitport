@@ -268,15 +268,18 @@ Or, equivalently, without removing the file first:
 git checkout HEAD -- test.yml
 ```
 
-For all affected files in the repository:
+For all affected files in the repository, first commit the updated
+`.gitattributes` and save any other local work, then run the following
+from the repository root to refresh all tracked files (not just those
+affected by the encoding change):
 
 ```bash
 git checkout HEAD -- .
 ```
 
-After this, the files are re-created from the repository content using the
-current `.gitattributes` rules, with the correct encoding and file tag, and
-`git status` is clean again.
+**Warning:** this discards staged and unstaged changes to tracked files
+under the current directory, so make sure the `.gitattributes` change is
+committed first - otherwise the files are refreshed with the old rule.
 
 > [!TIP]
 > `git status` showing a file as modified right after changing its encoding

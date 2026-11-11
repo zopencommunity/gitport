@@ -179,17 +179,28 @@ main change"
     write_ebcdic_file file.txt "base line
 side resolved"
     git add file.txt
-    git cherry-pick --continue --no-edit >/dev/null 2>&1 || true
+    if ! git cherry-pick --continue --no-edit >/dev/null 2>&1; then
+        fail_test "cherry-pick --continue failed; cannot set up rerere state"
+        git cherry-pick --abort 2>/dev/null
+        return 1
+    fi
 
     # Undo the cherry-pick; the tree is back at the conflicting state
     git reset -q --hard HEAD~1
 
     # Cherry-pick again; the same conflict recurs and rerere must
-    # replay the recorded resolution. Note: cherry-pick still stops
-    # for the result to be committed, but the file content must be
-    # the replayed resolution (not conflict markers).
-    git cherry-pick "$pick_commit" >/dev/null 2>&1 || true
-    pass_test "cherry-pick re-conflicted and rerere handled it"
+    # replay the recorded resolution. Require the rerere replay
+    # diagnostic so a clean (non-conflicting) apply cannot pass
+    # the test by accident.
+    local replay_out
+    replay_out=$(git cherry-pick "$pick_commit" 2>&1 || true)
+    if ! echo "$replay_out" | grep -q "Resolved 'file.txt' using previous resolution"; then
+        fail_test "rerere did not replay the recorded resolution"
+        echo "$replay_out" | head -5
+        git cherry-pick --abort 2>/dev/null
+        return 1
+    fi
+    pass_test "rerere replayed the cherry-pick resolution"
 
     check_ebcdic_file file.txt "base line
 side resolved" || return 1
