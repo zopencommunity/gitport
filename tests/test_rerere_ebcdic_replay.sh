@@ -207,6 +207,83 @@ side resolved" || return 1
     pass_test "replayed file has IBM-1047 tag and correct content"
 }
 
+#
+# Test 3: rerere replay must not apply smudge filters twice
+#
+# The cache images hold already-smudged working-tree text (handle_file()
+# performs no clean conversion when recording them), so the replay write
+# must perform only the encoding conversion - not the full
+# convert_to_working_tree() pipeline, which would run the smudge filter
+# a second time (e.g. a filter that prepends a header would prepend it
+# twice).
+#
+test_rerere_no_double_smudge() {
+    run_test "rerere replay does not apply smudge filters twice"
+
+    cd "$TEST_DIR"
+    rm -rf repo3
+    mkdir repo3
+    cd repo3
+    git init -q -b main
+    git config user.email "test@example.com"
+    git config user.name "Test User"
+    git config core.ignorefiletags true
+    git config rerere.enabled true
+
+    # A filter that prepends a generated header on checkout (smudge)
+    # and removes it again on add (clean)
+    git config filter.hdr.smudge "sed -e '1i GENERATED'"
+    git config filter.hdr.clean "sed -e '/^GENERATED$/d'"
+    git config filter.hdr.required true
+
+    echo "*.txt filter=hdr text" > .gitattributes
+    echo ".gitattributes -text" >> .gitattributes
+
+    printf 'common\noriginal\n' > file.txt
+    git add .gitattributes file.txt
+    git commit -q -m base
+
+    git checkout -q -b feat_a
+    printf 'common\nfeat_a change\n' > file.txt
+    git commit -qam a
+
+    git checkout -q main
+    printf 'common\nmain change\n' > file.txt
+    git commit -qam main
+
+    # Conflict; resolve (keeping the generated header in the workfile,
+    # as a user editing the smudged file would); rerere records
+    git checkout -q -b feat_b
+    git merge feat_a >/dev/null 2>&1 || true
+    printf 'GENERATED\ncommon\nresolved\n' > file.txt
+    git add file.txt
+    git commit -q -m resolve >/dev/null 2>&1
+
+    # Recreate the same conflict; rerere replays
+    git reset -q --hard HEAD~1
+    git merge feat_a 2>&1 | grep -q "Resolved 'file.txt' using previous resolution" || {
+        fail_test "rerere did not replay the recorded resolution"
+        return 1
+    }
+
+    # The smudge filter must have been applied exactly once: the file
+    # must contain exactly one GENERATED line.
+    local count
+    count=$(grep -c "^GENERATED$" file.txt)
+    if [ "$count" -ne 1 ]; then
+        fail_test "smudge filter applied $count times (expected exactly 1)"
+        grep -n "GENERATED" file.txt | head -5
+        return 1
+    fi
+    pass_test "smudge filter applied exactly once after rerere replay"
+
+    if ! grep -q "^resolved$" file.txt; then
+        fail_test "replayed content is wrong"
+        return 1
+    fi
+    pass_test "replayed content correct"
+}
+
 main() {
     log_info "rerere replay with genuine EBCDIC files"
     log_info "========================================"
@@ -215,6 +292,7 @@ main() {
 
     test_rerere_merge_replay
     test_rerere_cherry_pick_replay
+    test_rerere_no_double_smudge
 
     echo ""
     log_info "Test Summary:"

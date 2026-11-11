@@ -1,5 +1,5 @@
 diff --git a/rerere.c b/rerere.c
-index 1c3745d..689591f 100644
+index 1c3745d..5cc74ad 100644
 --- a/rerere.c
 +++ b/rerere.c
 @@ -12,6 +12,7 @@
@@ -10,20 +10,32 @@ index 1c3745d..689591f 100644
  #include "xdiff-interface.h"
  #include "dir.h"
  #include "resolve-undo.h"
-@@ -663,11 +664,46 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+@@ -663,11 +664,58 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
  			      rerere_path(&buf, id, "postimage"));
  
  	/* Update "path" with the resolution */
 +#ifdef __MVS__
 +	{
 +		/*
-+		 * z/OS: 'result' is in canonical (git-internal) form, like
-+		 * the cache files it was merged from. Convert it to the
-+		 * working-tree encoding before writing it out, so the file
-+		 * content matches the tag applied below.
++		 * z/OS: 'result' is in the canonical form of the rerere cache
++		 * files. Convert it to the working-tree encoding before writing
++		 * it out, so the file content matches the tag applied below.
++		 *
++		 * Note: only the encoding (and CRLF) conversion is performed
++		 * here, deliberately NOT the full convert_to_working_tree()
++		 * pipeline. The cache images hold already-smudged working-tree
++		 * text (handle_file() performs no clean conversion when
++		 * recording them), so applying smudge filters again during
++		 * replay would run them a second time.
 +		 */
++		struct conv_attrs ca;
 +		struct strbuf wtresult = STRBUF_INIT;
-+		int cr = convert_to_working_tree(istate, path,
++		int cr;
++
++		convert_attrs(istate, &ca, path);
++		ca.drv = NULL;
++		ca.ident = 0;
++		cr = convert_to_working_tree_ca(&ca, path,
 +						result.ptr, result.size,
 +						&wtresult, NULL);
 +		if (cr > 0) {
@@ -57,7 +69,7 @@ index 1c3745d..689591f 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
-@@ -730,7 +766,26 @@ static void do_rerere_one_path(struct index_state *istate,
+@@ -730,7 +778,26 @@ static void do_rerere_one_path(struct index_state *istate,
  	/* Has the user resolved it already? */
  	if (variant >= 0) {
  		if (!handle_file(istate, path, NULL, NULL)) {
