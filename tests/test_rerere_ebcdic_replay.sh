@@ -372,6 +372,129 @@ test_rerere_unconvertible_resolution() {
     pass_test "working file not mis-tagged after failed replay"
 }
 
+#
+# Test 5: non-ASCII content (café) in EBCDIC and ISO8859-1 files
+#
+# The cache images must be normalized to canonical UTF-8; a plain
+# text-mode read would leave process-codepage bytes (e.g. raw 0xe9)
+# in the cache, and the replay conversion would then reject the
+# resolution as invalid UTF-8 even though é is representable in
+# IBM-1047 (0x51) and ISO8859-1 (0xe9).
+#
+test_rerere_non_ascii_replay() {
+    run_test "rerere replay with non-ASCII (café) content"
+
+    # --- EBCDIC variant ---
+    cd "$TEST_DIR"
+    rm -rf repo5a
+    mkdir repo5a
+    cd repo5a
+    git init -q -b main
+    git config user.email "test@example.com"
+    git config user.name "Test User"
+    git config core.ignorefiletags true
+    git config rerere.enabled true
+    git config core.iconvtranslit false
+
+    echo "*.txt zos-working-tree-encoding=ibm-1047" > .gitattributes
+    echo ".gitattributes zos-working-tree-encoding=iso8859-1" >> .gitattributes
+    git add .gitattributes
+    git commit -q -m attrs
+
+    touch file.txt && chtag -tc 1047 file.txt
+    printf 'common\ncaf\xe9 original\n' > file.txt
+    git add file.txt
+    git commit -q -m base
+
+    git checkout -q -b feat_a
+    printf 'common\ncaf\xe9 feat_a\n' > file.txt
+    git commit -qam a
+
+    git checkout -q main
+    printf 'common\ncaf\xe9 main\n' > file.txt
+    git commit -qam main
+
+    git checkout -q -b feat_b
+    git merge feat_a >/dev/null 2>&1 || true
+    printf 'common\ncaf\xe9 resolved\n' > file.txt
+    git add file.txt
+    git commit -q -m resolve >/dev/null 2>&1
+
+    # The postimage must be canonical UTF-8 (é = c3 a9)
+    local postimage
+    postimage=$(find .git/rr-cache -name postimage | head -1)
+    if [ -n "$postimage" ] && ! od -An -tx1 "$postimage" | tr -d ' \n' | grep -q "c3a9"; then
+        fail_test "EBCDIC: postimage not normalized to UTF-8 (é should be c3 a9)"
+        od -An -tx1 "$postimage" | head -2
+        return 1
+    fi
+    pass_test "EBCDIC: postimage normalized to canonical UTF-8"
+
+    git reset -q --hard HEAD~1
+    git merge feat_a 2>&1 | grep -q "Resolved 'file.txt' using previous resolution" || {
+        fail_test "EBCDIC: rerere did not replay the café resolution"
+        return 1
+    }
+    expected_blob=$(printf 'common\ncaf\xc3\xa9 resolved\n' | git hash-object --stdin)
+    actual_blob=$(git hash-object file.txt)
+    if [ "$expected_blob" != "$actual_blob" ]; then
+        fail_test "EBCDIC: replayed café content is wrong"
+        return 1
+    fi
+    pass_test "EBCDIC: café resolution replayed with correct tag and content"
+
+    # --- ISO8859-1 variant ---
+    cd "$TEST_DIR"
+    rm -rf repo5b
+    mkdir repo5b
+    cd repo5b
+    git init -q -b main
+    git config user.email "test@example.com"
+    git config user.name "Test User"
+    git config core.ignorefiletags true
+    git config rerere.enabled true
+    git config core.iconvtranslit false
+
+    echo "*.txt zos-working-tree-encoding=iso8859-1" > .gitattributes
+    echo ".gitattributes zos-working-tree-encoding=iso8859-1" >> .gitattributes
+    git add .gitattributes
+    git commit -q -m attrs
+
+    printf 'common\ncaf\xe9 original\n' > file.txt
+    chtag -tc 819 file.txt 2>/dev/null || true
+    git add file.txt
+    git commit -q -m base
+
+    git checkout -q -b feat_a
+    printf 'common\ncaf\xe9 feat_a\n' > file.txt
+    chtag -tc 819 file.txt 2>/dev/null || true
+    git commit -qam a
+
+    git checkout -q main
+    printf 'common\ncaf\xe9 main\n' > file.txt
+    chtag -tc 819 file.txt 2>/dev/null || true
+    git commit -qam main
+
+    git checkout -q -b feat_b
+    git merge feat_a >/dev/null 2>&1 || true
+    printf 'common\ncaf\xe9 resolved\n' > file.txt
+    chtag -tc 819 file.txt 2>/dev/null || true
+    git add file.txt
+    git commit -q -m resolve >/dev/null 2>&1
+
+    git reset -q --hard HEAD~1
+    git merge feat_a 2>&1 | grep -q "Resolved 'file.txt' using previous resolution" || {
+        fail_test "ISO8859-1: rerere did not replay the café resolution"
+        return 1
+    }
+    if ! grep -q "caf" file.txt || ! od -An -tx1 file.txt | tr -d ' \n' | grep -q "e9"; then
+        fail_test "ISO8859-1: replayed café content is wrong"
+        od -An -tx1 file.txt | head -2
+        return 1
+    fi
+    pass_test "ISO8859-1: café resolution replayed with correct content"
+}
+
 main() {
     log_info "rerere replay with genuine EBCDIC files"
     log_info "========================================"
@@ -382,6 +505,7 @@ main() {
     test_rerere_cherry_pick_replay
     test_rerere_no_double_smudge
     test_rerere_unconvertible_resolution
+    test_rerere_non_ascii_replay
 
     echo ""
     log_info "Test Summary:"

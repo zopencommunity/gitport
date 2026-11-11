@@ -1,5 +1,5 @@
 diff --git a/rerere.c b/rerere.c
-index 1c3745d..80ed86c 100644
+index 1c3745d..640413d 100644
 --- a/rerere.c
 +++ b/rerere.c
 @@ -12,6 +12,7 @@
@@ -10,32 +10,156 @@ index 1c3745d..80ed86c 100644
  #include "xdiff-interface.h"
  #include "dir.h"
  #include "resolve-undo.h"
-@@ -663,11 +664,71 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+@@ -331,6 +332,39 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
+ 	return strbuf_getwholeline(sb, io->input, '\n');
+ }
+ 
++
++
++/*
++ * Subclass of rerere_io that reads from an in-core buffer that is a
++ * strbuf
++ */
++struct rerere_io_mem {
++	struct rerere_io io;
++	struct strbuf input;
++};
++
++/*
++ * ... and its getline() method implementation
++ */
++static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
++{
++	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
++	char *ep;
++	size_t len;
++
++	strbuf_release(sb);
++	if (!io->input.len)
++		return -1;
++	ep = memchr(io->input.buf, '\n', io->input.len);
++	if (!ep)
++		ep = io->input.buf + io->input.len;
++	else if (*ep == '\n')
++		ep++;
++	len = ep - io->input.buf;
++	strbuf_add(sb, io->input.buf, len);
++	strbuf_remove(&io->input, 0, len);
++	return 0;
++}
+ static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
+ {
+ 	strbuf_addchars(buf, ch, size);
+@@ -443,8 +477,58 @@ static int handle_file(struct index_state *istate,
+ 		       const char *path, unsigned char *hash, const char *output)
+ {
+ 	int has_conflicts = 0;
+-	struct rerere_io_file io;
+ 	int marker_size = ll_merge_marker_size(istate, path);
++#ifdef __MVS__
++	struct rerere_io_mem io;
++	struct strbuf raw = STRBUF_INIT;
++	int fd;
++
++	/*
++	 * z/OS: read the working-tree file raw (auto-conversion disabled)
++	 * and normalize it to the canonical (git-internal) form with the
++	 * same conversion git add performs (convert_to_git). All rerere
++	 * cache images (preimage/thisimage/postimage) are then canonical,
++	 * like the blobs they will be compared against, and the replay
++	 * conversion can convert the merged result back to the working-
++	 * tree encoding - the mirror image of checkout. A plain text-mode
++	 * fopen() would only convert by the file tag and leave e.g.
++	 * ISO8859-1 or process-codepage bytes in the cache, which the
++	 * replay conversion would then reject as invalid UTF-8 even when
++	 * the resolution is representable.
++	 */
++	memset(&io, 0, sizeof(io));
++	io.io.getline = rerere_mem_getline;
++	io.io.wrerror = 0;
++
++	fd = open(path, O_RDONLY);
++	if (fd < 0)
++		return error_errno(_("could not open '%s'"), path);
++	__disableautocvt(fd);
++	if (strbuf_read(&raw, fd, 0) < 0) {
++		close(fd);
++		return error_errno(_("could not read '%s'"), path);
++	}
++	close(fd);
++
++	{
++		int cr = convert_to_git(istate, path, raw.buf, raw.len,
++					&io.input, 0);
++		if (cr <= 0) {
++			/*
++			 * No conversion, or the file cannot be converted
++			 * (e.g. a character with no equivalent in the target
++			 * encoding): use the raw bytes so rerere stays
++			 * usable; the replay conversion will surface the
++			 * problem if it matters.
++			 */
++			if (cr < 0)
++				warning(_("could not convert '%s' to git form; using unconverted content"), path);
++			strbuf_swap(&io.input, &raw);
++		}
++	}
++
++#else
++	struct rerere_io_file io;
+ 
+ 	memset(&io, 0, sizeof(io));
+ 	io.io.getline = rerere_file_getline;
+@@ -452,19 +536,32 @@ static int handle_file(struct index_state *istate,
+ 	io.io.wrerror = 0;
+ 	if (!io.input)
+ 		return error_errno(_("could not open '%s'"), path);
++#endif
+ 
+ 	if (output) {
+ 		io.io.output = fopen(output, "w");
+ 		if (!io.io.output) {
+ 			error_errno(_("could not write '%s'"), output);
++#ifndef __MVS__
+ 			fclose(io.input);
++#endif
++#ifdef __MVS__
++			strbuf_release(&raw);
++			strbuf_release(&io.input);
++#endif
+ 			return -1;
+ 		}
+ 	}
+ 
+ 	has_conflicts = handle_path(hash, (struct rerere_io *)&io, marker_size);
+ 
++#ifndef __MVS__
+ 	fclose(io.input);
++#endif
++#ifdef __MVS__
++	strbuf_release(&raw);
++	strbuf_release(&io.input);
++#endif
+ 	if (io.io.wrerror)
+ 		error(_("there were errors while writing '%s' (%s)"),
+ 		      path, strerror(io.io.wrerror));
+@@ -663,11 +760,62 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
  			      rerere_path(&buf, id, "postimage"));
  
  	/* Update "path" with the resolution */
 +#ifdef __MVS__
 +	{
 +		/*
-+		 * z/OS: 'result' is in the canonical form of the rerere cache
-+		 * files. Convert it to the working-tree encoding before writing
-+		 * it out, so the file content matches the tag applied below.
-+		 *
-+		 * Note: only the encoding (and CRLF) conversion is performed
-+		 * here, deliberately NOT the full convert_to_working_tree()
-+		 * pipeline. The cache images hold already-smudged working-tree
-+		 * text (handle_file() performs no clean conversion when
-+		 * recording them), so applying smudge filters again during
-+		 * replay would run them a second time.
++		 * z/OS: 'result' is in the canonical (git-internal) form,
++		 * like the cache images it was merged from. Convert it back
++		 * to the working-tree form with the same conversion a
++		 * checkout of this path would perform (including smudge
++		 * filters, since handle_file() applies the matching clean
++		 * conversion when recording the cache images), so the file
++		 * content and tag match what git itself would have written.
 +		 */
-+		struct conv_attrs ca;
 +		struct strbuf wtresult = STRBUF_INIT;
-+		int cr;
-+
-+		convert_attrs(istate, &ca, path);
-+		ca.drv = NULL;
-+		ca.ident = 0;
-+		cr = convert_to_working_tree_ca(&ca, path,
++		int cr = convert_to_working_tree(istate, path,
 +						result.ptr, result.size,
 +						&wtresult, NULL);
 +		if (cr < 0) {
@@ -82,7 +206,7 @@ index 1c3745d..80ed86c 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
-@@ -730,7 +791,26 @@ static void do_rerere_one_path(struct index_state *istate,
+@@ -730,7 +878,26 @@ static void do_rerere_one_path(struct index_state *istate,
  	/* Has the user resolved it already? */
  	if (variant >= 0) {
  		if (!handle_file(istate, path, NULL, NULL)) {
@@ -109,3 +233,41 @@ index 1c3745d..80ed86c 100644
  			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
  			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
  			free_rerere_id(rr_item);
+@@ -911,37 +1078,6 @@ int repo_rerere(struct repository *r, int flags)
+ 	return status;
+ }
+ 
+-/*
+- * Subclass of rerere_io that reads from an in-core buffer that is a
+- * strbuf
+- */
+-struct rerere_io_mem {
+-	struct rerere_io io;
+-	struct strbuf input;
+-};
+-
+-/*
+- * ... and its getline() method implementation
+- */
+-static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
+-{
+-	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
+-	char *ep;
+-	size_t len;
+-
+-	strbuf_release(sb);
+-	if (!io->input.len)
+-		return -1;
+-	ep = memchr(io->input.buf, '\n', io->input.len);
+-	if (!ep)
+-		ep = io->input.buf + io->input.len;
+-	else if (*ep == '\n')
+-		ep++;
+-	len = ep - io->input.buf;
+-	strbuf_add(sb, io->input.buf, len);
+-	strbuf_remove(&io->input, 0, len);
+-	return 0;
+-}
+ 
+ static int handle_cache(struct index_state *istate,
+ 			const char *path, unsigned char *hash, const char *output)
