@@ -1,16 +1,17 @@
 diff --git a/rerere.c b/rerere.c
-index 1c3745d..5ad14ec 100644
+index 1c3745d..3d70669 100644
 --- a/rerere.c
 +++ b/rerere.c
-@@ -12,6 +12,7 @@
+@@ -12,6 +12,8 @@
  #include "string-list.h"
  #include "read-cache-ll.h"
  #include "rerere.h"
 +#include "convert.h"
++#include "utf8.h"
  #include "xdiff-interface.h"
  #include "dir.h"
  #include "resolve-undo.h"
-@@ -331,6 +332,39 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
+@@ -331,6 +333,43 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
  	return strbuf_getwholeline(sb, io->input, '\n');
  }
  
@@ -23,6 +24,9 @@ index 1c3745d..5ad14ec 100644
 +struct rerere_io_mem {
 +	struct rerere_io io;
 +	struct strbuf input;
++	size_t consumed;	/* offset of the next unread byte; avoids the
++			   quadratic buffer shifts of removing each
++			   consumed line from the front of the strbuf */
 +};
 +
 +/*
@@ -35,22 +39,23 @@ index 1c3745d..5ad14ec 100644
 +	size_t len;
 +
 +	strbuf_release(sb);
-+	if (!io->input.len)
++	if (io->consumed >= io->input.len)
 +		return -1;
-+	ep = memchr(io->input.buf, '\n', io->input.len);
++	ep = memchr(io->input.buf + io->consumed, '\n',
++		    io->input.len - io->consumed);
 +	if (!ep)
 +		ep = io->input.buf + io->input.len;
 +	else if (*ep == '\n')
 +		ep++;
-+	len = ep - io->input.buf;
-+	strbuf_add(sb, io->input.buf, len);
-+	strbuf_remove(&io->input, 0, len);
++	len = ep - (io->input.buf + io->consumed);
++	strbuf_add(sb, io->input.buf + io->consumed, len);
++	io->consumed += len;
 +	return 0;
 +}
  static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
  {
  	strbuf_addchars(buf, ch, size);
-@@ -443,8 +477,58 @@ static int handle_file(struct index_state *istate,
+@@ -443,8 +482,89 @@ static int handle_file(struct index_state *istate,
  		       const char *path, unsigned char *hash, const char *output)
  {
  	int has_conflicts = 0;
@@ -59,50 +64,81 @@ index 1c3745d..5ad14ec 100644
 +#ifdef __MVS__
 +	struct rerere_io_mem io;
 +	struct strbuf raw = STRBUF_INIT;
++	struct conv_attrs ca;
 +	int fd;
++	int autocvtToASCII = 0;
 +
 +	/*
-+	 * z/OS: read the working-tree file raw (auto-conversion disabled)
-+	 * and normalize it to the canonical (git-internal) form with the
-+	 * same conversion git add performs (convert_to_git). All rerere
-+	 * cache images (preimage/thisimage/postimage) are then canonical,
-+	 * like the blobs they will be compared against, and the replay
-+	 * conversion can convert the merged result back to the working-
-+	 * tree encoding - the mirror image of checkout. A plain text-mode
-+	 * fopen() would only convert by the file tag and leave e.g.
-+	 * ISO8859-1 or process-codepage bytes in the cache, which the
-+	 * replay conversion would then reject as invalid UTF-8 even when
-+	 * the resolution is representable.
++	 * z/OS: read the working-tree file and normalize it to the
++	 * canonical (UTF-8) form so that all rerere cache images
++	 * (preimage/thisimage/postimage) hold canonical bytes, like
++	 * the blobs they are compared against, and the replay
++	 * conversion can convert the merged result back to the
++	 * working-tree encoding.
++	 *
++	 * The read follows the same tag-aware rules git add uses
++	 * (validate_codeset()): a file tagged IBM-1047 under an
++	 * ISO8859-1 attribute is auto-converted on read; everything
++	 * else is read raw (auto-conversion disabled).
++	 *
++	 * The normalization is encoding-only (reencode_string_len),
++	 * deliberately NOT the full convert_to_git() pipeline: clean
++	 * filters must not run over conflict-marked content, since a
++	 * required filter that rejects marker-laden text (e.g. a
++	 * JSON validator) would break rerere entirely. The matching
++	 * replay conversion also skips smudge filters (see merge()).
 +	 */
 +	memset(&io, 0, sizeof(io));
 +	io.io.getline = rerere_mem_getline;
 +	io.io.wrerror = 0;
 +
++	validate_codeset(istate, path, &autocvtToASCII);
 +	fd = open(path, O_RDONLY);
 +	if (fd < 0)
 +		return error_errno(_("could not open '%s'"), path);
-+	__disableautocvt(fd);
++	if (!autocvtToASCII)
++		__disableautocvt(fd);
 +	if (strbuf_read(&raw, fd, 0) < 0) {
 +		close(fd);
 +		return error_errno(_("could not read '%s'"), path);
 +	}
 +	close(fd);
 +
-+	{
-+		int cr = convert_to_git(istate, path, raw.buf, raw.len,
-+					&io.input, 0);
-+		if (cr <= 0) {
++	convert_attrs(istate, &ca, path);
++	if (ca.working_tree_encoding &&
++	    !same_encoding(ca.working_tree_encoding, "UTF-8")
++#ifdef __MVS__
++	    /*
++	     * Honor the same backwards-compat convention as
++	     * encode_to_git(): with core.utf8ccsid=819 (the legacy
++	     * z/OS default), an ISO8859-1 attribute means UTF-8 and
++	     * content is passed through unconverted.
++	     */
++	    && !(utf8_ccsid == 819 &&
++		 !strcasecmp("ISO8859-1", ca.working_tree_encoding))
++#endif
++	    ) {
++		size_t outlen;
++		char *out = reencode_string_len(raw.buf, raw.len,
++						"UTF-8",
++						ca.working_tree_encoding,
++						&outlen);
++		if (!out) {
 +			/*
-+			 * No conversion, or the file cannot be converted
-+			 * (e.g. a character with no equivalent in the target
-+			 * encoding): use the raw bytes so rerere stays
-+			 * usable; the replay conversion will surface the
-+			 * problem if it matters.
++			 * The file cannot be represented in the
++			 * canonical form. Fail rather than parse the
++			 * raw bytes: a marker hidden in unconverted
++			 * content could make an unresolved file look
++			 * resolved and record an invalid postimage.
 +			 */
-+			if (cr < 0)
-+				warning(_("could not convert '%s' to git form; using unconverted content"), path);
-+			strbuf_swap(&io.input, &raw);
++			strbuf_release(&raw);
++			return error(_("could not convert '%s' from %s to UTF-8"),
++				     path, ca.working_tree_encoding);
 +		}
++		strbuf_attach(&io.input, out, outlen, outlen + 1);
++	} else {
++		/* no encoding conversion needed */
++		strbuf_swap(&io.input, &raw);
 +	}
 +
 +#else
@@ -110,7 +146,7 @@ index 1c3745d..5ad14ec 100644
  
  	memset(&io, 0, sizeof(io));
  	io.io.getline = rerere_file_getline;
-@@ -452,19 +536,32 @@ static int handle_file(struct index_state *istate,
+@@ -452,19 +572,32 @@ static int handle_file(struct index_state *istate,
  	io.io.wrerror = 0;
  	if (!io.input)
  		return error_errno(_("could not open '%s'"), path);
@@ -143,23 +179,32 @@ index 1c3745d..5ad14ec 100644
  	if (io.io.wrerror)
  		error(_("there were errors while writing '%s' (%s)"),
  		      path, strerror(io.io.wrerror));
-@@ -663,11 +760,62 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+@@ -663,11 +796,71 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
  			      rerere_path(&buf, id, "postimage"));
  
  	/* Update "path" with the resolution */
 +#ifdef __MVS__
 +	{
 +		/*
-+		 * z/OS: 'result' is in the canonical (git-internal) form,
-+		 * like the cache images it was merged from. Convert it back
-+		 * to the working-tree form with the same conversion a
-+		 * checkout of this path would perform (including smudge
-+		 * filters, since handle_file() applies the matching clean
-+		 * conversion when recording the cache images), so the file
-+		 * content and tag match what git itself would have written.
++		 * z/OS: 'result' is in the canonical form of the rerere
++		 * cache files. Convert it to the working-tree encoding
++		 * before writing it out, so the file content matches the
++		 * tag applied below. Only the encoding (and CRLF)
++		 * conversion is performed - deliberately not the full
++		 * convert_to_working_tree() pipeline: the cache images
++		 * hold already-smudged working-tree text (handle_file()
++		 * performs no clean conversion when recording them), so
++		 * applying smudge filters again during replay would run
++		 * them a second time.
 +		 */
++		struct conv_attrs ca;
 +		struct strbuf wtresult = STRBUF_INIT;
-+		int cr = convert_to_working_tree(istate, path,
++		int cr;
++
++		convert_attrs(istate, &ca, path);
++		ca.drv = NULL;
++		ca.ident = 0;
++		cr = convert_to_working_tree_ca(&ca, path,
 +						result.ptr, result.size,
 +						&wtresult, NULL);
 +		if (cr < 0) {
@@ -206,7 +251,7 @@ index 1c3745d..5ad14ec 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
-@@ -730,7 +878,27 @@ static void do_rerere_one_path(struct index_state *istate,
+@@ -730,7 +923,27 @@ static void do_rerere_one_path(struct index_state *istate,
  	/* Has the user resolved it already? */
  	if (variant >= 0) {
  		if (!handle_file(istate, path, NULL, NULL)) {
@@ -234,7 +279,7 @@ index 1c3745d..5ad14ec 100644
  			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
  			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
  			free_rerere_id(rr_item);
-@@ -911,37 +1079,6 @@ int repo_rerere(struct repository *r, int flags)
+@@ -911,37 +1124,6 @@ int repo_rerere(struct repository *r, int flags)
  	return status;
  }
  
