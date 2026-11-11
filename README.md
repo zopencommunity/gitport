@@ -233,6 +233,56 @@ You can specify multiple working-tree-encoding attributes, where the later attri
 *.png binary
 ```
 
+### Changing the working-tree-encoding attribute
+
+Changing an encoding attribute in `.gitattributes` does **not** automatically
+re-convert files that are already in your working tree. Git stores content in
+its canonical (UTF-8) form, and a file whose content has not changed is never
+rewritten on checkout or pull - even if the attribute for it changed in the
+meantime. The file keeps the encoding it was checked out with, and `git status`
+starts showing it as modified because the working-tree file no longer matches
+what the new attribute would produce.
+
+This also means that deleting a file and re-creating it with the same content
+does not help: identical content produces the identical Git object, so a
+pull/merge sees no change for that path and never rewrites the working-tree
+file.
+
+**Example scenario:** a repository contains `test.yml` checked out as
+IBM-1047 under `*.yml zos-working-tree-encoding=ibm-1047`. The attribute is
+later changed to `iso8859-1`, the file is deleted, committed, and re-created
+with the same content. After pulling, `test.yml` on z/OS is still IBM-1047
+(and shows as modified), because its content never changed from Git's point
+of view.
+
+**Fix - force the file to be rewritten with the current attribute:**
+
+```bash
+rm test.yml
+git checkout -- test.yml
+```
+
+Or, equivalently, without removing the file first:
+
+```bash
+git checkout HEAD -- test.yml
+```
+
+For all affected files in the repository:
+
+```bash
+git checkout HEAD -- .
+```
+
+After this, the files are re-created from the repository content using the
+current `.gitattributes` rules, with the correct encoding and file tag, and
+`git status` is clean again.
+
+> [!TIP]
+> `git status` showing a file as modified right after changing its encoding
+> attribute is the tell-tale sign of this situation. The file content is
+> unchanged; only the conversion rule did.
+
 ### Migration considerations
 If you are migrating from Rocket Software's Git, then the good news is that Git on z/OS should be compatible. 
 
