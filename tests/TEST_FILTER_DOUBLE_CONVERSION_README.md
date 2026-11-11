@@ -40,7 +40,7 @@ Checks Git object content for "Hello":
 
 ## Possible Outcomes
 
-### Outcome 1: Git Object Contains UTF-8 ✅
+### Outcome 1: Git Object Contains UTF-8 *
 
 ```
 First 5 bytes: 48 65 6c 6c 6f
@@ -49,7 +49,7 @@ Result: UTF-8 detected
 
 **Meaning:**
 - `encode_to_git()` IS being called
-- Conversion EBCDIC → UTF-8 happened
+- Conversion EBCDIC * UTF-8 happened
 - Git object is correct
 - No bug!
 
@@ -60,7 +60,7 @@ Result: UTF-8 detected
 
 ---
 
-### Outcome 2: Git Object Contains EBCDIC ❌
+### Outcome 2: Git Object Contains EBCDIC *
 
 ```
 First 5 bytes: c8 85 93 93 96
@@ -80,7 +80,7 @@ Result: EBCDIC detected
 
 ---
 
-### Outcome 3: Neither Encoding Detected ⚠️
+### Outcome 3: Neither Encoding Detected **
 
 ```
 First 5 bytes: [something else]
@@ -100,43 +100,43 @@ Result: Unexpected
 
 ```
 1. User: git add test.txt
-   └─> File: EBCDIC (c8 85 93...)
+   **> File: EBCDIC (c8 85 93...)
 
 2. Git: Read file
-   └─> Buffer: EBCDIC
+   **> Buffer: EBCDIC
 
 3. Git: Apply clean filter
-   └─> Filter input: EBCDIC
-   └─> Filter (cat): Pass through
-   └─> Filter output: EBCDIC
+   **> Filter input: EBCDIC
+   **> Filter (cat): Pass through
+   **> Filter output: EBCDIC
 
 4. Git: encode_to_git()
-   └─> Input: EBCDIC (c8 85 93...)
-   └─> Converts: EBCDIC → UTF-8
-   └─> Output: UTF-8 (48 65 6c...)
+   **> Input: EBCDIC (c8 85 93...)
+   **> Converts: EBCDIC * UTF-8
+   **> Output: UTF-8 (48 65 6c...)
 
 5. Git: Store object
-   └─> Object: UTF-8 ✓
+   **> Object: UTF-8 *
 ```
 
 ### With #ifdef __MVS__ Skip (Current Code)
 
 ```
 1. User: git add test.txt
-   └─> File: EBCDIC
+   **> File: EBCDIC
 
 2. Git: Read file
-   └─> Buffer: EBCDIC
+   **> Buffer: EBCDIC
 
 3. Git: Apply clean filter
-   └─> Filter output: EBCDIC
+   **> Filter output: EBCDIC
 
 4. Git: encode_to_git()
-   └─> #ifdef __MVS__
-   └─> SKIPPED!
+   **> #ifdef __MVS__
+   **> SKIPPED!
 
 5. Git: Store object
-   └─> Object: EBCDIC ✗ (BUG!)
+   **> Object: EBCDIC * (BUG!)
 ```
 
 ---
@@ -151,9 +151,9 @@ Result: Unexpected
 **Scenario they're worried about:**
 ```
 1. EBCDIC file
-2. Smart filter converts EBCDIC → UTF-8
+2. Smart filter converts EBCDIC * UTF-8
 3. Filter outputs UTF-8
-4. encode_to_git() tries to convert UTF-8 → UTF-8
+4. encode_to_git() tries to convert UTF-8 * UTF-8
 5. Double conversion? Corruption?
 ```
 
@@ -198,8 +198,8 @@ Result: Unexpected
 ### If EBCDIC Found (Outcome 2)
 
 **Actions:**
-1. ✅ Confirms P1's bug
-2. ✅ Confirms patch is wrong
+1. * Confirms P1's bug
+2. * Confirms patch is wrong
 3. Apply this fix immediately:
 
 ```c
@@ -221,7 +221,7 @@ Result: Unexpected
 
 // ... keep encode_to_git() call ...
 
-#endif  // ← Also remove this
+#endif  // * Also remove this
 ```
 
 **Result:** `encode_to_git()` always called (like upstream)
@@ -282,8 +282,8 @@ echo $?
 ## Summary
 
 This test will definitively answer:
-1. ✅ Does P1's bug exist? (EBCDIC in objects)
-2. ✅ Does double conversion happen? (corruption)
-3. ✅ What's the correct fix?
+1. * Does P1's bug exist? (EBCDIC in objects)
+2. * Does double conversion happen? (corruption)
+3. * What's the correct fix?
 
 **Run the test and report results!**

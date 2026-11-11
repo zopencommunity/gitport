@@ -63,10 +63,10 @@ echo "v3" > f.txt && $GIT_BIN add f.txt && $GIT_BIN commit -q -m "f" 2>/dev/null
 $GIT_BIN merge br 2>/dev/null || true
 TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Tagged as ISO8859-1"
+    echo "  * PASS: Tagged as ISO8859-1"
     run_test "rerere" "PASS"
 else
-    echo "  ✗ FAIL: Tagged as $TAG"
+    echo "  * FAIL: Tagged as $TAG"
     run_test "rerere" "FAIL:$TAG"
 fi
 cd ..
@@ -102,14 +102,14 @@ $GIT_BIN checkout f.txt 2>/dev/null
 if $GIT_BIN apply /tmp/patch.txt 2>/dev/null; then
     TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "ISO8859-1" ]; then
-        echo "  ✓ PASS: Tagged as ISO8859-1"
+        echo "  * PASS: Tagged as ISO8859-1"
         run_test "apply" "PASS"
     else
-        echo "  ✗ FAIL: Tagged as $TAG"
+        echo "  * FAIL: Tagged as $TAG"
         run_test "apply" "FAIL:$TAG"
     fi
 else
-    echo "  ✗ FAIL: Apply failed"
+    echo "  * FAIL: Apply failed"
     run_test "apply" "FAIL:apply-failed"
 fi
 cd ..
@@ -131,20 +131,20 @@ echo "other" > other.txt
 if $GIT_BIN merge-file current.txt base.txt other.txt 2>/dev/null; then
     TAG=$(chtag -p current.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "ISO8859-1" ]; then
-        echo "  ✓ PASS: Tagged as ISO8859-1"
+        echo "  * PASS: Tagged as ISO8859-1"
         run_test "merge-file" "PASS"
     else
-        echo "  ✗ FAIL: Tagged as $TAG"
+        echo "  * FAIL: Tagged as $TAG"
         run_test "merge-file" "FAIL:$TAG"
     fi
 else
-    echo "  ℹ Merge failed (expected), checking tag anyway"
+    echo "  * Merge failed (expected), checking tag anyway"
     TAG=$(chtag -p current.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "ISO8859-1" ]; then
-        echo "  ✓ PASS: Tagged as ISO8859-1"
+        echo "  * PASS: Tagged as ISO8859-1"
         run_test "merge-file" "PASS"
     else
-        echo "  ✗ FAIL: Tagged as $TAG"
+        echo "  * FAIL: Tagged as $TAG"
         run_test "merge-file" "FAIL:$TAG"
     fi
 fi
@@ -169,10 +169,10 @@ $GIT_BIN diff HEAD~1 HEAD --output=out.diff 2>/dev/null
 
 TAG=$(chtag -p out.diff 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Tagged as ISO8859-1"
+    echo "  * PASS: Tagged as ISO8859-1"
     run_test "diff-output" "PASS"
 else
-    echo "  ✗ FAIL: Tagged as $TAG"
+    echo "  * FAIL: Tagged as $TAG"
     run_test "diff-output" "FAIL:$TAG"
 fi
 cd ..
@@ -198,10 +198,10 @@ $GIT_BIN stash apply 2>/dev/null || true
 
 TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Tagged as ISO8859-1"
+    echo "  * PASS: Tagged as ISO8859-1"
     run_test "stash-apply" "PASS"
 else
-    echo "  ✗ FAIL: Tagged as $TAG"
+    echo "  * FAIL: Tagged as $TAG"
     run_test "stash-apply" "FAIL:$TAG"
 fi
 cd ..
@@ -229,10 +229,10 @@ $GIT_BIN checkout --conflict=diff3 f.txt 2>/dev/null || true
 
 TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Tagged as ISO8859-1"
+    echo "  * PASS: Tagged as ISO8859-1"
     run_test "checkout-conflict" "PASS"
 else
-    echo "  ✗ FAIL: Tagged as $TAG"
+    echo "  * FAIL: Tagged as $TAG"
     run_test "checkout-conflict" "FAIL:$TAG"
 fi
 cd ..
@@ -256,15 +256,15 @@ $GIT_BIN worktree add /tmp/wt1 HEAD 2>/dev/null || true
 if [ -f /tmp/wt1/f.txt ]; then
     TAG=$(chtag -p /tmp/wt1/f.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "ISO8859-1" ]; then
-        echo "  ✓ PASS: Tagged as ISO8859-1"
+        echo "  * PASS: Tagged as ISO8859-1"
         run_test "worktree" "PASS"
     else
-        echo "  ✗ FAIL: Tagged as $TAG"
+        echo "  * FAIL: Tagged as $TAG"
         run_test "worktree" "FAIL:$TAG"
     fi
     rm -rf /tmp/wt1 2>/dev/null
 else
-    echo "  ℹ SKIP: Worktree file not found"
+    echo "  * SKIP: Worktree file not found"
     run_test "worktree" "SKIP"
 fi
 cd ..
@@ -292,15 +292,15 @@ if [ -n "$PATCH" ]; then
     $GIT_BIN am "$PATCH" 2>/dev/null || true
     TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "ISO8859-1" ]; then
-        echo "  ✓ PASS: Tagged as ISO8859-1"
+        echo "  * PASS: Tagged as ISO8859-1"
         run_test "am" "PASS"
     else
-        echo "  ✗ FAIL: Tagged as $TAG"
+        echo "  * FAIL: Tagged as $TAG"
         run_test "am" "FAIL:$TAG"
     fi
     rm -f "$PATCH" 2>/dev/null
 else
-    echo "  ℹ SKIP: Patch not created"
+    echo "  * SKIP: Patch not created"
     run_test "am" "SKIP"
 fi
 cd ..
@@ -324,10 +324,10 @@ $GIT_BIN restore f.txt 2>/dev/null
 
 TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Tagged as ISO8859-1"
+    echo "  * PASS: Tagged as ISO8859-1"
     run_test "restore" "PASS"
 else
-    echo "  ✗ FAIL: Tagged as $TAG"
+    echo "  * FAIL: Tagged as $TAG"
     run_test "restore" "FAIL:$TAG"
 fi
 cd ..
@@ -352,10 +352,10 @@ GIT_SEQUENCE_EDITOR=true $GIT_BIN rebase -i HEAD~1 2>/dev/null || true
 
 TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Tagged as ISO8859-1"
+    echo "  * PASS: Tagged as ISO8859-1"
     run_test "rebase" "PASS"
 else
-    echo "  ℹ INFO: Tagged as $TAG (rebase may not have run)"
+    echo "  * INFO: Tagged as $TAG (rebase may not have run)"
     run_test "rebase" "INFO:$TAG"
 fi
 cd ..
@@ -380,21 +380,21 @@ for result in "${RESULTS[@]}"; do
     
     case "$status" in
         PASS)
-            printf "  ✓ %-20s PASS\n" "$name"
+            printf "  * %-20s PASS\n" "$name"
             PASS_COUNT=$((PASS_COUNT + 1))
             ;;
         FAIL:*)
             tag=$(echo "$status" | cut -d':' -f2)
-            printf "  ✗ %-20s FAIL (tagged as %s)\n" "$name" "$tag"
+            printf "  * %-20s FAIL (tagged as %s)\n" "$name" "$tag"
             FAIL_COUNT=$((FAIL_COUNT + 1))
             ;;
         SKIP)
-            printf "  ⊘ %-20s SKIP\n" "$name"
+            printf "  * %-20s SKIP\n" "$name"
             SKIP_COUNT=$((SKIP_COUNT + 1))
             ;;
         INFO:*)
             tag=$(echo "$status" | cut -d':' -f2)
-            printf "  ℹ %-20s INFO (tagged as %s)\n" "$name" "$tag"
+            printf "  * %-20s INFO (tagged as %s)\n" "$name" "$tag"
             INFO_COUNT=$((INFO_COUNT + 1))
             ;;
     esac
@@ -409,9 +409,9 @@ echo "  Info: $INFO_COUNT"
 echo ""
 
 if [ $FAIL_COUNT -eq 0 ]; then
-    echo "✓ NO FAILURES - All tested commands tag files correctly!"
+    echo "* NO FAILURES - All tested commands tag files correctly!"
 else
-    echo "⚠ $FAIL_COUNT command(s) need fixing"
+    echo "* $FAIL_COUNT command(s) need fixing"
     echo ""
     echo "Commands that FAILED need investigation:"
     for result in "${RESULTS[@]}"; do

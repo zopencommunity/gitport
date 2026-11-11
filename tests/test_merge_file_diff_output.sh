@@ -53,10 +53,10 @@ $GIT_BIN merge-file ours.txt base.txt theirs.txt 2>/dev/null || true
 
 TAG=$(chtag -p ours.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "  ✓ PASS: File tagged as IBM-1047"
+    echo "  * PASS: File tagged as IBM-1047"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: File tagged as $TAG (expected IBM-1047)"
+    echo "  * FAIL: File tagged as $TAG (expected IBM-1047)"
 fi
 
 cd ..
@@ -86,10 +86,10 @@ $GIT_BIN merge-file ours.txt base.txt theirs.txt 2>/dev/null || true
 TAG=$(chtag -p ours.txt 2>/dev/null | awk '{print $2}')
 # UTF-8 could be ISO8859-1 or UTF-8 depending on system
 if [ "$TAG" = "UTF-8" ] || [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: File tagged as $TAG"
+    echo "  * PASS: File tagged as $TAG"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: File tagged as $TAG"
+    echo "  * FAIL: File tagged as $TAG"
 fi
 
 cd ..
@@ -125,11 +125,11 @@ TAG=$(chtag -p output.diff 2>/dev/null | awk '{print $2}')
 # Diff output is always UTF-8/ISO8859-1, regardless of .gitattributes
 # Diff is metadata (not source code), so it uses utf8_ccsid
 if [ "$TAG" = "UTF-8" ] || [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Diff file tagged as $TAG (correct: uses utf8_ccsid)"
+    echo "  * PASS: Diff file tagged as $TAG (correct: uses utf8_ccsid)"
     echo "         (Diff is metadata, ignores .gitattributes)"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: Diff file tagged as $TAG (expected UTF-8 or ISO8859-1)"
+    echo "  * FAIL: Diff file tagged as $TAG (expected UTF-8 or ISO8859-1)"
 fi
 
 cd ..
@@ -162,10 +162,10 @@ $GIT_BIN diff HEAD~1 HEAD --output=out.diff
 
 TAG=$(chtag -p out.diff 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "UTF-8" ] || [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: Diff file tagged as $TAG"
+    echo "  * PASS: Diff file tagged as $TAG"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: Diff file tagged as $TAG"
+    echo "  * FAIL: Diff file tagged as $TAG"
 fi
 
 cd ..
@@ -179,14 +179,14 @@ echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 echo "========================================================================"
 
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ ALL TESTS PASSED!"
+    echo "  * ALL TESTS PASSED!"
     echo ""
     echo "  File tagging behavior:"
     echo "    - git merge-file: Respects .gitattributes (working tree content)"
     echo "    - git diff --output: Uses utf8_ccsid (metadata, ignores .gitattributes)"
     exit 0
 else
-    echo "  ✗ SOME TESTS FAILED"
+    echo "  * SOME TESTS FAILED"
     echo "  $((TOTAL - PASSED)) test(s) failed"
     exit 1
 fi

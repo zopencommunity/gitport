@@ -440,7 +440,7 @@ ATTR
 "$GIT_BIN" add .gitattributes
 "$GIT_BIN" commit -m "setup gitattributes for UTF-8"
 
-# File with 2-byte UTF-8 chars: Ţ=C5A2, ę=C499, ş=C59F, ţ=C5A3
+# File with 2-byte UTF-8 chars: *=C5A2, *=C499, *=C59F, *=C5A3
 # Use hex escapes to ensure proper UTF-8 bytes on all systems
 printf "\xc5\xa2\xc4\x99\xc5\x9f\xc5\xa3\nline2\nline3\n" > utf8_file.txt
 chtag -tc 1208 utf8_file.txt
@@ -453,7 +453,7 @@ chtag -tc 1208 utf8_file.txt
 "$GIT_BIN" commit -am "side changes line 3"
 
 "$GIT_BIN" checkout master
-# Main: Ţęşţ_ŏůŕş (additional UTF-8 chars: ŏ=C58F ů=C5AF ŕ=C595 ş=C59F)
+# Main: ****_**** (additional UTF-8 chars: *=C58F *=C5AF *=C595 *=C59F)
 printf "\xc5\xa2\xc4\x99\xc5\x9f\xc5\xa3_\xc5\x8f\xc5\xaf\xc5\x95\xc5\x9f\nline2\nline3\n" > utf8_file.txt
 chtag -tc 1208 utf8_file.txt
 "$GIT_BIN" commit -am "main changes line 1"
@@ -461,10 +461,10 @@ chtag -tc 1208 utf8_file.txt
 "$GIT_BIN" merge side -m "merge UTF-8 Latin Extended"
 
 # Verify content preserved (using hex check since characters may not display)
-# Check for Ţęşţ_ŏůŕş = c5a2c499c59fc5a3_c58fc5afc595c59f
+# Check for ****_**** = c5a2c499c59fc5a3_c58fc5afc595c59f
 grep -q "side_change" utf8_file.txt || { echo "FAIL: UTF-8 line 3 not merged"; exit 1; }
 
-# Verify byte-exact preservation (check for Ţ=C5A2, case-insensitive)
+# Verify byte-exact preservation (check for *=C5A2, case-insensitive)
 od -A n -t x1 utf8_file.txt | tr -d " \n" | grep -iq "c5a2" || { echo "FAIL: UTF-8 bytes corrupted"; exit 1; }
 
 echo "  -> Test 8 PASSED (UTF-8 2-byte Latin Extended preserved)"
@@ -482,9 +482,9 @@ cd "$TEST_ROOT"
 mkdir test9 && cd test9
 init_git_repo
 
-# Chinese characters (3-byte UTF-8): 你=E4BDA0, 好=E5A5BD, 世=E4B896, 界=E7958C
-# 再=E5868D, 见=E8A781
-# Use hex escapes: 你好世界
+# Chinese characters (3-byte UTF-8): *=E4BDA0, *=E5A5BD, *=E4B896, *=E7958C
+# *=E5868D, *=E8A781
+# Use hex escapes: ****
 printf "\xe4\xbd\xa0\xe5\xa5\xbd\xe4\xb8\x96\xe7\x95\x8c\nline2\nline3\n" > cjk_file.txt
 chtag -tc 1208 cjk_file.txt
 "$GIT_BIN" add cjk_file.txt
@@ -496,7 +496,7 @@ chtag -tc 1208 cjk_file.txt
 "$GIT_BIN" commit -am "side changes line 3"
 
 "$GIT_BIN" checkout master
-# 再见世界 = \xe5\x86\x8d\xe8\xa7\x81\xe4\xb8\x96\xe7\x95\x8c
+# **** = \xe5\x86\x8d\xe8\xa7\x81\xe4\xb8\x96\xe7\x95\x8c
 printf "\xe5\x86\x8d\xe8\xa7\x81\xe4\xb8\x96\xe7\x95\x8c\nline2\nline3\n" > cjk_file.txt
 chtag -tc 1208 cjk_file.txt
 "$GIT_BIN" commit -am "main changes to different Chinese"
@@ -506,7 +506,7 @@ chtag -tc 1208 cjk_file.txt
 # Verify content preserved (using hex check)
 grep -q "side_change" cjk_file.txt || { echo "FAIL: CJK line 3 not merged"; exit 1; }
 
-# Verify byte-exact CJK preservation (check for 再=E5868D, case-insensitive)
+# Verify byte-exact CJK preservation (check for *=E5868D, case-insensitive)
 od -A n -t x1 cjk_file.txt | tr -d " \n" | grep -iq "e5868d" || { echo "FAIL: CJK bytes corrupted"; exit 1; }
 
 echo "  -> Test 9 PASSED (UTF-8 3-byte CJK preserved)"
@@ -524,8 +524,8 @@ cd "$TEST_ROOT"
 mkdir test10 && cd test10
 init_git_repo
 
-# Emoji (4-byte UTF-8): 😀=F09F9880, 🌍=F09F8C8D
-# Hello😀World
+# Emoji (4-byte UTF-8): *=F09F9880, *=F09F8C8D
+# Hello*World
 printf "Hello\xf0\x9f\x98\x80World\nline2\nline3\n" > emoji_file.txt
 chtag -tc 1208 emoji_file.txt
 "$GIT_BIN" add emoji_file.txt
@@ -537,7 +537,7 @@ chtag -tc 1208 emoji_file.txt
 "$GIT_BIN" commit -am "side changes line 3"
 
 "$GIT_BIN" checkout master
-# Hello🌍World
+# Hello*World
 printf "Hello\xf0\x9f\x8c\x8dWorld\nline2\nline3\n" > emoji_file.txt
 chtag -tc 1208 emoji_file.txt
 "$GIT_BIN" commit -am "main changes emoji"
@@ -547,7 +547,7 @@ chtag -tc 1208 emoji_file.txt
 # Verify content preserved (using hex check)
 grep -q "side_change" emoji_file.txt || { echo "FAIL: Emoji line 3 not merged"; exit 1; }
 
-# Verify byte-exact emoji preservation (check for 🌍=F09F8C8D, case-insensitive)
+# Verify byte-exact emoji preservation (check for *=F09F8C8D, case-insensitive)
 od -A n -t x1 emoji_file.txt | tr -d " \n" | grep -iq "f09f8c8d" || { echo "FAIL: Emoji bytes corrupted"; exit 1; }
 
 echo "  -> Test 10 PASSED (UTF-8 4-byte Emoji preserved)"
@@ -855,7 +855,7 @@ fi
 cd ..
 
 # ==============================================================================
-# Test 15: Special Characters Round-Trip (IBM-1047 → UTF-8 → IBM-1047)
+# Test 15: Special Characters Round-Trip (IBM-1047 * UTF-8 * IBM-1047)
 # ==============================================================================
 echo "Test 15: Special Characters Round-Trip (¬ $ @ # &)"
 
@@ -886,11 +886,11 @@ printf "Caret: x^2\n" >> special.txt
 # Record original hex dump
 od -t x1 special.txt | head -10 > "$TEST_ROOT/test15_original_hex.txt"
 
-# Git add and commit (IBM-1047 → UTF-8)
+# Git add and commit (IBM-1047 * UTF-8)
 "$GIT_BIN" add .gitattributes special.txt
 "$GIT_BIN" commit -m "test special chars" -q
 
-# Remove file and checkout (UTF-8 → IBM-1047)
+# Remove file and checkout (UTF-8 * IBM-1047)
 rm special.txt
 "$GIT_BIN" checkout -- special.txt
 

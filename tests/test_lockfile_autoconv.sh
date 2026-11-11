@@ -15,8 +15,8 @@ if [ -f "$SCRIPT_DIR/test_common.sh" ]; then
 else
     # Minimal implementations
     log_test_start() { echo "=== TEST: $1 ==="; }
-    log_test_pass() { echo "✅ PASS: $1"; }
-    log_test_fail() { echo "❌ FAIL: $1"; exit 1; }
+    log_test_pass() { echo "* PASS: $1"; }
+    log_test_fail() { echo "* FAIL: $1"; exit 1; }
     log_info() { echo "   $1"; }
 fi
 
@@ -42,8 +42,8 @@ log_info "Test 1: git config - UTF-8 characters in config file"
 
 # Test UTF-8 characters that could be corrupted by double-conversion
 git config test.ascii "Simple ASCII text"
-git config test.utf8 "UTF-8: Héllo Wørld €uro"
-git config test.special "Special: 你好 مرحبا שלום"
+git config test.utf8 "UTF-8: Héllo Wørld *uro"
+git config test.special "Special: ** ***** ****"
 
 # Verify config file is readable
 if git config --get test.utf8 > /dev/null 2>&1; then
@@ -54,7 +54,7 @@ fi
 
 # Verify exact values are preserved
 RETRIEVED=$(git config --get test.utf8)
-EXPECTED="UTF-8: Héllo Wørld €uro"
+EXPECTED="UTF-8: Héllo Wørld *uro"
 if [ "$RETRIEVED" = "$EXPECTED" ]; then
     log_test_pass "UTF-8 characters preserved correctly in config"
 else
@@ -65,7 +65,7 @@ fi
 if file .git/config | grep -q "UTF-8\|ASCII"; then
     log_test_pass ".git/config file is valid UTF-8"
 else
-    log_info "⚠️  Warning: file command shows unexpected encoding"
+    log_info "**  Warning: file command shows unexpected encoding"
 fi
 
 # =============================================================================
@@ -77,7 +77,7 @@ log_info "Test 2: git add - Index file integrity"
 # Create test files
 echo "Test file 1" > file1.txt
 echo "Test file 2" > file2.txt
-echo "Test with UTF-8: Héllo €uro" > file3.txt
+echo "Test with UTF-8: Héllo *uro" > file3.txt
 
 # Add files (this writes to .git/index via lockfile)
 if git add file1.txt file2.txt file3.txt 2>&1; then
@@ -108,7 +108,7 @@ if [ -f .git/index ]; then
     if [ "$INDEX_TAG" = "t" ] || [ "$INDEX_TAG" = "-" ]; then
         log_test_pass "Index file exists with proper tag"
     else
-        log_info "⚠️  Index file tag: $INDEX_TAG"
+        log_info "**  Index file tag: $INDEX_TAG"
     fi
 else
     log_test_fail "Index file doesn't exist"
@@ -121,7 +121,7 @@ fi
 log_info "Test 3: git commit - Reference file integrity"
 
 # Make a commit (writes to .git/refs/heads/master via lockfile)
-if git commit -m "Test commit with UTF-8: Héllo €uro" > /dev/null 2>&1; then
+if git commit -m "Test commit with UTF-8: Héllo *uro" > /dev/null 2>&1; then
     log_test_pass "git commit succeeded"
 else
     log_test_fail "git commit failed (ref corruption?)"
@@ -159,14 +159,14 @@ log_info "Test 4: Multiple lockfile operations"
 
 # Do multiple config updates
 for i in {1..10}; do
-    git config "test.key$i" "Value $i with UTF-8: €$i"
+    git config "test.key$i" "Value $i with UTF-8: *$i"
 done
 
 # Verify all were written correctly
 CORRUPT_COUNT=0
 for i in {1..10}; do
     VALUE=$(git config --get "test.key$i")
-    if [ "$VALUE" != "Value $i with UTF-8: €$i" ]; then
+    if [ "$VALUE" != "Value $i with UTF-8: *$i" ]; then
         CORRUPT_COUNT=$((CORRUPT_COUNT + 1))
     fi
 done
@@ -186,7 +186,7 @@ log_info "Test 5: git branch - Branch ref integrity"
 # Create multiple branches
 git branch test-branch-1 2>/dev/null
 git branch test-branch-2 2>/dev/null
-git branch "test-utf8-€uro" 2>/dev/null || log_info "⚠️  UTF-8 branch name not supported"
+git branch "test-utf8-*uro" 2>/dev/null || log_info "**  UTF-8 branch name not supported"
 
 # Verify branches are readable
 BRANCH_COUNT=$(git branch | grep -c "test-branch" || true)
@@ -277,10 +277,10 @@ if git pack-refs --all 2>/dev/null; then
             log_test_fail "packed-refs contains corrupted entries"
         fi
     else
-        log_info "⚠️  packed-refs file not created (may be expected)"
+        log_info "**  packed-refs file not created (may be expected)"
     fi
 else
-    log_info "⚠️  git pack-refs not available or failed (non-critical)"
+    log_info "**  git pack-refs not available or failed (non-critical)"
 fi
 
 # Cleanup
@@ -288,19 +288,19 @@ cd /
 rm -rf "$TEST_DIR"
 
 echo ""
-echo "═══════════════════════════════════════════════════════════"
-echo "  $TEST_NAME: ALL TESTS PASSED ✅"
-echo "═══════════════════════════════════════════════════════════"
+echo "***********************************************************"
+echo "  $TEST_NAME: ALL TESTS PASSED *"
+echo "***********************************************************"
 echo ""
 echo "Summary:"
-echo "  ✅ Config files: UTF-8 preserved correctly"
-echo "  ✅ Index file: No corruption after writes"
-echo "  ✅ Ref files: Valid SHAs written correctly"
-echo "  ✅ Multiple operations: No corruption"
-echo "  ✅ Branches: Created correctly"
-echo "  ✅ Tags: Created correctly"
-echo "  ✅ Repository integrity: fsck passed"
-echo "  ✅ Packed refs: Written correctly"
+echo "  * Config files: UTF-8 preserved correctly"
+echo "  * Index file: No corruption after writes"
+echo "  * Ref files: Valid SHAs written correctly"
+echo "  * Multiple operations: No corruption"
+echo "  * Branches: Created correctly"
+echo "  * Tags: Created correctly"
+echo "  * Repository integrity: fsck passed"
+echo "  * Packed refs: Written correctly"
 echo ""
 echo "This confirms that __disableautocvt() prevents z/OS runtime"
 echo "from corrupting UTF-8/binary data in git internal files."

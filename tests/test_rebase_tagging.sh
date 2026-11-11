@@ -66,13 +66,13 @@ $GIT_BIN checkout -q feature 2>/dev/null
 if $GIT_BIN rebase master 2>/dev/null; then
     TAG=$(chtag -p file.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File tagged as IBM-1047"
+        echo "  * PASS: File tagged as IBM-1047"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File tagged as $TAG (expected IBM-1047)"
+        echo "  * FAIL: File tagged as $TAG (expected IBM-1047)"
     fi
 else
-    echo "  ✗ FAIL: Rebase failed"
+    echo "  * FAIL: Rebase failed"
 fi
 
 cd ..
@@ -125,15 +125,15 @@ $GIT_BIN commit -q -m "Master" 2>/dev/null
 # Rebase will conflict
 $GIT_BIN checkout -q feature 2>/dev/null
 if $GIT_BIN rebase master 2>/dev/null; then
-    echo "  ⚠ SKIP: No conflict occurred (test setup issue)"
+    echo "  * SKIP: No conflict occurred (test setup issue)"
 else
     # Check tag during conflict
     TAG=$(chtag -p file.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File tagged as IBM-1047 during conflict"
+        echo "  * PASS: File tagged as IBM-1047 during conflict"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File tagged as $TAG during conflict (expected IBM-1047)"
+        echo "  * FAIL: File tagged as $TAG during conflict (expected IBM-1047)"
     fi
     $GIT_BIN rebase --abort 2>/dev/null || true
 fi
@@ -182,13 +182,13 @@ $GIT_BIN checkout -q feature 2>/dev/null
 if $GIT_BIN rebase master 2>/dev/null; then
     TAG=$(chtag -p f.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File tagged as IBM-1047"
+        echo "  * PASS: File tagged as IBM-1047"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File tagged as $TAG (expected IBM-1047)"
+        echo "  * FAIL: File tagged as $TAG (expected IBM-1047)"
     fi
 else
-    echo "  ✗ FAIL: Rebase failed"
+    echo "  * FAIL: Rebase failed"
 fi
 
 cd ..
@@ -202,14 +202,14 @@ echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 echo "========================================================================"
 
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ ALL TESTS PASSED!"
+    echo "  * ALL TESTS PASSED!"
     echo ""
     echo "  git rebase tags files correctly"
     exit 0
 elif [ $PASSED -gt 0 ]; then
-    echo "  ⚠ PARTIAL PASS ($PASSED/$TOTAL)"
+    echo "  * PARTIAL PASS ($PASSED/$TOTAL)"
     exit 0
 else
-    echo "  ✗ ALL TESTS FAILED"
+    echo "  * ALL TESTS FAILED"
     exit 1
 fi

@@ -35,8 +35,8 @@ Note: We previously tested "smart filters" (filters that convert encoding), but 
 ```
 File:       c8 85 93 93 96  (EBCDIC "Test")
 Filter:     c8 85 93 93 96  (passes through)
-encode_to_git(): EBCDIC → UTF-8
-Git object: 48 65 6c 6c 6f  (UTF-8) ✅
+encode_to_git(): EBCDIC * UTF-8
+Git object: 48 65 6c 6c 6f  (UTF-8) *
 ```
 
 **This proves:** The fix works for normal filters! P1's bug is FIXED!
@@ -55,11 +55,11 @@ Git object: 48 65 6c 6c 6f  (UTF-8) ✅
 File:       48 65 6c 6c 6f  (UTF-8)
 Filter:     48 65 6c 6c 6f  (passes through)
 encode_to_git(): same_encoding(UTF-8, UTF-8)? YES
-               → Skip conversion (return 0)
-Git object: 48 65 6c 6c 6f  (UTF-8) ✅
+               * Skip conversion (return 0)
+Git object: 48 65 6c 6c 6f  (UTF-8) *
 ```
 
-**This proves:** No double conversion happens (UTF-8 → UTF-8 skipped)!
+**This proves:** No double conversion happens (UTF-8 * UTF-8 skipped)!
 
 ---
 
@@ -68,8 +68,8 @@ Git object: 48 65 6c 6c 6f  (UTF-8) ✅
 ### If Fix Was Applied Correctly
 
 ```
-TEST 1: PASS ✅ - Dumb filter works (EBCDIC → UTF-8)
-TEST 2: PASS ✅ - same_encoding() protection works
+TEST 1: PASS * - Dumb filter works (EBCDIC * UTF-8)
+TEST 2: PASS * - same_encoding() protection works
 
 ALL TESTS PASSED!
 ```
@@ -77,8 +77,8 @@ ALL TESTS PASSED!
 ### If Fix NOT Applied (still has #ifdef)
 
 ```
-TEST 1: FAIL ❌ - Git object has EBCDIC (should be UTF-8)
-TEST 2: PASS ✅ - This would still work
+TEST 1: FAIL * - Git object has EBCDIC (should be UTF-8)
+TEST 2: PASS * - This would still work
 
 SOME TESTS FAILED
 ```
@@ -90,8 +90,8 @@ SOME TESTS FAILED
 ### Success Criteria
 
 **For the fix to be correct, we need:**
-1. ✅ TEST 1 must PASS (dumb filters work - P1's bug fixed)
-2. ✅ TEST 2 must PASS (no double conversion)
+1. * TEST 1 must PASS (dumb filters work - P1's bug fixed)
+2. * TEST 2 must PASS (no double conversion)
 
 ### What Each Failure Means
 
@@ -112,8 +112,8 @@ SOME TESTS FAILED
 ### If All Pass
 
 Great! The fix is working correctly:
-1. ✅ Dumb filters work (P1's bug fixed!)
-2. ✅ No double conversion protection works
+1. * Dumb filters work (P1's bug fixed!)
+2. * No double conversion protection works
 
 **Next steps:**
 - Continue with other P1 fixes
@@ -164,8 +164,8 @@ This test used to include TEST 2 for "smart filters" (filters that convert encod
 ## Summary
 
 This test validates:
-1. ✅ The fix works for normal filters (P1's case)
-2. ✅ Double conversion is prevented (same_encoding())
+1. * The fix works for normal filters (P1's case)
+2. * Double conversion is prevented (same_encoding())
 
 Note: "Smart filters" (filters that convert encoding) are not tested as they are anti-patterns that violate Git's design. See FILTER_ANTI_PATTERNS.md.
 

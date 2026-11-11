@@ -466,8 +466,8 @@ index 0365068..7b070a7 100644
 +	/*
 +	 * Check if 'binary' attribute is explicitly set.
 +	 * This is the key to distinguishing:
-+	 *   - 'binary' attribute (binary: set) → ignore encoding, tag as binary
-+	 *   - '-text' attribute (binary: unspecified) → use encoding if set
++	 *   - 'binary' attribute (binary: set) * ignore encoding, tag as binary
++	 *   - '-text' attribute (binary: unspecified) * use encoding if set
 +	 */
 +	struct attr_check *binary_check = attr_check_initl("binary", NULL);
 +	git_check_attr(istate, path, binary_check);

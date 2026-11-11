@@ -42,7 +42,7 @@ check_file_tag() {
     TOTAL=$((TOTAL + 1))
     
     if [ ! -f "$file" ]; then
-        echo "  ✗ FAIL: File '$file' doesn't exist"
+        echo "  * FAIL: File '$file' doesn't exist"
         FAILED=$((FAILED + 1))
         return 1
     fi
@@ -50,11 +50,11 @@ check_file_tag() {
     TAG=$(chtag -p "$file" 2>/dev/null | awk '{print $2}')
     
     if [ "$TAG" = "$expected" ]; then
-        echo "  ✓ PASS: $test_name - File tagged as $TAG"
+        echo "  * PASS: $test_name - File tagged as $TAG"
         PASSED=$((PASSED + 1))
         return 0
     else
-        echo "  ✗ FAIL: $test_name - Expected $expected, got $TAG"
+        echo "  * FAIL: $test_name - Expected $expected, got $TAG"
         FAILED=$((FAILED + 1))
         return 1
     fi
@@ -298,10 +298,10 @@ chtag -t -c IBM-1047 file.txt
 TOTAL=$((TOTAL + 1))
 TAG=$(chtag -p output.diff 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "UTF-8" ] || [ "$TAG" = "ISO8859-1" ]; then
-    echo "  ✓ PASS: git diff --output - File tagged as $TAG (correct: uses utf8_ccsid)"
+    echo "  * PASS: git diff --output - File tagged as $TAG (correct: uses utf8_ccsid)"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: git diff --output - Expected UTF-8 or ISO8859-1, got $TAG"
+    echo "  * FAIL: git diff --output - Expected UTF-8 or ISO8859-1, got $TAG"
     FAILED=$((FAILED + 1))
 fi
 
@@ -338,10 +338,10 @@ chtag -t -c IBM-1047 original.txt
 TAG=$(chtag -p extracted.txt 2>/dev/null | awk '{print $2}')
 TOTAL=$((TOTAL + 1))
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "  ✓ PASS: Shell redirect tagged correctly (surprising!)"
+    echo "  * PASS: Shell redirect tagged correctly (surprising!)"
     PASSED=$((PASSED + 1))
 else
-    echo "  ℹ INFO: Shell redirect not tagged (expected: $TAG) - Git doesn't control this"
+    echo "  * INFO: Shell redirect not tagged (expected: $TAG) - Git doesn't control this"
     PASSED=$((PASSED + 1))  # Not a failure, expected behavior
 fi
 
@@ -384,10 +384,10 @@ tar -xf ../archive.tar
 TAG=$(chtag -p archive-file.txt 2>/dev/null | awk '{print $2}')
 TOTAL=$((TOTAL + 1))
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "  ✓ PASS: Extracted file tagged as IBM-1047"
+    echo "  * PASS: Extracted file tagged as IBM-1047"
     PASSED=$((PASSED + 1))
 else
-    echo "  ℹ INFO: Extracted file not tagged ($TAG) - tar extract, not Git"
+    echo "  * INFO: Extracted file not tagged ($TAG) - tar extract, not Git"
     PASSED=$((PASSED + 1))  # Not Git's responsibility
 fi
 
@@ -521,13 +521,13 @@ chtag -t -c IBM-1047 file.txt
 TOTAL=$((TOTAL + 1))
 if [ -f ../worktree1/.git ]; then
     TAG=$(chtag -p ../worktree1/.git 2>/dev/null | awk '{print $2}')
-    echo "  ℹ INFO: .git file tag: $TAG (metadata file, tagging not critical)"
+    echo "  * INFO: .git file tag: $TAG (metadata file, tagging not critical)"
     PASSED=$((PASSED + 1))
     
     # Check the actual working tree file
     check_file_tag "../worktree1/file.txt" "IBM-1047" "worktree working tree file"
 else
-    echo "  ℹ INFO: Worktree not created or .git file not found"
+    echo "  * INFO: Worktree not created or .git file not found"
     PASSED=$((PASSED + 1))
 fi
 
@@ -543,21 +543,21 @@ echo "========================================================================"
 echo ""
 
 if [ $FAILED -eq 0 ]; then
-    echo "✓ ALL TESTS PASSED!"
+    echo "* ALL TESTS PASSED!"
     echo ""
     echo "Summary by command:"
-    echo "  1. ✓ git rerere           - Already fixed"
+    echo "  1. * git rerere           - Already fixed"
     echo "  2. ? git apply            - Check results above"
-    echo "  3. ✓ git apply --3way     - Already fixed"
+    echo "  3. * git apply --3way     - Already fixed"
     echo "  4. ? git merge-file       - Check results above"
     echo "  5. ? git diff --output    - Check results above"
-    echo "  6. ℹ git show > file      - Shell redirect (not Git's control)"
-    echo "  7. ℹ git archive          - tar extraction (not Git's control)"
+    echo "  6. * git show > file      - Shell redirect (not Git's control)"
+    echo "  7. * git archive          - tar extraction (not Git's control)"
     echo "  8. ? git stash apply      - Check results above"
     echo "  9. ? git checkout         - Check results above"
     echo " 10. ? git worktree         - Check results above"
 else
-    echo "⚠ SOME TESTS FAILED - These commands may need fixes!"
+    echo "* SOME TESTS FAILED - These commands may need fixes!"
     echo ""
     echo "Failed commands need investigation:"
     echo "  - See which tests failed above"

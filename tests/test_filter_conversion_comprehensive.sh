@@ -4,9 +4,9 @@
 
 set -e
 
-echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║     Filter Conversion Test                                                    ║"
-echo "╚══════════════════════════════════════════════════════════════════════════════╝"
+echo "********************************************************************************"
+echo "*     Filter Conversion Test                                                    *"
+echo "********************************************************************************"
 echo ""
 
 # Create test directory
@@ -21,11 +21,11 @@ echo "Test directory: $TEST_DIR"
 echo ""
 
 # Initialize Git repo
-echo "═══ Initialize Git repository ═══"
+echo "*** Initialize Git repository ***"
 git init -q
 git config user.email "test@example.com"
 git config user.name "Test User"
-echo "✓ Git repo initialized"
+echo "* Git repo initialized"
 echo ""
 
 PASS_COUNT=0
@@ -35,9 +35,9 @@ FAIL_COUNT=0
 # TEST 1: Dumb Filter (cat - doesn't convert)
 # ==============================================================================
 
-echo "═══════════════════════════════════════════════════════════════════════════════"
+echo "*******************************************************************************"
 echo "TEST 1: Dumb Filter (cat - no conversion)"
-echo "═══════════════════════════════════════════════════════════════════════════════"
+echo "*******************************************************************************"
 echo ""
 echo "This tests P1's exact scenario: cat filter + EBCDIC file"
 echo "Expected: Git stores UTF-8 (not EBCDIC)"
@@ -72,9 +72,9 @@ echo ""
 # Verify it's EBCDIC
 FIRST_BYTES=$(od -A n -t x1 -N 4 test1.txt | tr -d ' \n')
 if echo "$FIRST_BYTES" | grep -qi "^e385a2a3"; then
-    echo "✓ Confirmed: File contains EBCDIC bytes"
+    echo "* Confirmed: File contains EBCDIC bytes"
 else
-    echo "✗ WARNING: File might not be EBCDIC: $FIRST_BYTES"
+    echo "* WARNING: File might not be EBCDIC: $FIRST_BYTES"
 fi
 echo ""
 
@@ -97,15 +97,15 @@ echo "Analysis:"
 echo "  First 4 bytes: $OBJECT_HEX"
 
 if echo "$OBJECT_HEX" | grep -qi "^54657374"; then
-    echo "  Result: UTF-8 detected ✅"
+    echo "  Result: UTF-8 detected *"
     echo ""
-    echo "  ✅ TEST 1 PASSED: Cat filter + encode_to_git() converted EBCDIC → UTF-8"
+    echo "  * TEST 1 PASSED: Cat filter + encode_to_git() converted EBCDIC * UTF-8"
     echo "     This proves P1's bug is FIXED!"
     PASS_COUNT=$((PASS_COUNT + 1))
 elif echo "$OBJECT_HEX" | grep -qi "^e385a2a3"; then
-    echo "  Result: EBCDIC detected ❌"
+    echo "  Result: EBCDIC detected *"
     echo ""
-    echo "  ❌ TEST 1 FAILED: Git stored EBCDIC (should be UTF-8)"
+    echo "  * TEST 1 FAILED: Git stored EBCDIC (should be UTF-8)"
     echo "     This means encode_to_git() is still being skipped!"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 else
@@ -121,11 +121,11 @@ echo ""
 # TEST 2: Verify same_encoding() Protection
 # ==============================================================================
 
-echo "═══════════════════════════════════════════════════════════════════════════════"
+echo "*******************************************************************************"
 echo "TEST 2: Verify same_encoding() Protection"
-echo "═══════════════════════════════════════════════════════════════════════════════"
+echo "*******************************************************************************"
 echo ""
-echo "This tests that UTF-8 → UTF-8 conversion is skipped (no double conversion)"
+echo "This tests that UTF-8 * UTF-8 conversion is skipped (no double conversion)"
 echo ""
 
 # Create filter and file with UTF-8 encoding
@@ -164,11 +164,11 @@ echo "Git object content: $CONTENT"
 echo ""
 
 if echo "$CONTENT" | grep -q "Test 2"; then
-    echo "  ✅ TEST 2 PASSED: same_encoding() protection works"
-    echo "     UTF-8 → UTF-8 conversion was skipped (no double conversion)"
+    echo "  * TEST 2 PASSED: same_encoding() protection works"
+    echo "     UTF-8 * UTF-8 conversion was skipped (no double conversion)"
     PASS_COUNT=$((PASS_COUNT + 1))
 else
-    echo "  ❌ TEST 2 FAILED: Content corrupted"
+    echo "  * TEST 2 FAILED: Content corrupted"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 fi
 
@@ -179,20 +179,20 @@ echo ""
 # Summary
 # ==============================================================================
 
-echo "═══════════════════════════════════════════════════════════════════════════════"
+echo "*******************************************************************************"
 echo "SUMMARY"
-echo "═══════════════════════════════════════════════════════════════════════════════"
+echo "*******************************************************************************"
 echo ""
 echo "Tests passed: $PASS_COUNT"
 echo "Tests failed: $FAIL_COUNT"
 echo ""
 
 if [ $FAIL_COUNT -eq 0 ]; then
-    echo "✅ ALL TESTS PASSED!"
+    echo "* ALL TESTS PASSED!"
     echo ""
     echo "Conclusions:"
-    echo "  1. ✅ Dumb filters (cat) work correctly - EBCDIC → UTF-8 conversion"
-    echo "  2. ✅ same_encoding() protection prevents double conversion"
+    echo "  1. * Dumb filters (cat) work correctly - EBCDIC * UTF-8 conversion"
+    echo "  2. * same_encoding() protection prevents double conversion"
     echo ""
     echo "The fix (removing #ifdef __MVS__) is CORRECT!"
     echo ""
@@ -200,14 +200,14 @@ if [ $FAIL_COUNT -eq 0 ]; then
     echo "      and are not supported. See FILTER_ANTI_PATTERNS.md for details."
     EXIT_CODE=0
 else
-    echo "❌ SOME TESTS FAILED"
+    echo "* SOME TESTS FAILED"
     echo ""
     echo "This suggests:"
     if [ $PASS_COUNT -eq 0 ]; then
-        echo "  • The fix may not have been applied correctly"
-        echo "  • Or encode_to_git() is still being skipped"
+        echo "  * The fix may not have been applied correctly"
+        echo "  * Or encode_to_git() is still being skipped"
     else
-        echo "  • Most tests passed, some edge cases need work"
+        echo "  * Most tests passed, some edge cases need work"
     fi
     EXIT_CODE=1
 fi

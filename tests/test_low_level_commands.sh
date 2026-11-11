@@ -53,13 +53,13 @@ rm test.txt
 if $GIT_BIN checkout-index -f test.txt 2>/dev/null; then
     TAG=$(chtag -p test.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File tagged as IBM-1047"
+        echo "  * PASS: File tagged as IBM-1047"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File tagged as $TAG (expected IBM-1047)"
+        echo "  * FAIL: File tagged as $TAG (expected IBM-1047)"
     fi
 else
-    echo "  ✗ FAIL: checkout-index failed"
+    echo "  * FAIL: checkout-index failed"
 fi
 
 cd ..
@@ -93,13 +93,13 @@ if $GIT_BIN checkout-index -f -a 2>/dev/null; then
     TAG2=$(chtag -p file.dat 2>/dev/null | awk '{print $2}')
     
     if [ "$TAG1" = "IBM-1047" ] && [ "$TAG2" = "UTF-8" -o "$TAG2" = "ISO8859-1" ]; then
-        echo "  ✓ PASS: file.txt=$TAG1, file.dat=$TAG2"
+        echo "  * PASS: file.txt=$TAG1, file.dat=$TAG2"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: file.txt=$TAG1 (expected IBM-1047), file.dat=$TAG2 (expected UTF-8)"
+        echo "  * FAIL: file.txt=$TAG1 (expected IBM-1047), file.dat=$TAG2 (expected UTF-8)"
     fi
 else
-    echo "  ✗ FAIL: checkout-index -a failed"
+    echo "  * FAIL: checkout-index -a failed"
 fi
 
 cd ..
@@ -132,13 +132,13 @@ $GIT_BIN commit -q -m "V2" 2>/dev/null
 if $GIT_BIN read-tree --reset -u HEAD~1 2>/dev/null; then
     TAG=$(chtag -p test.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File tagged as IBM-1047"
+        echo "  * PASS: File tagged as IBM-1047"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File tagged as $TAG (expected IBM-1047)"
+        echo "  * FAIL: File tagged as $TAG (expected IBM-1047)"
     fi
 else
-    echo "  ✗ FAIL: read-tree -u failed"
+    echo "  * FAIL: read-tree -u failed"
 fi
 
 cd ..
@@ -193,13 +193,13 @@ $GIT_BIN commit -q -m "Branch2" 2>/dev/null
 BRANCH2=$($GIT_BIN rev-parse HEAD)
 
 # Run merge-tree (doesn't write to working tree in modern Git)
-echo "  ℹ️  INFO: git merge-tree is a read-only command in Git 2.x"
-echo "  ℹ️  INFO: It doesn't write files to working tree"
+echo "  **  INFO: git merge-tree is a read-only command in Git 2.x"
+echo "  **  INFO: It doesn't write files to working tree"
 if $GIT_BIN merge-tree $BASE $BRANCH1 $BRANCH2 > /dev/null 2>&1; then
-    echo "  ✓ PASS: merge-tree ran successfully (no files written)"
+    echo "  * PASS: merge-tree ran successfully (no files written)"
     PASSED=$((PASSED + 1))
 else
-    echo "  ⚠️  SKIP: merge-tree not available or different behavior"
+    echo "  **  SKIP: merge-tree not available or different behavior"
     PASSED=$((PASSED + 1))  # Don't penalize
 fi
 
@@ -214,20 +214,20 @@ echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 echo "========================================================================"
 
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ ALL TESTS PASSED!"
+    echo "  * ALL TESTS PASSED!"
     echo ""
     echo "  Low-level commands tested:"
-    echo "    ✓ git checkout-index"
-    echo "    ✓ git checkout-index -a"
-    echo "    ✓ git read-tree -u"
-    echo "    ✓ git merge-tree"
+    echo "    * git checkout-index"
+    echo "    * git checkout-index -a"
+    echo "    * git read-tree -u"
+    echo "    * git merge-tree"
     exit 0
 elif [ $PASSED -ge 3 ]; then
-    echo "  ⚠️  MOSTLY PASSED ($PASSED/$TOTAL)"
+    echo "  **  MOSTLY PASSED ($PASSED/$TOTAL)"
     echo "  Most low-level commands work correctly"
     exit 0
 else
-    echo "  ✗ SOME TESTS FAILED"
+    echo "  * SOME TESTS FAILED"
     echo "  $((TOTAL - PASSED)) test(s) failed"
     exit 1
 fi

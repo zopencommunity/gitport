@@ -160,9 +160,9 @@ EOF
     echo ""
     
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "✅ PASS: File correctly tagged"
+        echo "* PASS: File correctly tagged"
     else
-        echo "❌ FAIL: File has WRONG tag!"
+        echo "* FAIL: File has WRONG tag!"
         echo ""
         echo "This is the first resolution - rerere recorded it."
     fi
@@ -187,9 +187,9 @@ if ! $GIT_BIN cherry-pick branch-a 2>&1; then
     
     # Check if rerere resolved it
     if $GIT_BIN diff --quiet; then
-        echo "✓ Rerere auto-resolved the conflict"
+        echo "* Rerere auto-resolved the conflict"
     else
-        echo "⚠ Rerere did not fully resolve"
+        echo "* Rerere did not fully resolve"
     fi
     
     # Complete the cherry-pick
@@ -210,9 +210,9 @@ echo "Actual:   $TAG_RERERE"
 echo ""
 
 if [ "$TAG_RERERE" = "IBM-1047" ]; then
-    echo "✅ PASS: Rerere preserved encoding tag"
+    echo "* PASS: Rerere preserved encoding tag"
 else
-    echo "❌ FAIL: Rerere did NOT preserve encoding tag!"
+    echo "* FAIL: Rerere did NOT preserve encoding tag!"
     echo ""
     echo "BUG REPRODUCED!"
     echo ""
@@ -228,7 +228,7 @@ echo "Test Summary"
 echo "==================================================================="
 echo ""
 if [ "$TAG_RERERE" != "IBM-1047" ]; then
-    echo "❌ BUG CONFIRMED: git rerere + cherry-pick loses encoding tag"
+    echo "* BUG CONFIRMED: git rerere + cherry-pick loses encoding tag"
     echo ""
     echo "Details:"
     echo "- Command: git cherry-pick (with conflicts)"
@@ -237,7 +237,7 @@ if [ "$TAG_RERERE" != "IBM-1047" ]; then
     echo "- Actual tag: $TAG_RERERE"
     echo "- File becomes unreadable due to wrong encoding tag"
 else
-    echo "✅ NO BUG: git rerere + cherry-pick works correctly"
+    echo "* NO BUG: git rerere + cherry-pick works correctly"
 fi
 echo ""
 echo "Test directory: $TEST_DIR"

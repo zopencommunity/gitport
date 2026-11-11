@@ -113,17 +113,17 @@ echo "  File tag:" $(ls -T file.txt | awk '{print $2}')
 
 if [ $APPLY_STATUS -eq 0 ]; then
     if grep -q "line2-modified" file.txt; then
-        echo "  ✓ PASS: Patch applied successfully"
+        echo "  * PASS: Patch applied successfully"
         PASSED=$((PASSED + 1))
     elif echo "$APPLY_OUTPUT" | grep -q "does not match index"; then
-        echo "  ✓ PASS: P1 fix correctly detected NEL/LF encoding difference"
-        echo "         (EBCDIC 0x25 → UTF-8 NEL 0xc285, test uses LF 0x0a)"
+        echo "  * PASS: P1 fix correctly detected NEL/LF encoding difference"
+        echo "         (EBCDIC 0x25 * UTF-8 NEL 0xc285, test uses LF 0x0a)"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: Unexpected behavior"
+        echo "  * FAIL: Unexpected behavior"
     fi
 else
-    echo "  ✗ FAIL: git apply --3way failed"
+    echo "  * FAIL: git apply --3way failed"
 fi
 
 cd ..
@@ -163,16 +163,16 @@ APPLY_STATUS2=$?
 
 if [ $APPLY_STATUS2 -eq 0 ]; then
     if grep -q "MODIFIED" file.txt; then
-        echo "  ✓ PASS: Special characters handled correctly"
+        echo "  * PASS: Special characters handled correctly"
         PASSED=$((PASSED + 1))
     elif echo "$APPLY_OUTPUT2" | grep -q "does not match index"; then
-        echo "  ✓ PASS: P1 fix correctly detected encoding difference"
+        echo "  * PASS: P1 fix correctly detected encoding difference"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: Unexpected result"
+        echo "  * FAIL: Unexpected result"
     fi
 else
-    echo "  ✗ FAIL: apply failed"
+    echo "  * FAIL: apply failed"
 fi
 
 cd ..
@@ -186,9 +186,9 @@ echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 echo "========================================================================"
 
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ ALL TESTS PASSED - git apply --3way works with EBCDIC!"
+    echo "  * ALL TESTS PASSED - git apply --3way works with EBCDIC!"
     exit 0
 else
-    echo "  ✗ SOME TESTS FAILED"
+    echo "  * SOME TESTS FAILED"
     exit 1
 fi

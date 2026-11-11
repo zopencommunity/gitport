@@ -74,7 +74,7 @@ echo "config.yml tag after .gitattributes change:"
 chtag -p config.yml
 TAG_AFTER_CHANGE=$(chtag -p config.yml 2>&1 | awk '{print $2}')
 echo "  Tag: $TAG_AFTER_CHANGE"
-echo "  ℹ️  This is EXPECTED - Git doesn't auto-retag existing files"
+echo "  **  This is EXPECTED - Git doesn't auto-retag existing files"
 echo
 
 echo "=========================================="
@@ -85,7 +85,7 @@ echo
 echo "Step 7: User deletes the yaml file"
 git rm -f config.yml
 git commit -m "Delete config.yml"
-echo "  ✅ File deleted and committed"
+echo "  * File deleted and committed"
 echo
 
 echo "Step 8: User creates a NEW test file to verify it works"
@@ -102,9 +102,9 @@ chtag -p test-new.yml
 TAG_NEW_FILE=$(chtag -p test-new.yml 2>&1 | awk '{print $2}')
 echo "  Tag: $TAG_NEW_FILE"
 if [ "$TAG_NEW_FILE" = "ISO8859-1" ]; then
-    echo "  ✅ GOOD - New file gets correct encoding"
+    echo "  * GOOD - New file gets correct encoding"
 else
-    echo "  ❌ UNEXPECTED - New file got wrong encoding"
+    echo "  * UNEXPECTED - New file got wrong encoding"
 fi
 echo
 
@@ -139,19 +139,19 @@ echo "4. Recreated file:        $TAG_RECREATED (should be ISO8859-1)"
 echo
 
 if [ "$TAG_RECREATED" = "ISO8859-1" ]; then
-    echo "✅✅✅ ISSUE IS FIXED! ✅✅✅"
+    echo "*** ISSUE IS FIXED! ***"
     echo "The recreated file got the correct encoding from .gitattributes"
     echo
     RESULT="FIXED"
 elif [ "$TAG_RECREATED" = "$TAG_BEFORE" ]; then
-    echo "❌❌❌ ISSUE STILL EXISTS! ❌❌❌"
+    echo "*** ISSUE STILL EXISTS! ***"
     echo "The recreated file kept the OLD encoding ($TAG_BEFORE)"
     echo "Expected: ISO8859-1"
     echo "Got:      $TAG_RECREATED"
     echo
     RESULT="NOT_FIXED"
 else
-    echo "⚠️⚠️⚠️ UNEXPECTED RESULT! ⚠️⚠️⚠️"
+    echo "****** UNEXPECTED RESULT! ******"
     echo "The recreated file has encoding: $TAG_RECREATED"
     echo "Expected: ISO8859-1"
     echo "This is different from both old and new!"
@@ -171,9 +171,9 @@ echo
 echo "Git diff (should be clean):"
 git diff config.yml
 if [ $? -eq 0 ]; then
-    echo "  ✅ No diff - file is clean"
+    echo "  * No diff - file is clean"
 else
-    echo "  ⚠️ File shows as modified"
+    echo "  ** File shows as modified"
 fi
 echo
 

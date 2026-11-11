@@ -63,19 +63,19 @@ unset GIT_ICONV_TRANSLIT
 if "$GIT_BIN" checkout test.txt 2>&1 | tee /tmp/checkout1.log; then
     # If it succeeded, check what we got
     if xxd test.txt | grep -q "3f"; then
-        echo "  ⚠ Checkout succeeded but produced 0x3f (illegal char)"
+        echo "  * Checkout succeeded but produced 0x3f (illegal char)"
         echo "  This is the bug the user reported!"
     else
-        echo "  ✓ Checkout succeeded without 0x3f"
+        echo "  * Checkout succeeded without 0x3f"
         PASSED=$((PASSED + 1))
     fi
 else
     # Failed - that's actually good (fail-fast)
     if grep -qi "failed to encode\|conversion" /tmp/checkout1.log; then
-        echo "  ✓ PASS: Git failed with encoding error (fail-fast, good!)"
+        echo "  * PASS: Git failed with encoding error (fail-fast, good!)"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: Git failed but with unexpected error"
+        echo "  * FAIL: Git failed but with unexpected error"
         cat /tmp/checkout1.log
     fi
 fi
@@ -110,7 +110,7 @@ rm test.txt
 export GIT_ICONV_TRANSLIT=1
 
 if "$GIT_BIN" checkout test.txt 2>&1 | tee /tmp/checkout2.log; then
-    echo "  ✓ Checkout succeeded with transliteration"
+    echo "  * Checkout succeeded with transliteration"
     
     # Check if it's a regular hyphen (not 0x3f)
     # In IBM-1047, regular hyphen is 0x60
@@ -118,20 +118,20 @@ if "$GIT_BIN" checkout test.txt 2>&1 | tee /tmp/checkout2.log; then
     TAG=$(chtag -p test.txt 2>/dev/null | awk '{print $2}')
     
     if xxd test.txt | grep -q "3f"; then
-        echo "  ✗ FAIL: File still contains 0x3f (illegal char)"
+        echo "  * FAIL: File still contains 0x3f (illegal char)"
         xxd test.txt | grep "3f"
     else
-        echo "  ✓ PASS: No 0x3f found - character was transliterated"
+        echo "  * PASS: No 0x3f found - character was transliterated"
         PASSED=$((PASSED + 1))
         
         # Check if it became a regular hyphen
         CONTENT=$(cat test.txt)
         if echo "$CONTENT" | grep -q "non.breaking"; then
-            echo "  ✓ File content looks correct"
+            echo "  * File content looks correct"
         fi
     fi
 else
-    echo "  ✗ FAIL: Checkout failed even with transliteration"
+    echo "  * FAIL: Checkout failed even with transliteration"
     cat /tmp/checkout2.log
 fi
 
@@ -141,7 +141,7 @@ cd ..
 # Test 3: Multiple unmappable characters
 # ==============================================================================
 echo ""
-echo "[Test 3/4] Multiple unmappable characters (café, naïve, €)..."
+echo "[Test 3/4] Multiple unmappable characters (café, naïve, *)..."
 
 mkdir test3 && cd test3
 "$GIT_BIN" init -q
@@ -156,7 +156,7 @@ echo "*.txt zos-working-tree-encoding=IBM-1047" > .gitattributes
 # Create file with various special characters
 # café (é = U+00E9 = 0xc3 0xa9)
 # naïve (ï = U+00EF = 0xc3 0xaf)
-# € (U+20AC = 0xe2 0x82 0xac)
+# * (U+20AC = 0xe2 0x82 0xac)
 printf 'caf\xc3\xa9 na\xc3\xafve \xe2\x82\xac\n' > test.txt
 chtag -tc UTF-8 test.txt
 "$GIT_BIN" add test.txt
@@ -166,20 +166,20 @@ rm test.txt
 export GIT_ICONV_TRANSLIT=1
 
 if "$GIT_BIN" checkout test.txt 2>&1 | tee /tmp/checkout3.log; then
-    echo "  ✓ Checkout succeeded"
+    echo "  * Checkout succeeded"
     
     CONTENT=$(cat test.txt)
     echo "  Content: $CONTENT"
     
     # Check if characters were approximated (not converted to 0x3f)
     if xxd test.txt | grep -q "3f"; then
-        echo "  ⚠ Warning: Contains 0x3f"
+        echo "  * Warning: Contains 0x3f"
     else
-        echo "  ✓ PASS: No 0x3f found - transliteration worked"
+        echo "  * PASS: No 0x3f found - transliteration worked"
         PASSED=$((PASSED + 1))
     fi
 else
-    echo "  ✗ FAIL: Checkout failed"
+    echo "  * FAIL: Checkout failed"
     cat /tmp/checkout3.log
 fi
 
@@ -214,12 +214,12 @@ rm test.txt
 
 # Check git status - file should NOT appear modified
 if "$GIT_BIN" status --porcelain | grep -q "test.txt"; then
-    echo "  ⚠ Warning: File appears modified after checkout"
+    echo "  * Warning: File appears modified after checkout"
     "$GIT_BIN" status --short
     echo "  This is the user's reported issue!"
     # This might be expected depending on conversion behavior
 else
-    echo "  ✓ PASS: File does not appear modified"
+    echo "  * PASS: File does not appear modified"
     PASSED=$((PASSED + 1))
 fi
 
@@ -232,7 +232,7 @@ echo ""
 echo "========================================================================"
 echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 if [ $PASSED -ge 3 ]; then
-    echo "  ✓ Transliteration appears to be working!"
+    echo "  * Transliteration appears to be working!"
     echo ""
     echo "  Key findings:"
     echo "  - GIT_ICONV_TRANSLIT=1 prevents 0x3f corruption"
@@ -240,7 +240,7 @@ if [ $PASSED -ge 3 ]; then
     echo "  - Solution is ready for user"
     exit 0
 else
-    echo "  ⚠ Some issues found - review needed"
+    echo "  * Some issues found - review needed"
     echo ""
     echo "  If tests failed, check if:"
     echo "  - iconv supports //TRANSLIT on this system"

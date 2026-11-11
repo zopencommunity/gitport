@@ -59,13 +59,13 @@ echo "data 2" > data.dat
 if "$GIT_BIN" apply patch.txt 2>/dev/null; then
     TAG=$(chtag -p data.dat 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "ISO8859-1" ] || [ "$TAG" = "UTF-8" ]; then
-        echo "  ✓ PASS: File tagged as $TAG"
+        echo "  * PASS: File tagged as $TAG"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File tagged as $TAG"
+        echo "  * FAIL: File tagged as $TAG"
     fi
 else
-    echo "  ✗ FAIL: git apply failed"
+    echo "  * FAIL: git apply failed"
 fi
 
 cd ..
@@ -83,9 +83,9 @@ echo "      Complex EBCDIC tests are covered by test_apply_3way_ebcdic.sh."
 echo ""
 
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ git apply works correctly for tagging!"
+    echo "  * git apply works correctly for tagging!"
     exit 0
 else
-    echo "  ✗ Test failed"
+    echo "  * Test failed"
     exit 1
 fi
