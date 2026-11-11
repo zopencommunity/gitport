@@ -1,5 +1,5 @@
 diff --git a/rerere.c b/rerere.c
-index 1c3745d..5cc74ad 100644
+index 1c3745d..80ed86c 100644
 --- a/rerere.c
 +++ b/rerere.c
 @@ -12,6 +12,7 @@
@@ -10,7 +10,7 @@ index 1c3745d..5cc74ad 100644
  #include "xdiff-interface.h"
  #include "dir.h"
  #include "resolve-undo.h"
-@@ -663,11 +664,58 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+@@ -663,11 +664,71 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
  			      rerere_path(&buf, id, "postimage"));
  
  	/* Update "path" with the resolution */
@@ -38,6 +38,19 @@ index 1c3745d..5cc74ad 100644
 +		cr = convert_to_working_tree_ca(&ca, path,
 +						result.ptr, result.size,
 +						&wtresult, NULL);
++		if (cr < 0) {
++			/*
++			 * Encoding error: the resolution cannot be
++			 * represented in the working-tree encoding. Do
++			 * not overwrite the working file with
++			 * unconverted bytes (that would corrupt it);
++			 * fail the replay instead so the conflict is
++			 * preserved for manual resolution.
++			 */
++			strbuf_release(&wtresult);
++			ret = 1;
++			goto out;
++		}
 +		if (cr > 0) {
 +			free(result.ptr);
 +			result.ptr = strbuf_detach(&wtresult, &result.size);
@@ -69,7 +82,7 @@ index 1c3745d..5cc74ad 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
-@@ -730,7 +778,26 @@ static void do_rerere_one_path(struct index_state *istate,
+@@ -730,7 +791,26 @@ static void do_rerere_one_path(struct index_state *istate,
  	/* Has the user resolved it already? */
  	if (variant >= 0) {
  		if (!handle_file(istate, path, NULL, NULL)) {

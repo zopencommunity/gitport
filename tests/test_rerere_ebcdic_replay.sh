@@ -284,6 +284,94 @@ test_rerere_no_double_smudge() {
     pass_test "replayed content correct"
 }
 
+#
+# Test 4: replay must not corrupt the working file when the resolution
+# cannot be represented in the working-tree encoding
+#
+# Record a resolution containing U+2011 (non-breaking hyphen, which has
+# no IBM-1047 equivalent) while the attribute says utf-8, then switch the
+# attribute to ibm-1047 and recreate the conflict. The replay conversion
+# fails; the working file must keep the conflict markers instead of being
+# overwritten with unconverted bytes tagged IBM-1047.
+#
+test_rerere_unconvertible_resolution() {
+    run_test "replay fails safely when resolution is unconvertible"
+
+    cd "$TEST_DIR"
+    rm -rf repo4
+    mkdir repo4
+    cd repo4
+    git init -q -b main
+    git config user.email "test@example.com"
+    git config user.name "Test User"
+    git config core.ignorefiletags true
+    git config rerere.enabled true
+    git config core.iconvtranslit false
+
+    echo "*.txt zos-working-tree-encoding=utf-8" > .gitattributes
+    echo ".gitattributes zos-working-tree-encoding=iso8859-1" >> .gitattributes
+
+    printf 'common\noriginal\n' > file.txt
+    chtag -tc UTF-8 file.txt 2>/dev/null || true
+    git add .gitattributes file.txt
+    git commit -q -m base
+
+    git checkout -q -b feat_a
+    printf 'common\nfeat_a change\n' > file.txt
+    chtag -tc UTF-8 file.txt 2>/dev/null || true
+    git commit -qam a
+
+    git checkout -q main
+    printf 'common\nmain change\n' > file.txt
+    chtag -tc UTF-8 file.txt 2>/dev/null || true
+    git commit -qam main
+
+    # Conflict; resolve with a U+2011 in the resolution; rerere records
+    git checkout -q -b feat_b
+    git merge feat_a >/dev/null 2>&1 || true
+    printf 'common\nresolved with U+2011: \xe2\x80\x91 hyphen\n' > file.txt
+    chtag -tc UTF-8 file.txt 2>/dev/null || true
+    git add file.txt
+    git commit -q -m resolve >/dev/null 2>&1
+
+    # Switch the attribute to ibm-1047: the recorded resolution now
+    # contains a character that has no IBM-1047 equivalent
+    git checkout -q main
+    echo "*.txt zos-working-tree-encoding=ibm-1047" > .gitattributes
+    echo ".gitattributes zos-working-tree-encoding=iso8859-1" >> .gitattributes
+    git add .gitattributes
+    git commit -q -m "attr to ibm-1047"
+
+    # Recreate the same conflict
+    # Refresh the working file for the new attribute (its content did
+    # not change, so it would otherwise stay UTF-8 and block the merge
+    # as a local modification)
+    rm file.txt
+    git checkout -- file.txt
+    # Recreate the same conflict; the replay conversion must fail
+    # WITHOUT corrupting the working file
+    git merge feat_a >/dev/null 2>&1 || true
+
+    # The working file must still contain conflict markers (the conflict
+    # is preserved for manual resolution), not unconverted bytes
+    if ! grep -q "<<<<<<<" file.txt; then
+        fail_test "working file lost its conflict markers after failed replay"
+        od -An -tx1 file.txt | head -2
+        return 1
+    fi
+    pass_test "conflict preserved when resolution is unconvertible"
+
+    # And it must not have been overwritten with UTF-8 bytes under an
+    # IBM-1047 tag
+    if chtag -p file.txt 2>/dev/null | grep -q "IBM-1047"; then
+        if od -An -tx1 file.txt | tr -d ' \n' | grep -q "e28091"; then
+            fail_test "working file contains UTF-8 bytes tagged IBM-1047"
+            return 1
+        fi
+    fi
+    pass_test "working file not mis-tagged after failed replay"
+}
+
 main() {
     log_info "rerere replay with genuine EBCDIC files"
     log_info "========================================"
@@ -293,6 +381,7 @@ main() {
     test_rerere_merge_replay
     test_rerere_cherry_pick_replay
     test_rerere_no_double_smudge
+    test_rerere_unconvertible_resolution
 
     echo ""
     log_info "Test Summary:"
