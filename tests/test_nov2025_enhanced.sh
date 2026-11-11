@@ -89,9 +89,9 @@ TAG_AFTER_FIX=$(chtag -p config.yml 2>&1 | awk '{print $2}')
 echo "  Tag after .gitattributes fix: $TAG_AFTER_FIX"
 
 if [ "$TAG_AFTER_FIX" = "$TAG_INITIAL" ]; then
-    echo "  ✅ Correct - tag didn't change (expected behavior)"
+    echo "  * Correct - tag didn't change (expected behavior)"
 else
-    echo "  ⚠️ Tag changed unexpectedly!"
+    echo "  ** Tag changed unexpectedly!"
 fi
 echo
 
@@ -103,7 +103,7 @@ echo
 echo "Step 7: Delete config.yml"
 git rm -f config.yml
 git commit -m "Delete config.yml"
-echo "  ✅ Deleted"
+echo "  * Deleted"
 echo
 
 echo "Step 8: Create NEW file with different name (control test)"
@@ -157,18 +157,18 @@ echo
 
 if [ "$TAG_RECREATED" = "ISO8859-1" ]; then
     if [ "$TAG_INITIAL" = "IBM-1047" ]; then
-        echo "✅✅✅ ISSUE IS FIXED! ✅✅✅"
+        echo "*** ISSUE IS FIXED! ***"
         echo "Recreated file correctly uses new .gitattributes encoding"
     else
-        echo "⚠️ Test inconclusive - initial tag was not IBM-1047"
+        echo "** Test inconclusive - initial tag was not IBM-1047"
         echo "Need to verify git is actually applying IBM-1047 from .gitattributes"
     fi
 elif [ "$TAG_RECREATED" = "IBM-1047" ]; then
-    echo "❌❌❌ ISSUE STILL EXISTS! ❌❌❌"
+    echo "*** ISSUE STILL EXISTS! ***"
     echo "Recreated file incorrectly uses old encoding"
     echo "Git is somehow remembering the old tag"
 else
-    echo "⚠️ Unexpected tag: $TAG_RECREATED"
+    echo "** Unexpected tag: $TAG_RECREATED"
 fi
 
 echo

@@ -23,8 +23,8 @@ if [ -f "$SCRIPT_DIR/test_common.sh" ]; then
 else
     # Minimal implementations
     log_test_start() { echo "=== TEST: $1 ==="; }
-    log_test_pass() { echo "✅ PASS: $1"; }
-    log_test_fail() { echo "❌ FAIL: $1"; exit 1; }
+    log_test_pass() { echo "* PASS: $1"; }
+    log_test_fail() { echo "* FAIL: $1"; exit 1; }
     log_info() { echo "   $1"; }
 fi
 
@@ -80,13 +80,13 @@ log_info "Attempting to add file with failing encoding..."
 if git add test2.txt 2>&1 | tee /tmp/filter_fd_error.txt; then
     log_test_fail "git add should have failed but succeeded (bug!)"
 else
-    log_info "git add failed as expected ✓"
+    log_info "git add failed as expected *"
 
     # Check that the error message is appropriate
     if grep -q "failed to encode" /tmp/filter_fd_error.txt; then
         log_test_pass "Error message contains 'failed to encode'"
     else
-        log_info "⚠️  Warning: Error message doesn't mention encoding failure"
+        log_info "**  Warning: Error message doesn't mention encoding failure"
         log_info "Error output:"
         cat /tmp/filter_fd_error.txt
         # Don't fail the test, but note the issue
@@ -117,7 +117,7 @@ if git add test2.txt 2>&1 | tee /tmp/filter_fd_translit.txt; then
     if grep -q "transliteration\|warning" /tmp/filter_fd_translit.txt; then
         log_test_pass "Warning issued about transliteration"
     else
-        log_info "⚠️  No warning about transliteration (may be expected)"
+        log_info "**  No warning about transliteration (may be expected)"
     fi
 
     # Verify file is in index
@@ -146,7 +146,7 @@ if git checkout test2.txt 2>&1; then
         if [ "$FILE_TAG" = "t" ]; then
             log_test_pass "File is properly tagged as text"
         else
-            log_info "⚠️  File tag: $FILE_TAG (expected 't')"
+            log_info "**  File tag: $FILE_TAG (expected 't')"
         fi
     else
         log_test_fail "File doesn't exist after checkout"
@@ -160,15 +160,15 @@ cd /
 rm -rf "$TEST_DIR"
 
 echo ""
-echo "═══════════════════════════════════════════════════════════"
-echo "  $TEST_NAME: ALL TESTS PASSED ✅"
-echo "═══════════════════════════════════════════════════════════"
+echo "***********************************************************"
+echo "  $TEST_NAME: ALL TESTS PASSED *"
+echo "***********************************************************"
 echo ""
 echo "Summary:"
-echo "  ✅ Convertible files work with filters"
-echo "  ✅ Failing encodings abort the add in strict mode"
-echo "  ✅ Error message is clear"
-echo "  ✅ Failed files not added to index"
-echo "  ✅ Transliteration mode works"
-echo "  ✅ Round-trip checkout works"
+echo "  * Convertible files work with filters"
+echo "  * Failing encodings abort the add in strict mode"
+echo "  * Error message is clear"
+echo "  * Failed files not added to index"
+echo "  * Transliteration mode works"
+echo "  * Round-trip checkout works"
 echo ""

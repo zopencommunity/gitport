@@ -28,20 +28,20 @@ echo ""
 
 case "$RESULT" in
     "c2ac")
-        echo "  → This system: IBM-1047 0xb0 = U+00AC (¬ NOT SIGN)"
-        echo "  → This is CORRECT per IBM-1047 spec"
+        echo "  * This system: IBM-1047 0xb0 = U+00AC (¬ NOT SIGN)"
+        echo "  * This is CORRECT per IBM-1047 spec"
         ;;
     "c2b0")
-        echo "  → This system: IBM-1047 0xb0 = U+00B0 (° DEGREE SIGN)"
-        echo "  → This is DIFFERENT from standard IBM-1047!"
-        echo "  → May be using IBM-037 or variant"
+        echo "  * This system: IBM-1047 0xb0 = U+00B0 (° DEGREE SIGN)"
+        echo "  * This is DIFFERENT from standard IBM-1047!"
+        echo "  * May be using IBM-037 or variant"
         ;;
     "5e")
-        echo "  → This system: IBM-1047 0xb0 = ^ (CIRCUMFLEX)"
-        echo "  → Unexpected mapping!"
+        echo "  * This system: IBM-1047 0xb0 = ^ (CIRCUMFLEX)"
+        echo "  * Unexpected mapping!"
         ;;
     *)
-        echo "  → Unknown mapping: 0x$RESULT"
+        echo "  * Unknown mapping: 0x$RESULT"
         ;;
 esac
 
@@ -62,14 +62,14 @@ echo ""
 
 case "$RESULT_5F" in
     "c2ac")
-        echo "  → This system: IBM-1047 0x5f = U+00AC (¬ NOT SIGN)"
+        echo "  * This system: IBM-1047 0x5f = U+00AC (¬ NOT SIGN)"
         ;;
     "5e")
-        echo "  → This system: IBM-1047 0x5f = ^ (CIRCUMFLEX)"
-        echo "  → This is CORRECT per IBM-1047 spec"
+        echo "  * This system: IBM-1047 0x5f = ^ (CIRCUMFLEX)"
+        echo "  * This is CORRECT per IBM-1047 spec"
         ;;
     *)
-        echo "  → Mapping: 0x$RESULT_5F"
+        echo "  * Mapping: 0x$RESULT_5F"
         ;;
 esac
 
@@ -91,15 +91,15 @@ echo ""
 
 case "$RESULT_NOT" in
     "b0")
-        echo "  → U+00AC (¬) → IBM-1047 0xb0"
-        echo "  → On this system, NOT SIGN maps to 0xb0"
+        echo "  * U+00AC (¬) * IBM-1047 0xb0"
+        echo "  * On this system, NOT SIGN maps to 0xb0"
         ;;
     "5f")
-        echo "  → U+00AC (¬) → IBM-1047 0x5f"
-        echo "  → On this system, NOT SIGN maps to 0x5f (standard)"
+        echo "  * U+00AC (¬) * IBM-1047 0x5f"
+        echo "  * On this system, NOT SIGN maps to 0x5f (standard)"
         ;;
     *)
-        echo "  → Converted to: 0x$RESULT_NOT"
+        echo "  * Converted to: 0x$RESULT_NOT"
         ;;
 esac
 
@@ -117,13 +117,13 @@ echo "Result: 0x$RESULT_037"
 
 case "$RESULT_037" in
     "c2ac")
-        echo "  → IBM-037 0xb0 = U+00AC (¬ NOT SIGN)"
+        echo "  * IBM-037 0xb0 = U+00AC (¬ NOT SIGN)"
         ;;
     "5e")
-        echo "  → IBM-037 0xb0 = ^ (CIRCUMFLEX)"
+        echo "  * IBM-037 0xb0 = ^ (CIRCUMFLEX)"
         ;;
     *)
-        echo "  → IBM-037 0xb0 = 0x$RESULT_037"
+        echo "  * IBM-037 0xb0 = 0x$RESULT_037"
         ;;
 esac
 
@@ -133,7 +133,7 @@ esac
 echo ""
 echo "[Test 5] Key character mappings on THIS system"
 echo ""
-echo "Byte | IBM-1047→UTF-8 | IBM-037→UTF-8 | Character"
+echo "Byte | IBM-1047*UTF-8 | IBM-037*UTF-8 | Character"
 echo "-----|----------------|---------------|----------"
 
 for byte in 5e 5f b0; do

@@ -100,9 +100,9 @@ echo ""
 
 TAG=$(chtag -p cobfe/zosGen/src/igyvcntl.plx | awk '{print $2}')
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "✅ PASS: File correctly tagged as IBM-1047"
+    echo "* PASS: File correctly tagged as IBM-1047"
 else
-    echo "❌ FAIL: File tagged as $TAG (should be IBM-1047)"
+    echo "* FAIL: File tagged as $TAG (should be IBM-1047)"
     echo ""
     echo "BUG REPRODUCED!"
     echo "File is readable after retagging:"
@@ -128,9 +128,9 @@ echo ""
 
 TAG_AFTER_POP=$(chtag -p cobfe/zosGen/src/igyvcntl.plx | awk '{print $2}')
 if [ "$TAG_AFTER_POP" = "IBM-1047" ]; then
-    echo "✅ PASS: File correctly tagged as IBM-1047 after pop"
+    echo "* PASS: File correctly tagged as IBM-1047 after pop"
 else
-    echo "❌ FAIL: File tagged as $TAG_AFTER_POP after pop"
+    echo "* FAIL: File tagged as $TAG_AFTER_POP after pop"
 fi
 echo ""
 
@@ -139,7 +139,7 @@ echo "Test Summary"
 echo "==================================================================="
 echo ""
 if [ "$TAG" != "IBM-1047" ]; then
-    echo "❌ BUG CONFIRMED: git stash push <file> tags file incorrectly"
+    echo "* BUG CONFIRMED: git stash push <file> tags file incorrectly"
     echo ""
     echo "Issue Details:"
     echo "- Command: git stash push cobfe/zosGen/src/igyvcntl.plx"
@@ -154,7 +154,7 @@ if [ "$TAG" != "IBM-1047" ]; then
     echo "Note: 'git stash pop' restores tag correctly"
     EXIT_CODE=1
 else
-    echo "✅ NO BUG: git stash push <file> works correctly"
+    echo "* NO BUG: git stash push <file> works correctly"
     EXIT_CODE=0
 fi
 echo ""

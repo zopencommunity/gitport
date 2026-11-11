@@ -43,24 +43,24 @@ echo "[Test 1/5] Check iconv support for NOT symbol (¬)..."
 # Test UTF-8 to IBM-1047 conversion
 printf '\xc2\xac' > /tmp/not_utf8.txt
 if iconv -f UTF-8 -t IBM-1047 /tmp/not_utf8.txt > /tmp/not_1047.txt 2>/dev/null; then
-    echo "  ✓ iconv can convert ¬ from UTF-8 to IBM-1047"
+    echo "  * iconv can convert ¬ from UTF-8 to IBM-1047"
     RESULT=$(xxd -p /tmp/not_1047.txt | tr -d '\n')
     echo "  Result: 0x$RESULT"
     if [ "$RESULT" = "5f" ]; then
-        echo "  ✓ PASS: Correctly converted to 0x5f (^)"
+        echo "  * PASS: Correctly converted to 0x5f (^)"
         PASSED=$((PASSED + 1))
     else
-        echo "  ⚠ Warning: Got 0x$RESULT instead of 0x5f"
+        echo "  * Warning: Got 0x$RESULT instead of 0x5f"
     fi
 else
-    echo "  ✗ FAIL: iconv cannot convert ¬"
+    echo "  * FAIL: iconv cannot convert ¬"
 fi
 
 # ==============================================================================
 # Test 2: Clone repo with NOT symbol in UTF-8
 # ==============================================================================
 echo ""
-echo "[Test 2/5] Clone repo with ¬ symbol (UTF-8 → IBM-1047)..."
+echo "[Test 2/5] Clone repo with ¬ symbol (UTF-8 * IBM-1047)..."
 
 mkdir test2 && cd test2
 "$GIT_BIN" init -q
@@ -87,9 +87,9 @@ chtag -tc UTF-8 test.plx
 
 # Verify UTF-8 encoding
 if xxd test.plx | grep -q "c2ac"; then
-    echo "  ✓ File contains U+00AC (¬) in UTF-8"
+    echo "  * File contains U+00AC (¬) in UTF-8"
 else
-    echo "  ⚠ Warning: Cannot find ¬ in UTF-8 encoding"
+    echo "  * Warning: Cannot find ¬ in UTF-8 encoding"
 fi
 
 "$GIT_BIN" add test.plx
@@ -98,7 +98,7 @@ fi
 # Try to checkout
 rm test.plx
 if "$GIT_BIN" checkout test.plx 2>&1 | tee /tmp/checkout_not.log; then
-    echo "  ✓ Checkout succeeded"
+    echo "  * Checkout succeeded"
     
     # Check file encoding
     TAG=$(chtag -p test.plx 2>/dev/null | awk '{print $2}')
@@ -109,22 +109,22 @@ if "$GIT_BIN" checkout test.plx 2>&1 | tee /tmp/checkout_not.log; then
     echo "  Character: $CHAR"
     
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File correctly tagged as IBM-1047"
+        echo "  * PASS: File correctly tagged as IBM-1047"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: File has wrong tag: $TAG"
+        echo "  * FAIL: File has wrong tag: $TAG"
     fi
 else
     # Check if it's an encoding error
     if grep -q "failed to encode" /tmp/checkout_not.log; then
-        echo "  ⚠ Encoding error occurred (user's issue)"
+        echo "  * Encoding error occurred (user's issue)"
         cat /tmp/checkout_not.log
         
         # Check if tag was set despite error
         if [ -f test.plx ]; then
             TAG=$(chtag -p test.plx 2>/dev/null | awk '{print $2}')
             if [ "$TAG" = "IBM-1047" ]; then
-                echo "  ✗ BUG: File tagged as IBM-1047 despite error!"
+                echo "  * BUG: File tagged as IBM-1047 despite error!"
                 echo "  This is the issue Igor mentioned - tag should NOT be set on error"
             fi
         fi
@@ -166,17 +166,17 @@ export GIT_ICONV_TRANSLIT=1
 
 rm test.plx
 if "$GIT_BIN" checkout test.plx 2>&1 | tee /tmp/checkout_translit.log; then
-    echo "  ✓ Checkout succeeded with transliteration"
+    echo "  * Checkout succeeded with transliteration"
     
     TAG=$(chtag -p test.plx 2>/dev/null | awk '{print $2}')
     echo "  File tag: $TAG"
     
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: File correctly tagged"
+        echo "  * PASS: File correctly tagged"
         PASSED=$((PASSED + 1))
     fi
 else
-    echo "  ✗ FAIL: Checkout failed even with transliteration"
+    echo "  * FAIL: Checkout failed even with transliteration"
     cat /tmp/checkout_translit.log
 fi
 
@@ -198,26 +198,26 @@ printf '\xb0' > /tmp/byte_b0.txt
 # Try to convert from IBM-037 to UTF-8
 if iconv -f IBM-037 -t UTF-8 /tmp/byte_b0.txt > /tmp/from_037.txt 2>/dev/null; then
     CHAR_037=$(xxd -p /tmp/from_037.txt | tr -d '\n')
-    echo "  IBM-037 0xb0 → UTF-8: 0x$CHAR_037"
+    echo "  IBM-037 0xb0 * UTF-8: 0x$CHAR_037"
     if [ "$CHAR_037" = "c2ac" ]; then
-        echo "  ✓ Correct: U+00AC (¬ NOT symbol)"
+        echo "  * Correct: U+00AC (¬ NOT symbol)"
     fi
 fi
 
 # Try to convert from IBM-1047 to UTF-8
 if iconv -f IBM-1047 -t UTF-8 /tmp/byte_b0.txt > /tmp/from_1047.txt 2>/dev/null; then
     CHAR_1047=$(xxd -p /tmp/from_1047.txt | tr -d '\n')
-    echo "  IBM-1047 0xb0 → UTF-8: 0x$CHAR_1047"
+    echo "  IBM-1047 0xb0 * UTF-8: 0x$CHAR_1047"
     if [ "$CHAR_1047" = "c2b0" ]; then
-        echo "  ✓ Correct: U+00B0 (° degree symbol)"
+        echo "  * Correct: U+00B0 (° degree symbol)"
     fi
 fi
 
 if [ "$CHAR_037" != "$CHAR_1047" ]; then
-    echo "  ✓ PASS: Confirmed 0xb0 means different characters in 037 vs 1047"
+    echo "  * PASS: Confirmed 0xb0 means different characters in 037 vs 1047"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: Same character in both encodings?"
+    echo "  * FAIL: Same character in both encodings?"
 fi
 
 # ==============================================================================
@@ -250,15 +250,15 @@ chtag -tc UTF-8 test.plx
 
 rm test.plx
 if "$GIT_BIN" checkout test.plx 2>&1; then
-    echo "  ✓ Checkout succeeded with caret (^)"
+    echo "  * Checkout succeeded with caret (^)"
     
     TAG=$(chtag -p test.plx 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: Caret works fine in IBM-1047"
+        echo "  * PASS: Caret works fine in IBM-1047"
         PASSED=$((PASSED + 1))
     fi
 else
-    echo "  ✗ FAIL: Even caret failed?"
+    echo "  * FAIL: Even caret failed?"
 fi
 
 cd ..
@@ -271,17 +271,17 @@ echo "========================================================================"
 echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 echo ""
 echo "  KEY FINDINGS:"
-echo "  - U+00AC (¬ NOT) → IBM-1047: 0x5f (^)"
+echo "  - U+00AC (¬ NOT) * IBM-1047: 0x5f (^)"
 echo "  - 0xb0 in IBM-037 = ¬ (NOT symbol)"
 echo "  - 0xb0 in IBM-1047 = ° (degree symbol)"
 echo "  - Problem: File may have been edited in IBM-037 environment"
 echo ""
 if [ $PASSED -ge 3 ]; then
-    echo "  ✓ Transliteration handles this issue"
+    echo "  * Transliteration handles this issue"
     echo "  Solution: git config --global core.iconvtranslit true"
     exit 0
 else
-    echo "  ⚠ Some encoding issues detected"
+    echo "  * Some encoding issues detected"
     exit 1
 fi
 echo "========================================================================"

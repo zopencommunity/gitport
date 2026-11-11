@@ -26,12 +26,12 @@ run_test() {
     
     if bash "$SCRIPT_DIR/$test_script"; then
         echo ""
-        echo "✓ $test_name PASSED"
+        echo "* $test_name PASSED"
         echo ""
     else
         EXIT_CODE=$?
         echo ""
-        echo "✗ $test_name FAILED (exit code: $EXIT_CODE)"
+        echo "* $test_name FAILED (exit code: $EXIT_CODE)"
         echo ""
         FAILURES="${FAILURES}  - $test_name\n"
     fi
@@ -48,18 +48,18 @@ echo "========================================================================"
 echo ""
 
 if [ -z "$FAILURES" ]; then
-    echo "  ✓✓✓ ALL TEST SUITES PASSED! ✓✓✓"
+    echo "  *** ALL TEST SUITES PASSED! ***"
     echo ""
     echo "  Commands tested:"
-    echo "    ✓ git merge-file"
-    echo "    ✓ git diff --output"
-    echo "    ✓ git apply"
-    echo "    ✓ git rebase"
+    echo "    * git merge-file"
+    echo "    * git diff --output"
+    echo "    * git apply"
+    echo "    * git rebase"
     echo ""
     echo "  All commands correctly tag files according to .gitattributes"
     exit 0
 else
-    echo "  ✗ SOME TEST SUITES FAILED:"
+    echo "  * SOME TEST SUITES FAILED:"
     echo ""
     echo -e "$FAILURES"
     echo ""

@@ -84,11 +84,11 @@ echo "Recreated: $TAG3"
 echo
 
 if [ "$TAG3" = "ISO8859-1" ]; then
-    echo "✅ PASS - Issue is FIXED on your system!"
+    echo "* PASS - Issue is FIXED on your system!"
     echo "   Recreated file correctly uses new encoding"
     RESULT=0
 else
-    echo "❌ FAIL - Issue still exists on your system"
+    echo "* FAIL - Issue still exists on your system"
     echo "   Expected: ISO8859-1"
     echo "   Got:      $TAG3"
     echo

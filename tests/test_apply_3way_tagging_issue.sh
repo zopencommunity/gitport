@@ -139,9 +139,9 @@ echo "Actual:   $TAG"
 echo ""
 
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "✅ PASS: File correctly tagged as IBM-1047"
+    echo "* PASS: File correctly tagged as IBM-1047"
 else
-    echo "❌ FAIL: File tagged as $TAG (should be IBM-1047)"
+    echo "* FAIL: File tagged as $TAG (should be IBM-1047)"
     echo ""
     echo "BUG REPRODUCED!"
     echo ""
@@ -156,7 +156,7 @@ else
     echo "Content after retagging:"
     cat hello.c | head -5
     echo ""
-    echo "✓ Content is correct - only the tag was wrong!"
+    echo "* Content is correct - only the tag was wrong!"
 fi
 
 echo ""
@@ -165,12 +165,12 @@ echo "Test Summary"
 echo "==================================================================="
 echo ""
 if [ "$TAG" != "IBM-1047" ]; then
-    echo "❌ BUG CONFIRMED: git apply --3way sets wrong file tag"
+    echo "* BUG CONFIRMED: git apply --3way sets wrong file tag"
     echo ""
     echo "Details:"
     echo "- Command: git apply --3way"
-    echo "- File content: ✓ CORRECT (properly converted to IBM-1047)"
-    echo "- File tag: ✗ WRONG ($TAG instead of IBM-1047)"
+    echo "- File content: * CORRECT (properly converted to IBM-1047)"
+    echo "- File tag: * WRONG ($TAG instead of IBM-1047)"
     echo "- Impact: File appears corrupted until manually retagged"
     echo ""
     echo "Workaround:"
@@ -180,7 +180,7 @@ if [ "$TAG" != "IBM-1047" ]; then
     echo "  git apply --3way converts content correctly but doesn't"
     echo "  call the file tagging function for merged files."
 else
-    echo "✅ NO BUG: git apply --3way correctly tags files"
+    echo "* NO BUG: git apply --3way correctly tags files"
 fi
 echo ""
 echo "Test directory: $TEST_DIR"

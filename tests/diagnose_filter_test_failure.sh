@@ -1,25 +1,25 @@
 #!/bin/bash
 # Diagnose why filter tests are failing
 
-echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║     Filter Test Failure Diagnosis                                             ║"
-echo "╚══════════════════════════════════════════════════════════════════════════════╝"
+echo "********************************************************************************"
+echo "*     Filter Test Failure Diagnosis                                             *"
+echo "********************************************************************************"
 echo ""
 
 echo "Step 1: Check Git binary"
-echo "════════════════════════════════════════════════════════════════════════════════"
+echo "********************************************************************************"
 which git
 git --version
 echo ""
 
 echo "Step 2: Verify the fix was applied"
-echo "════════════════════════════════════════════════════════════════════════════════"
+echo "********************************************************************************"
 echo "Checking git/convert.c around line 1612..."
 cd ../git 2>/dev/null || cd git 2>/dev/null || { echo "Cannot find git directory"; exit 1; }
 
 # Check if #ifdef __MVS__ exists in convert_to_git_filter_fd
 if grep -A 20 "convert_to_git_filter_fd" convert.c | grep -q "#ifdef __MVS__"; then
-    echo "❌ FOUND: #ifdef __MVS__ block still exists!"
+    echo "* FOUND: #ifdef __MVS__ block still exists!"
     echo ""
     echo "The block around convert_to_git_filter_fd:"
     grep -A 30 "convert_to_git_filter_fd" convert.c | head -35
@@ -27,7 +27,7 @@ if grep -A 20 "convert_to_git_filter_fd" convert.c | grep -q "#ifdef __MVS__"; t
     echo "PROBLEM: The fix was not applied!"
     echo "ACTION: Remove the #ifdef __MVS__ block (lines 1612-1626)"
 else
-    echo "✅ GOOD: No #ifdef __MVS__ found in convert_to_git_filter_fd"
+    echo "* GOOD: No #ifdef __MVS__ found in convert_to_git_filter_fd"
     echo ""
     echo "The encode_to_git call:"
     grep -A 5 "convert_to_git_filter_fd" convert.c | grep -A 3 "encode_to_git"
@@ -35,18 +35,18 @@ fi
 
 echo ""
 echo "Step 3: Check if git was rebuilt"
-echo "════════════════════════════════════════════════════════════════════════════════"
+echo "********************************************************************************"
 ls -l git 2>/dev/null || ls -l ../git/git 2>/dev/null
 echo ""
 BUILT_GIT=$(find . -name "git" -type f -executable | grep -v ".git/" | head -1)
 if [ -n "$BUILT_GIT" ]; then
     echo "Found git binary: $BUILT_GIT"
-    strings "$BUILT_GIT" | grep -i "skip encode_to_git" && echo "⚠️  OLD binary still has skip message" || echo "✓ No skip message found"
+    strings "$BUILT_GIT" | grep -i "skip encode_to_git" && echo "**  OLD binary still has skip message" || echo "* No skip message found"
 fi
 
 echo ""
 echo "Step 4: Run simple filter test manually"
-echo "════════════════════════════════════════════════════════════════════════════════"
+echo "********************************************************************************"
 
 cd ..
 TEST_DIR="/tmp/quick_filter_test_$$"
@@ -92,11 +92,11 @@ echo ""
 echo "First 4 bytes: $BYTES"
 
 if echo "$BYTES" | grep -qi "^54657374"; then
-    echo "✅ UTF-8 detected - FIX IS WORKING!"
+    echo "* UTF-8 detected - FIX IS WORKING!"
 elif echo "$BYTES" | grep -qi "^e385a2a3"; then
-    echo "❌ EBCDIC detected - FIX NOT WORKING!"
+    echo "* EBCDIC detected - FIX NOT WORKING!"
 else
-    echo "⚠️  Unknown: $BYTES"
+    echo "**  Unknown: $BYTES"
 fi
 
 cd /

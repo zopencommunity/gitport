@@ -91,13 +91,13 @@ TXT
     # Check file tag
     TAG=$(chtag -p test.txt 2>/dev/null | awk '{print $2}')
     if [ "$TAG" = "IBM-1047" ]; then
-        echo "  ✓ PASS: Rerere file tagged as IBM-1047"
+        echo "  * PASS: Rerere file tagged as IBM-1047"
         PASSED=$((PASSED + 1))
     else
-        echo "  ✗ FAIL: Rerere file tagged as $TAG (expected IBM-1047)"
+        echo "  * FAIL: Rerere file tagged as $TAG (expected IBM-1047)"
     fi
 else
-    echo "  ⚠ SKIP: No conflict occurred"
+    echo "  * SKIP: No conflict occurred"
 fi
 
 cd ..
@@ -148,10 +148,10 @@ fi
 # Just check the merged file tag
 TAG=$(chtag -p file.txt 2>/dev/null | awk '{print $2}')
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "  ✓ PASS: Merged file tagged as IBM-1047"
+    echo "  * PASS: Merged file tagged as IBM-1047"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: File tagged as $TAG (expected IBM-1047)"
+    echo "  * FAIL: File tagged as $TAG (expected IBM-1047)"
 fi
 
 cd ..
@@ -165,9 +165,9 @@ echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 echo "========================================================================"
 
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ ALL TESTS PASSED - git rerere tagging works!"
+    echo "  * ALL TESTS PASSED - git rerere tagging works!"
     exit 0
 else
-    echo "  ✗ SOME TESTS FAILED"
+    echo "  * SOME TESTS FAILED"
     exit 1
 fi

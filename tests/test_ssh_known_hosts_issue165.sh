@@ -41,14 +41,14 @@ echo
 
 if [ -f ~/.ssh/known_hosts ]; then
     if grep -q "$TEST_HOST" ~/.ssh/known_hosts; then
-        echo "✅ $TEST_HOST is in known_hosts (normal state)"
+        echo "* $TEST_HOST is in known_hosts (normal state)"
         BASELINE_EXISTS=true
     else
-        echo "⚠️ $TEST_HOST NOT in known_hosts"
+        echo "** $TEST_HOST NOT in known_hosts"
         BASELINE_EXISTS=false
     fi
 else
-    echo "⚠️ known_hosts does not exist"
+    echo "** known_hosts does not exist"
     BASELINE_EXISTS=false
 fi
 
@@ -71,9 +71,9 @@ git ls-remote git@github.com:HarithaIBM/gitport.git HEAD 2>&1 | head -3
 EXIT_CODE=${PIPESTATUS[0]}
 
 if [ $EXIT_CODE -eq 0 ]; then
-    echo "✅ Git command succeeded"
+    echo "* Git command succeeded"
 else
-    echo "❌ Git command failed with exit code: $EXIT_CODE"
+    echo "* Git command failed with exit code: $EXIT_CODE"
 fi
 
 exit $EXIT_CODE
@@ -96,11 +96,11 @@ echo "Result: Exit code $RESULT2"
 echo
 
 if [ -f /tmp/test_known_hosts_$$ ]; then
-    echo "✅ Test known_hosts was created"
+    echo "* Test known_hosts was created"
     echo "Content:"
     cat /tmp/test_known_hosts_$$
 else
-    echo "❌ Test known_hosts was NOT created (THIS IS THE BUG)"
+    echo "* Test known_hosts was NOT created (THIS IS THE BUG)"
     echo "This is the issue reported in #165"
 fi
 
@@ -131,9 +131,9 @@ echo
 echo "Result: Exit code $RESULT3"
 
 if [ $RESULT3 -eq 0 ]; then
-    echo "✅ Workaround successful"
+    echo "* Workaround successful"
 else
-    echo "❌ Workaround failed"
+    echo "* Workaround failed"
 fi
 
 rm -f /tmp/test_known_hosts_workaround_$$
@@ -150,7 +150,7 @@ echo "Pre-populating known_hosts with ssh-keyscan..."
 ssh-keyscan -H $TEST_HOST 2>/dev/null > /tmp/test_known_hosts_keyscan_$$
 
 if [ -s /tmp/test_known_hosts_keyscan_$$ ]; then
-    echo "✅ ssh-keyscan succeeded"
+    echo "* ssh-keyscan succeeded"
     echo "Entries added:"
     cat /tmp/test_known_hosts_keyscan_$$ | wc -l
     
@@ -168,12 +168,12 @@ SCRIPT_EOF
     
     echo
     if [ $RESULT4 -eq 0 ]; then
-        echo "✅ Git works with pre-populated known_hosts"
+        echo "* Git works with pre-populated known_hosts"
     else
-        echo "❌ Git failed even with pre-populated known_hosts"
+        echo "* Git failed even with pre-populated known_hosts"
     fi
 else
-    echo "❌ ssh-keyscan failed"
+    echo "* ssh-keyscan failed"
     RESULT4=1
 fi
 
@@ -190,11 +190,11 @@ echo "SSH Version: $SSH_VERSION"
 echo
 
 if [[ "$SSH_VERSION" == *"OpenSSH_9"* ]] || [[ "$SSH_VERSION" == *"OpenSSH_9"* ]]; then
-    echo "⚠️ OpenSSH 9.x or later detected"
+    echo "** OpenSSH 9.x or later detected"
     echo "User reports this issue started with OpenSSH 9"
     OPENSSH_9=true
 else
-    echo "ℹ️ OpenSSH version < 9"
+    echo "** OpenSSH version < 9"
     OPENSSH_9=false
 fi
 
@@ -223,13 +223,13 @@ echo
 echo "Result: Exit code $RESULT6"
 
 if [ $RESULT6 -eq 0 ]; then
-    echo "✅ accept-new workaround successful"
+    echo "* accept-new workaround successful"
     if [ -f /tmp/test_known_hosts_accept_$$ ]; then
-        echo "✅ known_hosts was created automatically"
+        echo "* known_hosts was created automatically"
         echo "This is the BEST workaround - automatic and secure"
     fi
 else
-    echo "❌ accept-new workaround failed"
+    echo "* accept-new workaround failed"
 fi
 
 rm -f /tmp/test_known_hosts_accept_$$
@@ -284,9 +284,9 @@ echo
 
 # Exit with error if any critical test failed
 if [ $RESULT3 -ne 0 ] && [ $RESULT4 -ne 0 ] && [ $RESULT6 -ne 0 ]; then
-    echo "❌ All workarounds failed - there may be a connectivity issue"
+    echo "* All workarounds failed - there may be a connectivity issue"
     exit 1
 else
-    echo "✅ At least one workaround succeeded"
+    echo "* At least one workaround succeeded"
     exit 0
 fi

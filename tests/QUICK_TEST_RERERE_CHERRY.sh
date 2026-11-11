@@ -117,7 +117,7 @@ echo "Actual:   $TAG"
 
 if [ "$TAG" != "IBM-1047" ]; then
     echo ""
-    echo "❌ BUG: Tag is WRONG ($TAG instead of IBM-1047)"
+    echo "* BUG: Tag is WRONG ($TAG instead of IBM-1047)"
     echo ""
     echo "File may appear corrupted:"
     cat file.txt | head -5
@@ -125,5 +125,5 @@ if [ "$TAG" != "IBM-1047" ]; then
     echo "To fix: chtag -tc 1047 file.txt"
 else
     echo ""
-    echo "✅ OK: Tag is correct"
+    echo "* OK: Tag is correct"
 fi

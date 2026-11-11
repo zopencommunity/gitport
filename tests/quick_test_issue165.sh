@@ -14,7 +14,7 @@ echo
 TEST_KNOWN_HOSTS="/tmp/test_known_hosts_issue165_$$"
 TEST_REPO="git@github.com:HarithaIBM/gitport.git"
 
-echo "⚠️  SAFE MODE: This test does NOT modify your ~/.ssh/known_hosts"
+echo "**  SAFE MODE: This test does NOT modify your ~/.ssh/known_hosts"
 echo "    Using test file: $TEST_KNOWN_HOSTS"
 echo
 
@@ -34,12 +34,12 @@ RESULT1=$?
 
 echo
 if [ $RESULT1 -eq 0 ]; then
-    echo "✅ Test 1 PASSED (no bug detected)"
+    echo "* Test 1 PASSED (no bug detected)"
     if [ -f "$TEST_KNOWN_HOSTS" ]; then
         echo "   known_hosts was created automatically"
     fi
 else
-    echo "❌ Test 1 FAILED (bug exists)"
+    echo "* Test 1 FAILED (bug exists)"
     echo "   Git cannot connect without known_hosts in script mode"
     echo "   This is Issue #165"
 fi
@@ -63,13 +63,13 @@ RESULT2=$?
 
 echo
 if [ $RESULT2 -eq 0 ]; then
-    echo "✅ Test 2 PASSED (workaround works)"
+    echo "* Test 2 PASSED (workaround works)"
     if [ -f "$TEST_KNOWN_HOSTS" ]; then
         echo "   known_hosts was created by workaround"
         echo "   Entries: $(wc -l < "$TEST_KNOWN_HOSTS")"
     fi
 else
-    echo "❌ Test 2 FAILED (workaround doesn't work)"
+    echo "* Test 2 FAILED (workaround doesn't work)"
     echo "   May be connectivity or SSH key issue"
 fi
 
@@ -82,7 +82,7 @@ echo "OpenSSH Version: $(ssh -V 2>&1)"
 echo
 
 if [ $RESULT1 -ne 0 ] && [ $RESULT2 -eq 0 ]; then
-    echo "❌ Issue #165 EXISTS on this system"
+    echo "* Issue #165 EXISTS on this system"
     echo "   - Scripts fail without workaround"
     echo "   - Workaround is needed"
     echo
@@ -90,12 +90,12 @@ if [ $RESULT1 -ne 0 ] && [ $RESULT2 -eq 0 ]; then
     echo "  export GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=accept-new'"
     EXIT_CODE=1
 elif [ $RESULT1 -eq 0 ]; then
-    echo "✅ Issue #165 does NOT exist on this system"
+    echo "* Issue #165 does NOT exist on this system"
     echo "   - Scripts work without workaround"
     echo "   - No action needed"
     EXIT_CODE=0
 else
-    echo "⚠️  Both tests failed - may be connectivity issue"
+    echo "**  Both tests failed - may be connectivity issue"
     echo "   Check: SSH key setup, network connectivity"
     EXIT_CODE=2
 fi
@@ -106,7 +106,7 @@ rm -f /tmp/test_with_workaround_$$.sh
 rm -f "$TEST_KNOWN_HOSTS"
 
 echo
-echo "✅ Your ~/.ssh/known_hosts was NOT modified"
+echo "* Your ~/.ssh/known_hosts was NOT modified"
 echo
 echo "Test complete"
 exit $EXIT_CODE

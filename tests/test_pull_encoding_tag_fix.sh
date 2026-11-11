@@ -70,7 +70,7 @@ TAG1=$(chtag -p file.txt | awk '{print $2}')
 echo "After checkout commit1: tag=$TAG1"
 
 if [ "$TAG1" != "ISO8859-1" ]; then
-    echo "✗ FAIL: Expected ISO8859-1, got $TAG1"
+    echo "* FAIL: Expected ISO8859-1, got $TAG1"
     exit 1
 fi
 
@@ -79,12 +79,12 @@ TAG2=$(chtag -p file.txt | awk '{print $2}')
 echo "After checkout commit2: tag=$TAG2"
 
 if [ "$TAG2" != "IBM-1047" ]; then
-    echo "✗ FAIL: Expected IBM-1047, got $TAG2"
+    echo "* FAIL: Expected IBM-1047, got $TAG2"
     echo "This indicates the attribute cache was NOT invalidated when .gitattributes changed"
     exit 1
 fi
 
-echo "✓ PASS: File correctly retagged when checking out commit with different .gitattributes"
+echo "* PASS: File correctly retagged when checking out commit with different .gitattributes"
 
 # ==============================================================================
 # Test 2: Multiple files with attribute changes
@@ -137,9 +137,9 @@ T3=$(chtag -p file3.txt | awk '{print $2}')
 
 echo "After checkout commit1: file1=$T1, file2=$T2, file3=$T3"
 
-[ "$T1" = "ISO8859-1" ] || { echo "✗ FAIL: file1 wrong tag"; exit 1; }
-[ "$T2" = "ISO8859-1" ] || { echo "✗ FAIL: file2 wrong tag"; exit 1; }
-[ "$T3" = "IBM-1047" ] || { echo "✗ FAIL: file3 wrong tag"; exit 1; }
+[ "$T1" = "ISO8859-1" ] || { echo "* FAIL: file1 wrong tag"; exit 1; }
+[ "$T2" = "ISO8859-1" ] || { echo "* FAIL: file2 wrong tag"; exit 1; }
+[ "$T3" = "IBM-1047" ] || { echo "* FAIL: file3 wrong tag"; exit 1; }
 
 # Checkout commit2
 "$GIT_BIN" checkout "$C2" -q 2>&1 | grep -v "detached HEAD" || true
@@ -150,11 +150,11 @@ T3=$(chtag -p file3.txt | awk '{print $2}')
 
 echo "After checkout commit2: file1=$T1, file2=$T2, file3=$T3"
 
-[ "$T1" = "IBM-1047" ] || { echo "✗ FAIL: file1 not retagged"; exit 1; }
-[ "$T2" = "IBM-1047" ] || { echo "✗ FAIL: file2 not retagged"; exit 1; }
-[ "$T3" = "IBM-1047" ] || { echo "✗ FAIL: file3 tag wrong"; exit 1; }
+[ "$T1" = "IBM-1047" ] || { echo "* FAIL: file1 not retagged"; exit 1; }
+[ "$T2" = "IBM-1047" ] || { echo "* FAIL: file2 not retagged"; exit 1; }
+[ "$T3" = "IBM-1047" ] || { echo "* FAIL: file3 tag wrong"; exit 1; }
 
-echo "✓ PASS: All files correctly retagged"
+echo "* PASS: All files correctly retagged"
 
 # ==============================================================================
 # Test 3: Subdirectory .gitattributes
@@ -197,14 +197,14 @@ C2=$("$GIT_BIN" rev-parse HEAD)
 "$GIT_BIN" checkout "$C1" -q 2>&1 | grep -v "detached HEAD" || true
 T1=$(chtag -p subdir/data.txt | awk '{print $2}')
 echo "After checkout commit1: subdir/data.txt=$T1"
-[ "$T1" = "ISO8859-1" ] || { echo "✗ FAIL: subdir file wrong tag at C1"; exit 1; }
+[ "$T1" = "ISO8859-1" ] || { echo "* FAIL: subdir file wrong tag at C1"; exit 1; }
 
 "$GIT_BIN" checkout "$C2" -q 2>&1 | grep -v "detached HEAD" || true
 T2=$(chtag -p subdir/data.txt | awk '{print $2}')
 echo "After checkout commit2: subdir/data.txt=$T2"
-[ "$T2" = "IBM-1047" ] || { echo "✗ FAIL: subdir file not retagged at C2"; exit 1; }
+[ "$T2" = "IBM-1047" ] || { echo "* FAIL: subdir file not retagged at C2"; exit 1; }
 
-echo "✓ PASS: Subdirectory .gitattributes correctly applied"
+echo "* PASS: Subdirectory .gitattributes correctly applied"
 
 # Cleanup
 cd /

@@ -76,10 +76,10 @@ rm -f filler_*.txt file_*.txt
 
 # Verify tags
 if chtag -p file_ebcdic.txt 2>/dev/null | grep -q "1047"; then
-    echo "  ✓ file_ebcdic.txt correctly tagged as IBM-1047"
+    echo "  * file_ebcdic.txt correctly tagged as IBM-1047"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: file_ebcdic.txt not tagged as IBM-1047"
+    echo "  * FAIL: file_ebcdic.txt not tagged as IBM-1047"
     chtag -p file_ebcdic.txt
 fi
 
@@ -132,23 +132,23 @@ rm -f even_*.txt odd_*.txt
 ERRORS=0
 for i in {0..9}; do
     if ! chtag -p "even_$i.txt" 2>/dev/null | grep -q "1047"; then
-        echo "  ✗ even_$i.txt has wrong tag"
+        echo "  * even_$i.txt has wrong tag"
         chtag -p "even_$i.txt"
         ERRORS=$((ERRORS + 1))
     fi
     # Check for expected UTF-8 tag (could be ISO8859-1 or UTF-8)
     if ! chtag -p "odd_$i.txt" 2>/dev/null | grep -qE "$UTF8_EXPECTED_TAG"; then
-        echo "  ✗ odd_$i.txt has wrong tag (expected $UTF8_EXPECTED_TAG)"
+        echo "  * odd_$i.txt has wrong tag (expected $UTF8_EXPECTED_TAG)"
         chtag -p "odd_$i.txt"
         ERRORS=$((ERRORS + 1))
     fi
 done
 
 if [ $ERRORS -eq 0 ]; then
-    echo "  ✓ All 20 files have correct tags (no race condition)"
+    echo "  * All 20 files have correct tags (no race condition)"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: $ERRORS files have incorrect tags (race condition!)"
+    echo "  * FAIL: $ERRORS files have incorrect tags (race condition!)"
 fi
 
 cd ..
@@ -183,10 +183,10 @@ rm -f binary.bin text.txt
 
 # Binary should be untagged or binary-tagged
 if chtag -p binary.bin 2>/dev/null | grep -qE "untagged|binary"; then
-    echo "  ✓ binary.bin correctly tagged as binary/untagged"
+    echo "  * binary.bin correctly tagged as binary/untagged"
     PASSED=$((PASSED + 1))
 else
-    echo "  ✗ FAIL: binary.bin has incorrect tag"
+    echo "  * FAIL: binary.bin has incorrect tag"
     chtag -p binary.bin
 fi
 
@@ -199,9 +199,9 @@ echo ""
 echo "========================================================================"
 echo "  SUMMARY: $PASSED / $TOTAL TESTS PASSED"
 if [ $PASSED -eq $TOTAL ]; then
-    echo "  ✓ ALL TESTS PASSED - Parallel checkout encoding is correct!"
+    echo "  * ALL TESTS PASSED - Parallel checkout encoding is correct!"
 else
-    echo "  ✗ SOME TESTS FAILED"
+    echo "  * SOME TESTS FAILED"
     exit 1
 fi
 echo "========================================================================"

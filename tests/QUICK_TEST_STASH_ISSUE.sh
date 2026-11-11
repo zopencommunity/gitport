@@ -61,9 +61,9 @@ echo ""
 echo "=== RESULT CHECK ==="
 TAG=$(chtag -p cobfe/zosGen/src/igyvcntl.plx | awk '{print $2}')
 if [ "$TAG" = "IBM-1047" ]; then
-    echo "✅ PASS: Tag is correct (IBM-1047)"
+    echo "* PASS: Tag is correct (IBM-1047)"
 else
-    echo "❌ FAIL: Tag is WRONG ($TAG instead of IBM-1047)"
+    echo "* FAIL: Tag is WRONG ($TAG instead of IBM-1047)"
     echo ""
     echo "File content (may be garbled):"
     head -3 cobfe/zosGen/src/igyvcntl.plx

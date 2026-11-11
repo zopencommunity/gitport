@@ -87,7 +87,7 @@ echo "File on system:"
 chtag -p config.yml
 TAG_SYSTEM_INITIAL=$(chtag -p config.yml 2>&1 | awk '{print $2}')
 echo "  Tag: $TAG_SYSTEM_INITIAL"
-echo "  ℹ️  This demonstrates the initial state"
+echo "  **  This demonstrates the initial state"
 echo
 
 echo "=========================================="
@@ -113,9 +113,9 @@ chtag -p config.yml
 TAG_AFTER_FIX=$(chtag -p config.yml 2>&1 | awk '{print $2}')
 echo "  Tag: $TAG_AFTER_FIX"
 if [ "$TAG_AFTER_FIX" = "$TAG_PHASE1" ]; then
-    echo "  ✅ Expected - tag unchanged"
+    echo "  * Expected - tag unchanged"
 else
-    echo "  ⚠️ Tag changed unexpectedly"
+    echo "  ** Tag changed unexpectedly"
 fi
 echo
 
@@ -129,13 +129,13 @@ cd "$CLONE1_DIR"
 git rm -f config.yml
 git commit -m "Delete config.yml"
 git push origin master
-echo "  ✅ File deleted and pushed"
+echo "  * File deleted and pushed"
 echo
 
 echo "Step 7: System pulls the deletion"
 cd "$CLONE2_DIR"
 git pull origin master
-echo "  ✅ System pulled - file deleted"
+echo "  * System pulled - file deleted"
 echo
 
 echo "=========================================="
@@ -231,30 +231,30 @@ echo
 ISSUE_EXISTS=false
 
 if [ "$TAG_RECREATED_SYSTEM" = "IBM-1047" ]; then
-    echo "❌❌❌ ISSUE EXISTS ON SYSTEM! ❌❌❌"
+    echo "*** ISSUE EXISTS ON SYSTEM! ***"
     echo "The recreated file on system has OLD encoding (IBM-1047)"
     echo "Expected: ISO8859-1"
     ISSUE_EXISTS=true
 elif [ "$TAG_RECREATED_SYSTEM" != "ISO8859-1" ]; then
-    echo "⚠️ UNEXPECTED TAG: $TAG_RECREATED_SYSTEM"
+    echo "** UNEXPECTED TAG: $TAG_RECREATED_SYSTEM"
     echo "Expected: ISO8859-1"
     ISSUE_EXISTS=true
 fi
 
 if [ "$TAG_RECREATED_USER" = "IBM-1047" ]; then
-    echo "❌ Issue also exists in user's clone"
+    echo "* Issue also exists in user's clone"
     ISSUE_EXISTS=true
 elif [ "$TAG_RECREATED_USER" != "ISO8859-1" ]; then
-    echo "⚠️ Unexpected tag in user's clone: $TAG_RECREATED_USER"
+    echo "** Unexpected tag in user's clone: $TAG_RECREATED_USER"
     ISSUE_EXISTS=true
 fi
 
 if [ "$ISSUE_EXISTS" = false ]; then
-    echo "✅✅✅ ISSUE IS FIXED! ✅✅✅"
+    echo "*** ISSUE IS FIXED! ***"
     echo
     echo "Both locations have correct encoding:"
-    echo "  - User's clone:  $TAG_RECREATED_USER ✅"
-    echo "  - System clone:  $TAG_RECREATED_SYSTEM ✅"
+    echo "  - User's clone:  $TAG_RECREATED_USER *"
+    echo "  - System clone:  $TAG_RECREATED_SYSTEM *"
     echo
     echo "The recreated file correctly uses the new .gitattributes encoding"
     echo "This matches the expected behavior after the fix"
@@ -291,12 +291,12 @@ echo "Summary"
 echo "=========================================="
 echo
 if [ "$ISSUE_EXISTS" = false ]; then
-    echo "✅ The Nov 2025 issue is FIXED in this Git version"
-    echo "✅ Files recreated with same name get correct encoding"
-    echo "✅ Both local and remote clones behave correctly"
+    echo "* The Nov 2025 issue is FIXED in this Git version"
+    echo "* Files recreated with same name get correct encoding"
+    echo "* Both local and remote clones behave correctly"
 else
-    echo "❌ The Nov 2025 issue STILL EXISTS"
-    echo "❌ Files recreated with same name keep old encoding"
+    echo "* The Nov 2025 issue STILL EXISTS"
+    echo "* Files recreated with same name keep old encoding"
     echo
     echo "WORKAROUNDS:"
     echo "  1. After changing .gitattributes:"
