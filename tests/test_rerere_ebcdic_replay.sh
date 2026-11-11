@@ -350,7 +350,22 @@ test_rerere_unconvertible_resolution() {
     git checkout -- file.txt
     # Recreate the same conflict; the replay conversion must fail
     # WITHOUT corrupting the working file
-    git merge feat_a >/dev/null 2>&1 || true
+    local replay_out
+    replay_out=$(git merge feat_a 2>&1 || true)
+
+    # The replay must actually have been attempted and reached the
+    # failing encoding conversion; an ordinary unresolved merge also
+    # preserves the markers, so require the encoding-error diagnostic.
+    if ! echo "$replay_out" | grep -q "error: failed to encode"; then
+        fail_test "replay did not reach the failing encoding conversion"
+        echo "$replay_out" | head -5
+        return 1
+    fi
+    if echo "$replay_out" | grep -q "Resolved 'file.txt' using previous resolution"; then
+        fail_test "replay unexpectedly succeeded despite unconvertible resolution"
+        return 1
+    fi
+    pass_test "replay reached the failing encoding conversion"
 
     # The working file must still contain conflict markers (the conflict
     # is preserved for manual resolution), not unconverted bytes
@@ -360,6 +375,7 @@ test_rerere_unconvertible_resolution() {
         return 1
     fi
     pass_test "conflict preserved when resolution is unconvertible"
+
 
     # And it must not have been overwritten with UTF-8 bytes under an
     # IBM-1047 tag
