@@ -1,5 +1,5 @@
 diff --git a/rerere.c b/rerere.c
-index 1c3745d..3d70669 100644
+index 1c3745d..a0eb070 100644
 --- a/rerere.c
 +++ b/rerere.c
 @@ -12,6 +12,8 @@
@@ -179,7 +179,7 @@ index 1c3745d..3d70669 100644
  	if (io.io.wrerror)
  		error(_("there were errors while writing '%s' (%s)"),
  		      path, strerror(io.io.wrerror));
-@@ -663,11 +796,71 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+@@ -663,11 +796,79 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
  			      rerere_path(&buf, id, "postimage"));
  
  	/* Update "path" with the resolution */
@@ -221,8 +221,16 @@ index 1c3745d..3d70669 100644
 +			goto out;
 +		}
 +		if (cr > 0) {
++			size_t outlen;
++
 +			free(result.ptr);
-+			result.ptr = strbuf_detach(&wtresult, &result.size);
++			/*
++			 * mmbuffer_t.size is a long; detach into a
++			 * size_t and assign separately to avoid an
++			 * incompatible pointer type.
++			 */
++			result.ptr = strbuf_detach(&wtresult, &outlen);
++			result.size = outlen;
 +		} else {
 +			strbuf_release(&wtresult);
 +		}
@@ -251,7 +259,7 @@ index 1c3745d..3d70669 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
-@@ -730,7 +923,27 @@ static void do_rerere_one_path(struct index_state *istate,
+@@ -730,7 +931,27 @@ static void do_rerere_one_path(struct index_state *istate,
  	/* Has the user resolved it already? */
  	if (variant >= 0) {
  		if (!handle_file(istate, path, NULL, NULL)) {
@@ -279,7 +287,7 @@ index 1c3745d..3d70669 100644
  			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
  			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
  			free_rerere_id(rr_item);
-@@ -911,37 +1124,6 @@ int repo_rerere(struct repository *r, int flags)
+@@ -911,37 +1132,6 @@ int repo_rerere(struct repository *r, int flags)
  	return status;
  }
  
