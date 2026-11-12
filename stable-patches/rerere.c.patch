@@ -1,16 +1,241 @@
 diff --git a/rerere.c b/rerere.c
-index 8232542585..e8ca73dd49 100644
+index 1c3745d..a0eb070 100644
 --- a/rerere.c
 +++ b/rerere.c
-@@ -21,6 +21,7 @@
- #include "object-file.h"
- #include "odb.h"
- #include "strmap.h"
+@@ -12,6 +12,8 @@
+ #include "string-list.h"
+ #include "read-cache-ll.h"
+ #include "rerere.h"
 +#include "convert.h"
++#include "utf8.h"
+ #include "xdiff-interface.h"
+ #include "dir.h"
+ #include "resolve-undo.h"
+@@ -331,6 +333,43 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
+ 	return strbuf_getwholeline(sb, io->input, '\n');
+ }
  
- #define RESOLVED 0
- #define PUNTED 1
-@@ -692,8 +693,23 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
++
++
++/*
++ * Subclass of rerere_io that reads from an in-core buffer that is a
++ * strbuf
++ */
++struct rerere_io_mem {
++	struct rerere_io io;
++	struct strbuf input;
++	size_t consumed;	/* offset of the next unread byte; avoids the
++			   quadratic buffer shifts of removing each
++			   consumed line from the front of the strbuf */
++};
++
++/*
++ * ... and its getline() method implementation
++ */
++static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
++{
++	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
++	char *ep;
++	size_t len;
++
++	strbuf_release(sb);
++	if (io->consumed >= io->input.len)
++		return -1;
++	ep = memchr(io->input.buf + io->consumed, '\n',
++		    io->input.len - io->consumed);
++	if (!ep)
++		ep = io->input.buf + io->input.len;
++	else if (*ep == '\n')
++		ep++;
++	len = ep - (io->input.buf + io->consumed);
++	strbuf_add(sb, io->input.buf + io->consumed, len);
++	io->consumed += len;
++	return 0;
++}
+ static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
+ {
+ 	strbuf_addchars(buf, ch, size);
+@@ -443,8 +482,89 @@ static int handle_file(struct index_state *istate,
+ 		       const char *path, unsigned char *hash, const char *output)
+ {
+ 	int has_conflicts = 0;
+-	struct rerere_io_file io;
+ 	int marker_size = ll_merge_marker_size(istate, path);
++#ifdef __MVS__
++	struct rerere_io_mem io;
++	struct strbuf raw = STRBUF_INIT;
++	struct conv_attrs ca;
++	int fd;
++	int autocvtToASCII = 0;
++
++	/*
++	 * z/OS: read the working-tree file and normalize it to the
++	 * canonical (UTF-8) form so that all rerere cache images
++	 * (preimage/thisimage/postimage) hold canonical bytes, like
++	 * the blobs they are compared against, and the replay
++	 * conversion can convert the merged result back to the
++	 * working-tree encoding.
++	 *
++	 * The read follows the same tag-aware rules git add uses
++	 * (validate_codeset()): a file tagged IBM-1047 under an
++	 * ISO8859-1 attribute is auto-converted on read; everything
++	 * else is read raw (auto-conversion disabled).
++	 *
++	 * The normalization is encoding-only (reencode_string_len),
++	 * deliberately NOT the full convert_to_git() pipeline: clean
++	 * filters must not run over conflict-marked content, since a
++	 * required filter that rejects marker-laden text (e.g. a
++	 * JSON validator) would break rerere entirely. The matching
++	 * replay conversion also skips smudge filters (see merge()).
++	 */
++	memset(&io, 0, sizeof(io));
++	io.io.getline = rerere_mem_getline;
++	io.io.wrerror = 0;
++
++	validate_codeset(istate, path, &autocvtToASCII);
++	fd = open(path, O_RDONLY);
++	if (fd < 0)
++		return error_errno(_("could not open '%s'"), path);
++	if (!autocvtToASCII)
++		__disableautocvt(fd);
++	if (strbuf_read(&raw, fd, 0) < 0) {
++		close(fd);
++		return error_errno(_("could not read '%s'"), path);
++	}
++	close(fd);
++
++	convert_attrs(istate, &ca, path);
++	if (ca.working_tree_encoding &&
++	    !same_encoding(ca.working_tree_encoding, "UTF-8")
++#ifdef __MVS__
++	    /*
++	     * Honor the same backwards-compat convention as
++	     * encode_to_git(): with core.utf8ccsid=819 (the legacy
++	     * z/OS default), an ISO8859-1 attribute means UTF-8 and
++	     * content is passed through unconverted.
++	     */
++	    && !(utf8_ccsid == 819 &&
++		 !strcasecmp("ISO8859-1", ca.working_tree_encoding))
++#endif
++	    ) {
++		size_t outlen;
++		char *out = reencode_string_len(raw.buf, raw.len,
++						"UTF-8",
++						ca.working_tree_encoding,
++						&outlen);
++		if (!out) {
++			/*
++			 * The file cannot be represented in the
++			 * canonical form. Fail rather than parse the
++			 * raw bytes: a marker hidden in unconverted
++			 * content could make an unresolved file look
++			 * resolved and record an invalid postimage.
++			 */
++			strbuf_release(&raw);
++			return error(_("could not convert '%s' from %s to UTF-8"),
++				     path, ca.working_tree_encoding);
++		}
++		strbuf_attach(&io.input, out, outlen, outlen + 1);
++	} else {
++		/* no encoding conversion needed */
++		strbuf_swap(&io.input, &raw);
++	}
++
++#else
++	struct rerere_io_file io;
+ 
+ 	memset(&io, 0, sizeof(io));
+ 	io.io.getline = rerere_file_getline;
+@@ -452,19 +572,32 @@ static int handle_file(struct index_state *istate,
+ 	io.io.wrerror = 0;
+ 	if (!io.input)
+ 		return error_errno(_("could not open '%s'"), path);
++#endif
+ 
+ 	if (output) {
+ 		io.io.output = fopen(output, "w");
+ 		if (!io.io.output) {
+ 			error_errno(_("could not write '%s'"), output);
++#ifndef __MVS__
+ 			fclose(io.input);
++#endif
++#ifdef __MVS__
++			strbuf_release(&raw);
++			strbuf_release(&io.input);
++#endif
+ 			return -1;
+ 		}
+ 	}
+ 
+ 	has_conflicts = handle_path(hash, (struct rerere_io *)&io, marker_size);
+ 
++#ifndef __MVS__
+ 	fclose(io.input);
++#endif
++#ifdef __MVS__
++	strbuf_release(&raw);
++	strbuf_release(&io.input);
++#endif
+ 	if (io.io.wrerror)
+ 		error(_("there were errors while writing '%s' (%s)"),
+ 		      path, strerror(io.io.wrerror));
+@@ -663,11 +796,79 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
+ 			      rerere_path(&buf, id, "postimage"));
+ 
+ 	/* Update "path" with the resolution */
++#ifdef __MVS__
++	{
++		/*
++		 * z/OS: 'result' is in the canonical form of the rerere
++		 * cache files. Convert it to the working-tree encoding
++		 * before writing it out, so the file content matches the
++		 * tag applied below. Only the encoding (and CRLF)
++		 * conversion is performed - deliberately not the full
++		 * convert_to_working_tree() pipeline: the cache images
++		 * hold already-smudged working-tree text (handle_file()
++		 * performs no clean conversion when recording them), so
++		 * applying smudge filters again during replay would run
++		 * them a second time.
++		 */
++		struct conv_attrs ca;
++		struct strbuf wtresult = STRBUF_INIT;
++		int cr;
++
++		convert_attrs(istate, &ca, path);
++		ca.drv = NULL;
++		ca.ident = 0;
++		cr = convert_to_working_tree_ca(&ca, path,
++						result.ptr, result.size,
++						&wtresult, NULL);
++		if (cr < 0) {
++			/*
++			 * Encoding error: the resolution cannot be
++			 * represented in the working-tree encoding. Do
++			 * not overwrite the working file with
++			 * unconverted bytes (that would corrupt it);
++			 * fail the replay instead so the conflict is
++			 * preserved for manual resolution.
++			 */
++			strbuf_release(&wtresult);
++			ret = 1;
++			goto out;
++		}
++		if (cr > 0) {
++			size_t outlen;
++
++			free(result.ptr);
++			/*
++			 * mmbuffer_t.size is a long; detach into a
++			 * size_t and assign separately to avoid an
++			 * incompatible pointer type.
++			 */
++			result.ptr = strbuf_detach(&wtresult, &outlen);
++			result.size = outlen;
++		} else {
++			strbuf_release(&wtresult);
++		}
++	}
++#endif
  	f = fopen(path, "w");
  	if (!f)
  		return error_errno(_("could not open '%s'"), path);
@@ -34,3 +259,69 @@ index 8232542585..e8ca73dd49 100644
  	if (fclose(f))
  		return error_errno(_("writing '%s' failed"), path);
  
+@@ -730,7 +931,27 @@ static void do_rerere_one_path(struct index_state *istate,
+ 	/* Has the user resolved it already? */
+ 	if (variant >= 0) {
+ 		if (!handle_file(istate, path, NULL, NULL)) {
++#ifdef __MVS__
++			/*
++			 * z/OS: the working-tree file is in the working-tree
++			 * encoding (e.g. IBM-1047), while the cache files must
++			 * hold the canonical form. A raw copy_file() would store
++			 * unconverted bytes in postimage, so record it through
++			 * handle_file() - the same convert_to_git()
++			 * normalization that produces preimage/thisimage -
++			 * keeping all cache files consistent. If recording
++			 * fails, leave the resolution unrecorded (a later run
++			 * can retry) rather than storing
++			 * an invalid postimage.
++			 */
++			if (handle_file(istate, path, NULL,
++					rerere_path(&buf, id, "postimage"))) {
++				warning(_("could not record resolution for '%s'"), path);
++				goto out;
++			}
++#else
+ 			copy_file(the_repository, rerere_path(&buf, id, "postimage"), path, 0666);
++#endif
+ 			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
+ 			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
+ 			free_rerere_id(rr_item);
+@@ -911,37 +1132,6 @@ int repo_rerere(struct repository *r, int flags)
+ 	return status;
+ }
+ 
+-/*
+- * Subclass of rerere_io that reads from an in-core buffer that is a
+- * strbuf
+- */
+-struct rerere_io_mem {
+-	struct rerere_io io;
+-	struct strbuf input;
+-};
+-
+-/*
+- * ... and its getline() method implementation
+- */
+-static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
+-{
+-	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
+-	char *ep;
+-	size_t len;
+-
+-	strbuf_release(sb);
+-	if (!io->input.len)
+-		return -1;
+-	ep = memchr(io->input.buf, '\n', io->input.len);
+-	if (!ep)
+-		ep = io->input.buf + io->input.len;
+-	else if (*ep == '\n')
+-		ep++;
+-	len = ep - io->input.buf;
+-	strbuf_add(sb, io->input.buf, len);
+-	strbuf_remove(&io->input, 0, len);
+-	return 0;
+-}
+ 
+ static int handle_cache(struct index_state *istate,
+ 			const char *path, unsigned char *hash, const char *output)
